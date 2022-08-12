@@ -309,3 +309,16 @@ fn ld_d() {
         assert_eq!(c.halt, true);
         assert_eq!(c.pc, 1);
     }
+
+    #[test]
+    fn ld_r_ix_d() {
+        let mut c = CPU::new();
+        c.ix = 0x25AF;
+        c.bus.write_byte(0x0000, 0xDD);
+        c.bus.write_byte(0x0001, 0x46);
+        c.bus.write_byte(0x0002, 0x19);
+        c.bus.write_byte(0x25C8, 0x39);
+        assert_eq!(c.execute(), 19);
+        assert_eq!(c.registers.b, 0x39);
+        assert_eq!(c.pc, 3);
+    }
