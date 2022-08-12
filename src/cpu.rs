@@ -2,10 +2,10 @@ use crate::registers::Registers;
 use crate::memory::AddressBus;
 
 const CYCLES: [u8; 256] = [
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
+    0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
+    0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
+    0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -54,7 +54,8 @@ impl CPU {
         let cycles = CYCLES[opcode as usize].into();
 
         match opcode {
-            // 8-Bit Load Group
+            /* 8-Bit Load Group */
+            // LD r,r'      LD r,(HL)
             0x40 => {},                                                             // LD B,B
             0x41 => self.registers.b = self.registers.c,                            // LD B,C
             0x42 => self.registers.b = self.registers.d,                            // LD B,D
@@ -172,11 +173,47 @@ impl CPU {
             }
             0x7F => {},                                                             // LD A,A
 
+            // LD r,n
+            0x06 => {                                                               // LD B,d8
+                let d8 = self.bus.read_byte(self.pc + 1);
+                self.registers.b = d8;
+            },
+            0x0E => {                                                               // LD C,d8
+                let d8 = self.bus.read_byte(self.pc + 1);
+                self.registers.c = d8;
+            },
+            0x16 => {                                                               // LD D,d8
+                let d8 = self.bus.read_byte(self.pc + 1);
+                self.registers.d = d8;
+            },
+            0x1E => {                                                               // LD E,d8
+                let d8 = self.bus.read_byte(self.pc + 1);
+                self.registers.e = d8;
+            },
+            0x26 => {                                                               // LD H,d8
+                let d8 = self.bus.read_byte(self.pc + 1);
+                self.registers.h = d8;
+            },
+            0x2E => {                                                               // LD L,d8
+                let d8 = self.bus.read_byte(self.pc + 1);
+                self.registers.l = d8;
+            },
+            0x36 => {                                                               // LD (HL),d8
+                let d8 = self.bus.read_byte(self.pc + 1);
+                let addr = self.registers.get_hl();
+                self.bus.write_byte(addr, d8);
+            },
+            0x3E => {                                                               // LD A,d8
+                let d8 = self.bus.read_byte(self.pc + 1);
+                self.registers.a = d8;
+            },
+
 
             _ => {},
         }
 
         match opcode {
+            0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E => self.pc += 2,
             _ => self.pc +=1,
         }
 
