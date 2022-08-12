@@ -25,10 +25,10 @@ const CYCLES_PREFIXED_DD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
+    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
+    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -44,10 +44,10 @@ const CYCLES_PREFIXED_FD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
+    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
+    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -112,16 +112,79 @@ impl CPU {
                 if displacement < 0 { self.registers.b = self.bus.read_byte(self.ix - ( displacement as u16 )) }
                 else { self.registers.b = self.bus.read_byte(self.ix + ( displacement as u16 )) }
             },
+            0xDD4E => {                                                             // LD C,(IX+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 { self.registers.c = self.bus.read_byte(self.ix - ( displacement as u16 )) }
+                else { self.registers.c = self.bus.read_byte(self.ix + ( displacement as u16 )) }
+            },
+            0xDD56 => {                                                             // LD D,(IX+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 { self.registers.d = self.bus.read_byte(self.ix - ( displacement as u16 )) }
+                else { self.registers.d = self.bus.read_byte(self.ix + ( displacement as u16 )) }
+            },
+            0xDD5E => {                                                             // LD E,(IX+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 { self.registers.e = self.bus.read_byte(self.ix - ( displacement as u16 )) }
+                else { self.registers.e = self.bus.read_byte(self.ix + ( displacement as u16 )) }
+            },
+            0xDD66 => {                                                             // LD H,(IX+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 { self.registers.h = self.bus.read_byte(self.ix - ( displacement as u16 )) }
+                else { self.registers.h = self.bus.read_byte(self.ix + ( displacement as u16 )) }
+            },
+            0xDD6E => {                                                             // LD L,(IX+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 { self.registers.l = self.bus.read_byte(self.ix - ( displacement as u16 )) }
+                else { self.registers.l = self.bus.read_byte(self.ix + ( displacement as u16 )) }
+            },
+            0xDD7E => {                                                             // LD A,(IX+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 { self.registers.a = self.bus.read_byte(self.ix - ( displacement as u16 )) }
+                else { self.registers.a = self.bus.read_byte(self.ix + ( displacement as u16 )) }
+            },
+
             0xFD46 => {                                                             // LD B,(IY+d)
                 let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
                 if displacement < 0 { self.registers.b = self.bus.read_byte(self.iy - ( displacement as u16 )) }
                 else { self.registers.b = self.bus.read_byte(self.iy + ( displacement as u16 )) }
             },
+            0xFD4E => {                                                             // LD C,(IY+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 { self.registers.c = self.bus.read_byte(self.iy - ( displacement as u16 )) }
+                else { self.registers.c = self.bus.read_byte(self.iy + ( displacement as u16 )) }
+            },
+            0xFD56 => {                                                             // LD D,(IY+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 { self.registers.d = self.bus.read_byte(self.iy - ( displacement as u16 )) }
+                else { self.registers.d = self.bus.read_byte(self.iy + ( displacement as u16 )) }
+            },
+            0xFD5E => {                                                             // LD E,(IY+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 { self.registers.e = self.bus.read_byte(self.iy - ( displacement as u16 )) }
+                else { self.registers.e = self.bus.read_byte(self.iy + ( displacement as u16 )) }
+            },
+            0xFD66 => {                                                             // LD H,(IY+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 { self.registers.h = self.bus.read_byte(self.iy - ( displacement as u16 )) }
+                else { self.registers.h = self.bus.read_byte(self.iy + ( displacement as u16 )) }
+            },
+            0xFD6E => {                                                             // LD L,(IY+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 { self.registers.l = self.bus.read_byte(self.iy - ( displacement as u16 )) }
+                else { self.registers.l = self.bus.read_byte(self.iy + ( displacement as u16 )) }
+            },
+            0xFD7E => {                                                             // LD A,(IY+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 { self.registers.a = self.bus.read_byte(self.iy - ( displacement as u16 )) }
+                else { self.registers.a = self.bus.read_byte(self.iy + ( displacement as u16 )) }
+            },
             _ => {}
         }
 
         match opcode {
-            0xDD46 | 0xFD46 => self.pc += 3,
+            0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
+            0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
+            0xDD7E | 0xFD7E => self.pc += 3,
             _ => self.pc +=1,
         }
 
