@@ -39,6 +39,25 @@ const CYCLES_PREFIXED_DD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 
+const CYCLES_PREFIXED_FD: [u8; 256] = [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
+
 pub struct CPU {
     pub registers: crate::registers::Registers,
     pub alt_registers: crate::registers::Registers,
@@ -72,7 +91,7 @@ impl CPU {
         let opcode = self.bus.read_byte(self.pc);
 
         match opcode {
-            0xDD => {
+            0xDD | 0xFD => {
                 let opcode_prefixed = self.bus.read_le_word(self.pc);
                 return self.execute_prefixed(opcode_prefixed)
                 },
@@ -83,20 +102,26 @@ impl CPU {
     fn execute_prefixed(&mut self, opcode: u16) -> u32 {
         let cycles = match opcode & 0xFF00 {
                 0xDD00 => CYCLES_PREFIXED_DD[(opcode & 0x00FF) as usize].into(),
+                0xFD00 => CYCLES_PREFIXED_FD[(opcode & 0x00FF) as usize].into(),
                 _ => 0
         };
 
         match opcode {
-            0xDD46 => {
+            0xDD46 => {                                                             // LD B,(IX+d)
                 let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
                 if displacement < 0 { self.registers.b = self.bus.read_byte(self.ix - ( displacement as u16 )) }
                 else { self.registers.b = self.bus.read_byte(self.ix + ( displacement as u16 )) }
+            },
+            0xFD46 => {                                                             // LD B,(IY+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 { self.registers.b = self.bus.read_byte(self.iy - ( displacement as u16 )) }
+                else { self.registers.b = self.bus.read_byte(self.iy + ( displacement as u16 )) }
             },
             _ => {}
         }
 
         match opcode {
-            0xDD46 => self.pc += 3,
+            0xDD46 | 0xFD46 => self.pc += 3,
             _ => self.pc +=1,
         }
 
