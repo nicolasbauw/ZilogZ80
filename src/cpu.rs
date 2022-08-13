@@ -1,5 +1,6 @@
 use crate::registers::Registers;
 use crate::memory::AddressBus;
+use crate::flags::Flags;
 
 const CYCLES: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 7, 0,
@@ -58,9 +59,28 @@ const CYCLES_PREFIXED_FD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 
+const CYCLES_PREFIXED_ED: [u8; 256] = [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
+
 pub struct CPU {
-    pub registers: crate::registers::Registers,
-    pub alt_registers: crate::registers::Registers,
+    pub registers: Registers,
+    pub alt_registers: Registers,
     pub i: u8,
     pub r: u8,
     pub ix: u16,
@@ -68,7 +88,9 @@ pub struct CPU {
     pub sp: u16,
     pub pc: u16,
     pub bus: AddressBus,
-    pub halt: bool
+    pub halt: bool,
+    iff2: bool,
+    flags: Flags,
 }
 
 impl CPU {
@@ -83,7 +105,9 @@ impl CPU {
             sp: 0,
             pc: 0,
             bus: AddressBus::new(),
-            halt: false
+            halt: false,
+            iff2: false,
+            flags: Flags::new()
         }
     }
 
@@ -103,6 +127,7 @@ impl CPU {
         let cycles = match opcode & 0xFF00 {
                 0xDD00 => CYCLES_PREFIXED_DD[(opcode & 0x00FF) as usize].into(),
                 0xFD00 => CYCLES_PREFIXED_FD[(opcode & 0x00FF) as usize].into(),
+                0xED00 => CYCLES_PREFIXED_ED[(opcode & 0x00FF) as usize].into(),
                 _ => 0
         };
 
@@ -271,10 +296,23 @@ impl CPU {
                 else { self.bus.write_byte(self.iy + ( displacement as u16 ), data) }
             }
 
+            // LD A,I
+            0xED57 => {
+                self.registers.a = self.i;
+                if (self.i as i8) < 0 { self.flags.s = true } else { self.flags.s = false }
+                if (self.i as i8) == 0 { self.flags.z = true }
+                self.flags.h = false;
+                self.flags.p = self.iff2;
+                self.flags.n = false;
+                // TODO :
+                // If an interrupt occurs during execution of this instruction, the Parity flag contains a 0.
+            },
+
             _ => {}
         }
 
         match opcode {
+            0xED57 => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
