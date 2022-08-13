@@ -361,3 +361,37 @@ fn ld_d() {
         assert_eq!(c.bus.read_byte(0x219F), 0x5A);
         assert_eq!(c.pc, 4);
     }
+
+    #[test]
+    fn ld_a_bc() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x0a);
+        c.bus.write_byte(0x100, 0x65);
+        c.registers.set_bc(0x100);
+        assert_eq!(c.execute(), 7);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.a, 0x65);
+    }
+
+    #[test]
+    fn ld_a_de() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x1a);
+        c.bus.write_byte(0x100, 0x65);
+        c.registers.set_de(0x100);
+        assert_eq!(c.execute(), 7);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.a, 0x65);
+    }
+
+    #[test]
+    fn ld_nn_a() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x32);
+        c.bus.write_byte(0x0001, 0x00);
+        c.bus.write_byte(0x0002, 0xff);
+        c.registers.a = 0x56;
+        assert_eq!(c.execute(), 13);
+        assert_eq!(c.pc, 0x0003);
+        assert_eq!(c.bus.read_byte(0xff00), 0x56);
+    }
