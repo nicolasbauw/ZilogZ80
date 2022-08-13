@@ -65,7 +65,7 @@ const CYCLES_PREFIXED_ED: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -308,11 +308,23 @@ impl CPU {
                 // If an interrupt occurs during execution of this instruction, the Parity flag contains a 0.
             },
 
+            // LD A,R
+            0xED5F => {
+                self.registers.a = self.r;
+                if (self.r as i8) < 0 { self.flags.s = true } else { self.flags.s = false }
+                if (self.r as i8) == 0 { self.flags.z = true }
+                self.flags.h = false;
+                self.flags.p = self.iff2;
+                self.flags.n = false;
+                // TODO :
+                // If an interrupt occurs during execution of this instruction, the Parity flag contains a 0.
+            },
+
             _ => {}
         }
 
         match opcode {
-            0xED57 => self.pc += 2,
+            0xED57 | 0xED5F => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
