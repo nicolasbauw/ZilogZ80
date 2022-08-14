@@ -3,10 +3,10 @@ use crate::memory::AddressBus;
 use crate::flags::Flags;
 
 const CYCLES: [u8; 256] = [
-    0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 7, 0,
-    0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 7, 0,
-    0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
-    0, 0, 13, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
+    0, 10, 0, 0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 7, 0,
+    0, 10, 0, 0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 7, 0,
+    0, 10, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
+    0, 10, 13, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -520,12 +520,30 @@ impl CPU {
                 self.bus.write_byte(addr, self.registers.a);
             },
 
+            // LD dd,nn
+            0x01 => {                                                       // LD BC,nn
+                let d16 = self.bus.read_word(self.pc + 1); 
+                self.registers.set_bc(d16);
+            },
+            0x11 => {                                                       // LD DE,nn
+                let d16 = self.bus.read_word(self.pc + 1); 
+                self.registers.set_de(d16);
+            },
+            0x21 => {                                                       // LD HL,nn
+                let d16 = self.bus.read_word(self.pc + 1); 
+                self.registers.set_hl(d16);
+            },
+            0x31 => {                                                       // LD SP,nn
+                let d16 = self.bus.read_word(self.pc + 1); 
+                self.sp = d16;
+            },
+
             _ => {},
         }
 
         match opcode {
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E => self.pc += 2,
-            0x32 => self.pc += 3,
+            0x32 | 0x01 | 0x11 | 0x21 | 0x31=> self.pc += 3,
             _ => self.pc +=1,
         }
 
