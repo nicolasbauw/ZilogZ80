@@ -2,6 +2,13 @@
 name = "zilog_z80"
 version = "0.1.0"
 edition = "2021"
+authors = ["Nicolas BAUW <nbauw@hotmail.com>"]
+description = "Zilog Z80 Emulator."
+keywords = ["emulation", "emulator", "Zilog", "Z80", "CPU"]
+categories = ["emulators"]
+license = "MIT"
+repository = "https://github.com/nicolasbauw/ZilogZ80"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
