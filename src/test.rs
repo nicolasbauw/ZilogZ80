@@ -417,3 +417,84 @@ fn ld_d() {
         assert_eq!(c.pc, 0x0003);
         assert_eq!(c.registers.get_hl(), 0x5000);
     }
+
+    #[test]
+    fn ld_ix_nn() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xDD);
+        c.bus.write_byte(0x0001, 0x21);
+        c.bus.write_byte(0x0002, 0xA2);
+        c.bus.write_byte(0x0003, 0x45);
+        assert_eq!(c.execute(), 14);
+        assert_eq!(c.pc, 0x0004);
+        assert_eq!(c.ix, 0x45A2);
+    }
+
+    #[test]
+    fn ld_hl_nn() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x2A);
+        c.bus.write_byte(0x0001, 0x45);
+        c.bus.write_byte(0x0002, 0x45);
+        c.bus.write_byte(0x4545, 0x37);
+        c.bus.write_byte(0x4546, 0xA1);
+        assert_eq!(c.execute(), 16);
+        assert_eq!(c.pc, 0x0003);
+        assert_eq!(c.registers.get_hl(), 0xA137);
+    }
+
+    #[test]
+    fn ld_bc_cnn() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0x4B);
+        c.bus.write_byte(0x0002, 0x30);
+        c.bus.write_byte(0x0003, 0x21);
+        c.bus.write_byte(0x2130, 0x65);
+        c.bus.write_byte(0x2131, 0x78);
+        assert_eq!(c.execute(), 20);
+        assert_eq!(c.pc, 0x0004);
+        assert_eq!(c.registers.get_bc(), 0x7865);
+    }
+
+    #[test]
+    fn ld_de_cnn() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0x5B);
+        c.bus.write_byte(0x0002, 0x30);
+        c.bus.write_byte(0x0003, 0x21);
+        c.bus.write_byte(0x2130, 0x65);
+        c.bus.write_byte(0x2131, 0x78);
+        assert_eq!(c.execute(), 20);
+        assert_eq!(c.pc, 0x0004);
+        assert_eq!(c.registers.get_de(), 0x7865);
+    }
+
+    #[test]
+    fn ld_hl_cnn() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0x6B);
+        c.bus.write_byte(0x0002, 0x30);
+        c.bus.write_byte(0x0003, 0x21);
+        c.bus.write_byte(0x2130, 0x65);
+        c.bus.write_byte(0x2131, 0x78);
+        assert_eq!(c.execute(), 20);
+        assert_eq!(c.pc, 0x0004);
+        assert_eq!(c.registers.get_hl(), 0x7865);
+    }
+
+    #[test]
+    fn ld_sp_cnn() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0x7B);
+        c.bus.write_byte(0x0002, 0x30);
+        c.bus.write_byte(0x0003, 0x21);
+        c.bus.write_byte(0x2130, 0x65);
+        c.bus.write_byte(0x2131, 0x78);
+        assert_eq!(c.execute(), 20);
+        assert_eq!(c.pc, 0x0004);
+        assert_eq!(c.sp, 0x7865);
+    }

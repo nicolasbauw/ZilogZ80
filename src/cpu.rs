@@ -5,7 +5,7 @@ use crate::flags::Flags;
 const CYCLES: [u8; 256] = [
     0, 10, 0, 0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 7, 0,
     0, 10, 0, 0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 7, 0,
-    0, 10, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
+    0, 10, 0, 0, 0, 0, 7, 0, 0, 0, 16, 0, 0, 0, 7, 0,
     0, 10, 13, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -24,7 +24,7 @@ const CYCLES: [u8; 256] = [
 const CYCLES_DD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
@@ -43,7 +43,7 @@ const CYCLES_DD: [u8; 256] = [
 const CYCLES_FD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
@@ -64,10 +64,10 @@ const CYCLES_ED: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9,
-    0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 9,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 20, 0, 0, 0, 9,
+    0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 20, 0, 0, 0, 9,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -288,6 +288,17 @@ impl CPU {
                 else { self.bus.write_byte(self.ix + ( displacement as u16 ), data) }
             }
 
+            // LD IX,nn
+            0xDD21 => {
+                self.ix = self.bus.read_word(self.pc + 2);
+            }
+
+
+            // LD IY,nn
+            0xFD21 => {
+                self.iy = self.bus.read_word(self.pc + 2);
+            }
+
             // LD (IY+d),n
             0xFD36 => {
                 let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
@@ -326,6 +337,31 @@ impl CPU {
             // LD R,A
             0xED4F => self.r = self.registers.a,
 
+            // LD dd,(nn)
+            0xED4B => {                                                             // LD BC,(nn)
+                let addr = self.bus.read_word(self.pc +2);
+                let d = self.bus.read_word(addr);
+                self.registers.set_bc(d);
+            },
+
+            0xED5B => {                                                             // LD DE,(nn)
+                let addr = self.bus.read_word(self.pc +2);
+                let d = self.bus.read_word(addr);
+                self.registers.set_de(d);
+            },
+
+            0xED6B => {                                                             // LD HL,(nn)
+                let addr = self.bus.read_word(self.pc +2);
+                let d = self.bus.read_word(addr);
+                self.registers.set_hl(d);
+            },
+
+            0xED7B => {                                                             // LD SP,(nn)
+                let addr = self.bus.read_word(self.pc +2);
+                let d = self.bus.read_word(addr);
+                self.sp = d;
+            },
+
             _ => {}
         }
 
@@ -338,7 +374,8 @@ impl CPU {
             0xDD77 |
             0xFD70 | 0xFD71 | 0xFD72 | 0xFD73 | 0xFD74 | 0xFD75 |
             0xFD77 => self.pc += 3,
-            0xDD36 | 0xFD36 => self.pc += 4,
+            0xDD36 | 0xFD36 | 0xDD21 | 0xFD21 | 0xED4B | 0xED5B |
+            0xED6B | 0xED7B => self.pc += 4,
             _ => self.pc +=1,
         }
 
@@ -538,12 +575,19 @@ impl CPU {
                 self.sp = d16;
             },
 
+            // LD HL,(nn)
+            0x2A => {
+                let addr = self.bus.read_word(self.pc + 1);
+                let d = self.bus.read_word(addr);
+                self.registers.set_hl(d);
+            },
+
             _ => {},
         }
 
         match opcode {
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E => self.pc += 2,
-            0x32 | 0x01 | 0x11 | 0x21 | 0x31=> self.pc += 3,
+            0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A => self.pc += 3,
             _ => self.pc +=1,
         }
 
