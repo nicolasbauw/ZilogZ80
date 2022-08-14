@@ -21,7 +21,7 @@ const CYCLES: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 
-const CYCLES_PREFIXED_DD: [u8; 256] = [
+const CYCLES_DD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -40,7 +40,7 @@ const CYCLES_PREFIXED_DD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 
-const CYCLES_PREFIXED_FD: [u8; 256] = [
+const CYCLES_FD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -59,7 +59,7 @@ const CYCLES_PREFIXED_FD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 
-const CYCLES_PREFIXED_ED: [u8; 256] = [
+const CYCLES_ED: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -125,9 +125,9 @@ impl CPU {
 
     fn execute_prefixed(&mut self, opcode: u16) -> u32 {
         let cycles = match opcode & 0xFF00 {
-                0xDD00 => CYCLES_PREFIXED_DD[(opcode & 0x00FF) as usize].into(),
-                0xFD00 => CYCLES_PREFIXED_FD[(opcode & 0x00FF) as usize].into(),
-                0xED00 => CYCLES_PREFIXED_ED[(opcode & 0x00FF) as usize].into(),
+                0xDD00 => CYCLES_DD[(opcode & 0x00FF) as usize].into(),
+                0xFD00 => CYCLES_FD[(opcode & 0x00FF) as usize].into(),
+                0xED00 => CYCLES_ED[(opcode & 0x00FF) as usize].into(),
                 _ => 0
         };
 
