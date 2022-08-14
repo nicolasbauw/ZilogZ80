@@ -498,3 +498,31 @@ fn ld_d() {
         assert_eq!(c.pc, 0x0004);
         assert_eq!(c.sp, 0x7865);
     }
+
+    #[test]
+    fn ld_ix_cnn() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xDD);
+        c.bus.write_byte(0x0001, 0x2A);
+        c.bus.write_byte(0x0002, 0x66);
+        c.bus.write_byte(0x0003, 0x66);
+        c.bus.write_byte(0x6666, 0x92);
+        c.bus.write_byte(0x6667, 0xDA);
+        assert_eq!(c.execute(), 20);
+        assert_eq!(c.pc, 0x0004);
+        assert_eq!(c.ix, 0xDA92);
+    }
+
+    #[test]
+    fn ld_iy_cnn() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xFD);
+        c.bus.write_byte(0x0001, 0x2A);
+        c.bus.write_byte(0x0002, 0x66);
+        c.bus.write_byte(0x0003, 0x66);
+        c.bus.write_byte(0x6666, 0x92);
+        c.bus.write_byte(0x6667, 0xDA);
+        assert_eq!(c.execute(), 20);
+        assert_eq!(c.pc, 0x0004);
+        assert_eq!(c.iy, 0xDA92);
+    }
