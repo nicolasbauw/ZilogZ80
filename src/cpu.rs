@@ -5,7 +5,7 @@ use crate::flags::Flags;
 const CYCLES: [u8; 256] = [
     0, 10, 0, 0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 7, 0,
     0, 10, 0, 0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 7, 0,
-    0, 10, 0, 0, 0, 0, 7, 0, 0, 0, 16, 0, 0, 0, 7, 0,
+    0, 10, 16, 0, 0, 0, 7, 0, 0, 0, 16, 0, 0, 0, 7, 0,
     0, 10, 13, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -596,12 +596,19 @@ impl CPU {
                 self.registers.set_hl(d);
             },
 
+            // LD (nn),HL
+            0x22 => {
+                let d = self.registers.get_hl();
+                let addr = self.bus.read_word(self.pc + 1);
+                self.bus.write_word(addr, d);
+            },
+
             _ => {},
         }
 
         match opcode {
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E => self.pc += 2,
-            0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A => self.pc += 3,
+            0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 => self.pc += 3,
             _ => self.pc +=1,
         }
 

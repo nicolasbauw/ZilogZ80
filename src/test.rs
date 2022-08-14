@@ -526,3 +526,16 @@ fn ld_d() {
         assert_eq!(c.pc, 0x0004);
         assert_eq!(c.iy, 0xDA92);
     }
+
+    #[test]
+    fn ld_cnn_hl() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x22);
+        c.bus.write_byte(0x0001, 0x29);
+        c.bus.write_byte(0x0002, 0xB2);
+        c.registers.set_hl(0x483A);
+        assert_eq!(c.execute(), 16);
+        assert_eq!(c.pc, 0x0003);
+        assert_eq!(c.bus.read_byte(0xB229), 0x3A);
+        assert_eq!(c.bus.read_byte(0xB22A), 0x48);
+    }
