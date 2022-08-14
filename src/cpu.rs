@@ -115,7 +115,7 @@ impl CPU {
         let opcode = self.bus.read_byte(self.pc);
 
         match opcode {
-            0xDD | 0xFD => {
+            0xDD | 0xFD | 0xED => {
                 let opcode_prefixed = self.bus.read_le_word(self.pc);
                 return self.execute_prefixed(opcode_prefixed)
                 },
