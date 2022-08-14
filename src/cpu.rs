@@ -90,7 +90,7 @@ pub struct CPU {
     pub bus: AddressBus,
     pub halt: bool,
     iff2: bool,
-    flags: Flags,
+    pub flags: Flags,
 }
 
 impl CPU {
