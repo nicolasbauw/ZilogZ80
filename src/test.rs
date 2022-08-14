@@ -395,3 +395,14 @@ fn ld_d() {
         assert_eq!(c.pc, 0x0003);
         assert_eq!(c.bus.read_byte(0xff00), 0x56);
     }
+
+    #[test]
+    fn ld_a_r() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0x5F);
+        c.r = 0x56;
+        assert_eq!(c.execute(), 9);
+        assert_eq!(c.pc, 0x0002);
+        assert_eq!(c.registers.a, 0x56);
+    }
