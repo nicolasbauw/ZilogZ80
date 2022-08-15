@@ -15,10 +15,10 @@ const CYCLES: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 11, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0,
 ];
 
 const CYCLES_DD: [u8; 256] = [
@@ -36,7 +36,7 @@ const CYCLES_DD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
 ];
 
@@ -55,7 +55,7 @@ const CYCLES_FD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
 ];
 
@@ -415,11 +415,24 @@ impl CPU {
             // LD SP,IY
             0xFDF9 => self.sp = self.iy,
 
+            // PUSH IX
+            0xDDE5 => {
+                self.sp = self.sp.wrapping_sub(2);
+                self.bus.write_word(self.sp, self.ix);
+            },
+
+            // PUSH IY
+            0xFDE5 => {
+                self.sp = self.sp.wrapping_sub(2);
+                self.bus.write_word(self.sp, self.ix);
+            },
+
             _ => {}
         }
 
         match opcode {
-            0xED57 | 0xED5F | 0xED47 | 0xED4F | 0xDDF9 | 0xFDF9 => self.pc += 2,
+            0xED57 | 0xED5F | 0xED47 | 0xED4F | 0xDDF9 | 0xFDF9 |
+            0xDDE5 | 0xFDE5 => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
@@ -613,19 +626,19 @@ impl CPU {
             },
 
             // LD dd,nn
-            0x01 => {                                                       // LD BC,nn
+            0x01 => {                                                               // LD BC,nn
                 let d16 = self.bus.read_word(self.pc + 1); 
                 self.registers.set_bc(d16);
             },
-            0x11 => {                                                       // LD DE,nn
+            0x11 => {                                                               // LD DE,nn
                 let d16 = self.bus.read_word(self.pc + 1); 
                 self.registers.set_de(d16);
             },
-            0x21 => {                                                       // LD HL,nn
+            0x21 => {                                                               // LD HL,nn
                 let d16 = self.bus.read_word(self.pc + 1); 
                 self.registers.set_hl(d16);
             },
-            0x31 => {                                                       // LD SP,nn
+            0x31 => {                                                               // LD SP,nn
                 let d16 = self.bus.read_word(self.pc + 1); 
                 self.sp = d16;
             },
@@ -646,6 +659,25 @@ impl CPU {
 
             // LD SP,HL
             0xF9 => self.sp = self.registers.get_hl(),
+
+            // PUSH qq
+            0xC5 => {                                                               // PUSH BC
+                self.sp = self.sp.wrapping_sub(2);
+                self.bus.write_word(self.sp, self.registers.get_bc());
+            },
+            0xD5 => {                                                               // PUSH DE
+                self.sp = self.sp.wrapping_sub(2);
+                self.bus.write_word(self.sp, self.registers.get_de());
+            },
+            0xE5 => {                                                               // PUSH HL
+                self.sp = self.sp.wrapping_sub(2);
+                self.bus.write_word(self.sp, self.registers.get_hl());
+            },
+            0xF5 => {                                                               // PUSH AF
+                self.sp = self.sp.wrapping_sub(2);
+                self.bus.write_byte(self.sp, self.flags.to_byte());
+                self.bus.write_byte(self.sp + 1, self.registers.a);
+            },
 
             _ => {},
         }
