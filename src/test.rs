@@ -662,9 +662,9 @@ fn ld_d() {
         let mut c = CPU::new();
         c.bus.write_byte(0x0000, 0xF5);
         c.registers.a = 0x22;
-        c.flags.from_byte(0x33);
+        c.registers.flags.from_byte(0x33);
         c.sp = 0x1007;
-        assert_eq!(c.flags.to_byte(), 0b00110011);
+        assert_eq!(c.registers.flags.to_byte(), 0b00110011);
         assert_eq!(c.execute(), 11);
         assert_eq!(c.pc, 1);
         assert_eq!(c.sp, 0x1005);
@@ -752,4 +752,17 @@ fn ld_d() {
         assert_eq!(c.pc, 1);
         assert_eq!(c.registers.get_de(), 0x499A);
         assert_eq!(c.registers.get_hl(), 0x2822);
+    }
+
+    #[test]
+    fn ex_af_afp() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x08);
+        c.registers.set_af(0x9900);
+        assert_eq!(c.registers.get_af(), 0x9900);
+        c.alt_registers.set_af(0x5944);
+        assert_eq!(c.execute(), 4);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.get_af(), 0x5944);
+        assert_eq!(c.alt_registers.get_af(), 0x9900);
     }

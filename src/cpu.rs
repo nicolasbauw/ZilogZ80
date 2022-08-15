@@ -1,9 +1,8 @@
 use crate::registers::Registers;
 use crate::memory::AddressBus;
-use crate::flags::Flags;
 
 const CYCLES: [u8; 256] = [
-    0, 10, 0, 0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 7, 0,
+    0, 10, 0, 0, 0, 0, 7, 0, 4, 0, 7, 0, 0, 0, 7, 0,
     0, 10, 0, 0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 7, 0,
     0, 10, 16, 0, 0, 0, 7, 0, 0, 0, 16, 0, 0, 0, 7, 0,
     0, 10, 13, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
@@ -90,7 +89,6 @@ pub struct CPU {
     pub bus: AddressBus,
     pub halt: bool,
     iff2: bool,
-    pub flags: Flags,
 }
 
 impl CPU {
@@ -107,7 +105,6 @@ impl CPU {
             bus: AddressBus::new(),
             halt: false,
             iff2: false,
-            flags: Flags::new()
         }
     }
 
@@ -310,11 +307,11 @@ impl CPU {
             // LD A,I
             0xED57 => {
                 self.registers.a = self.i;
-                if (self.i as i8) < 0 { self.flags.s = true } else { self.flags.s = false }
-                if (self.i as i8) == 0 { self.flags.z = true }
-                self.flags.h = false;
-                self.flags.p = self.iff2;
-                self.flags.n = false;
+                if (self.i as i8) < 0 { self.registers.flags.s = true } else { self.registers.flags.s = false }
+                if (self.i as i8) == 0 { self.registers.flags.z = true }
+                self.registers.flags.h = false;
+                self.registers.flags.p = self.iff2;
+                self.registers.flags.n = false;
                 // TODO :
                 // If an interrupt occurs during execution of this instruction, the Parity flag contains a 0.
             },
@@ -322,11 +319,11 @@ impl CPU {
             // LD A,R
             0xED5F => {
                 self.registers.a = self.r;
-                if (self.r as i8) < 0 { self.flags.s = true } else { self.flags.s = false }
-                if (self.r as i8) == 0 { self.flags.z = true }
-                self.flags.h = false;
-                self.flags.p = self.iff2;
-                self.flags.n = false;
+                if (self.r as i8) < 0 { self.registers.flags.s = true } else { self.registers.flags.s = false }
+                if (self.r as i8) == 0 { self.registers.flags.z = true }
+                self.registers.flags.h = false;
+                self.registers.flags.p = self.iff2;
+                self.registers.flags.n = false;
                 // TODO :
                 // If an interrupt occurs during execution of this instruction, the Parity flag contains a 0.
             },
@@ -690,7 +687,7 @@ impl CPU {
             },
             0xF5 => {                                                               // PUSH AF
                 self.sp = self.sp.wrapping_sub(2);
-                self.bus.write_byte(self.sp, self.flags.to_byte());
+                self.bus.write_byte(self.sp, self.registers.flags.to_byte());
                 self.bus.write_byte(self.sp + 1, self.registers.a);
             },
 
@@ -713,34 +710,26 @@ impl CPU {
             0xF1 => {                                                               // POP AF
                 self.registers.a = self.bus.read_byte((self.sp)+1);
                 let bflags = self.bus.read_byte(self.sp);
-                self.flags.from_byte(bflags);
+                self.registers.flags.from_byte(bflags);
                 self.sp = self.sp.wrapping_add(2);
             },
 
             // Exchange, Block Transfer, and Search Group
             // EX DE,HL
             0xEB => {
-                let d = self.registers.d;
-                let e = self.registers.e;
-                let h = self.registers.h;
-                let l = self.registers.l;
-                self.registers.d = h;
-                self.registers.e = l;
-                self.registers.h = d;
-                self.registers.l = e;
+                let de= self.registers.get_de();
+                let hl = self.registers.get_hl();
+                self.registers.set_de(hl);
+                self.registers.set_hl(de);
             }
 
             // EX AF,AF'
-            /*0x08 => {
-                let a = self.registers.a;
-                let f = self.registers.;
-                let ap = self.registers.h;
-                let fp = self.registers.l;
-                self.registers.d = h;
-                self.registers.e = l;
-                self.registers.h = d;
-                self.registers.l = e;
-            }*/
+            0x08 => {
+                let af = self.registers.get_af();
+                let afp = self.alt_registers.get_af();
+                self.registers.set_af(afp);
+                self.alt_registers.set_af(af);
+            }
 
             _ => {},
         }
