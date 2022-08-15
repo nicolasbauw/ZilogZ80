@@ -700,3 +700,44 @@ fn ld_d() {
         assert_eq!(c.bus.read_byte(0x1006), 0x22);
         assert_eq!(c.sp, 0x1005);
     }
+
+    #[test]
+    fn pop_hl() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xE1);
+        c.bus.write_byte(0x1000, 0x55);
+        c.bus.write_byte(0x1001, 0x33);
+        c.sp = 0x1000;
+        assert_eq!(c.execute(), 10);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.get_hl(), 0x3355);
+        assert_eq!(c.sp, 0x1002);
+    }
+
+    #[test]
+    fn pop_ix() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xDD);
+        c.bus.write_byte(0x0001, 0xE1);
+        c.bus.write_byte(0x1000, 0x55);
+        c.bus.write_byte(0x1001, 0x33);
+        c.sp = 0x1000;
+        assert_eq!(c.execute(), 14);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.ix, 0x3355);
+        assert_eq!(c.sp, 0x1002);
+    }
+
+    #[test]
+    fn pop_iy() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xFD);
+        c.bus.write_byte(0x0001, 0xE1);
+        c.bus.write_byte(0x1000, 0x55);
+        c.bus.write_byte(0x1001, 0x33);
+        c.sp = 0x1000;
+        assert_eq!(c.execute(), 14);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.iy, 0x3355);
+        assert_eq!(c.sp, 0x1002);
+    }

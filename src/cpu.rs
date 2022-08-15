@@ -15,10 +15,10 @@ const CYCLES: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 11, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0,
+    0, 10, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 10, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 10, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 10, 0, 0, 0, 11, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0,
 ];
 
 const CYCLES_DD: [u8; 256] = [
@@ -36,7 +36,7 @@ const CYCLES_DD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 14, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
 ];
 
@@ -55,7 +55,7 @@ const CYCLES_FD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 14, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
 ];
 
@@ -427,12 +427,24 @@ impl CPU {
                 self.bus.write_word(self.sp, self.ix);
             },
 
+            // POP IX
+            0xDDE1 => {
+                self.ix = self.bus.read_word(self.sp);
+                self.sp = self.sp.wrapping_add(2);
+            },
+
+            // POP IX
+            0xFDE1 => {
+                self.iy = self.bus.read_word(self.sp);
+                self.sp = self.sp.wrapping_add(2);
+            },
+
             _ => {}
         }
 
         match opcode {
             0xED57 | 0xED5F | 0xED47 | 0xED4F | 0xDDF9 | 0xFDF9 |
-            0xDDE5 | 0xFDE5 => self.pc += 2,
+            0xDDE5 | 0xFDE5 | 0xDDE1 | 0xFDE1 => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
@@ -677,6 +689,29 @@ impl CPU {
                 self.sp = self.sp.wrapping_sub(2);
                 self.bus.write_byte(self.sp, self.flags.to_byte());
                 self.bus.write_byte(self.sp + 1, self.registers.a);
+            },
+
+            // POP qq
+            0xC1 => {                                                               // POP BC
+                self.registers.set_bc(self.bus.read_word(self.sp));
+                self.sp = self.sp.wrapping_add(2);
+            },
+
+            0xD1 => {                                                               // POP DE
+                self.registers.set_de(self.bus.read_word(self.sp));
+                self.sp = self.sp.wrapping_add(2);
+            },
+
+            0xE1 => {                                                               // POP HL
+                self.registers.set_hl(self.bus.read_word(self.sp));
+                self.sp = self.sp.wrapping_add(2);
+            },
+
+            0xF1 => {                                                               // POP AF
+                self.registers.a = self.bus.read_byte((self.sp)+1);
+                let bflags = self.bus.read_byte(self.sp);
+                self.flags.from_byte(bflags);
+                self.sp = self.sp.wrapping_add(2);
             },
 
             _ => {},
