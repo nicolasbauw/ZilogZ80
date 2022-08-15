@@ -741,3 +741,15 @@ fn ld_d() {
         assert_eq!(c.iy, 0x3355);
         assert_eq!(c.sp, 0x1002);
     }
+
+    #[test]
+    fn ex_de_hl() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xEB);
+        c.registers.set_de(0x2822);
+        c.registers.set_hl(0x499A);
+        assert_eq!(c.execute(), 4);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.get_de(), 0x499A);
+        assert_eq!(c.registers.get_hl(), 0x2822);
+    }

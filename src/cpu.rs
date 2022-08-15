@@ -17,7 +17,7 @@ const CYCLES: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 10, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 10, 0, 0, 0, 11, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0,
 ];
 
@@ -439,6 +439,9 @@ impl CPU {
                 self.sp = self.sp.wrapping_add(2);
             },
 
+            // Exchange, Block Transfer, and Search Group
+
+
             _ => {}
         }
 
@@ -713,6 +716,31 @@ impl CPU {
                 self.flags.from_byte(bflags);
                 self.sp = self.sp.wrapping_add(2);
             },
+
+            // Exchange, Block Transfer, and Search Group
+            // EX DE,HL
+            0xEB => {
+                let d = self.registers.d;
+                let e = self.registers.e;
+                let h = self.registers.h;
+                let l = self.registers.l;
+                self.registers.d = h;
+                self.registers.e = l;
+                self.registers.h = d;
+                self.registers.l = e;
+            }
+
+            // EX AF,AF'
+            /*0x08 => {
+                let a = self.registers.a;
+                let f = self.registers.;
+                let ap = self.registers.h;
+                let fp = self.registers.l;
+                self.registers.d = h;
+                self.registers.e = l;
+                self.registers.h = d;
+                self.registers.l = e;
+            }*/
 
             _ => {},
         }
