@@ -766,3 +766,23 @@ fn ld_d() {
         assert_eq!(c.registers.get_af(), 0x5944);
         assert_eq!(c.alt_registers.get_af(), 0x9900);
     }
+
+    #[test]
+    fn exx() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xD9);
+        c.registers.set_bc(0x445A);
+        c.registers.set_de(0x3DA2);
+        c.registers.set_hl(0x8859);
+        c.alt_registers.set_bc(0x0988);
+        c.alt_registers.set_de(0x9300);
+        c.alt_registers.set_hl(0x00E7);
+        assert_eq!(c.execute(), 4);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.get_bc(), 0x0988);
+        assert_eq!(c.registers.get_de(), 0x9300);
+        assert_eq!(c.registers.get_hl(), 0x00E7);
+        assert_eq!(c.alt_registers.get_bc(), 0x445A);
+        assert_eq!(c.alt_registers.get_de(), 0x3DA2);
+        assert_eq!(c.alt_registers.get_hl(), 0x8859);
+    }

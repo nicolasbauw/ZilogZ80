@@ -15,7 +15,7 @@ const CYCLES: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 10, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 10, 0, 0, 0, 11, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0,
 ];
@@ -729,6 +729,22 @@ impl CPU {
                 let afp = self.alt_registers.get_af();
                 self.registers.set_af(afp);
                 self.alt_registers.set_af(af);
+            }
+
+            // EXX
+            0xD9 => {
+                let bc = self.registers.get_bc();
+                let de = self.registers.get_de();
+                let hl = self.registers.get_hl();
+                let bcp = self.alt_registers.get_bc();
+                let dep = self.alt_registers.get_de();
+                let hlp = self.alt_registers.get_hl();
+                self.registers.set_bc(bcp);
+                self.registers.set_de(dep);
+                self.registers.set_hl(hlp);
+                self.alt_registers.set_bc(bc);
+                self.alt_registers.set_de(de);
+                self.alt_registers.set_hl(hl);
             }
 
             _ => {},
