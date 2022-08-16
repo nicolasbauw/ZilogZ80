@@ -16,7 +16,7 @@ const CYCLES: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0,
-    0, 10, 0, 0, 0, 11, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0,
+    0, 10, 0, 19, 0, 11, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0,
 ];
 
@@ -35,7 +35,7 @@ const CYCLES_DD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 14, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 14, 0, 23, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
 ];
 
@@ -54,7 +54,7 @@ const CYCLES_FD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 14, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 14, 0, 23, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
 ];
 
@@ -129,6 +129,7 @@ impl CPU {
         };
 
         match opcode {
+            // 8-Bit Load Group
             // LD r,(IX+d)
             0xDD46 => {                                                             // LD B,(IX+d)
                 let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
@@ -334,6 +335,7 @@ impl CPU {
             // LD R,A
             0xED4F => self.r = self.registers.a,
 
+            // 16-Bit Load Group
             // LD dd,(nn)
             0xED4B => {                                                             // LD BC,(nn)
                 let addr = self.bus.read_word(self.pc +2);
@@ -437,14 +439,26 @@ impl CPU {
             },
 
             // Exchange, Block Transfer, and Search Group
+            // EX (SP),IX
+            0xDDE3 => {
+                let pointed_by_sp = self.bus.read_word(self.sp);
+                self.bus.write_word(self.sp, self.ix);
+                self.ix = pointed_by_sp;
+            },
 
+            // EX (SP),IY
+            0xFDE3 => {
+                let pointed_by_sp = self.bus.read_word(self.sp);
+                self.bus.write_word(self.sp, self.ix);
+                self.iy = pointed_by_sp;
+            },
 
             _ => {}
         }
 
         match opcode {
             0xED57 | 0xED5F | 0xED47 | 0xED4F | 0xDDF9 | 0xFDF9 |
-            0xDDE5 | 0xFDE5 | 0xDDE1 | 0xFDE1 => self.pc += 2,
+            0xDDE5 | 0xFDE5 | 0xDDE1 | 0xFDE1 | 0xDDE3 | 0xFDE3 => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
@@ -466,6 +480,7 @@ impl CPU {
         let cycles = CYCLES[opcode as usize].into();
 
         match opcode {
+            // 8-Bit Load Group
             // LD r,r'      LD r,(HL)
             0x40 => {},                                                             // LD B,B
             0x41 => self.registers.b = self.registers.c,                            // LD B,C
@@ -637,6 +652,7 @@ impl CPU {
                 self.bus.write_byte(addr, self.registers.a);
             },
 
+            // 16-Bit Load Group
             // LD dd,nn
             0x01 => {                                                               // LD BC,nn
                 let d16 = self.bus.read_word(self.pc + 1); 
@@ -746,6 +762,14 @@ impl CPU {
                 self.alt_registers.set_de(de);
                 self.alt_registers.set_hl(hl);
             }
+
+            // EX (SP),HL
+            0xE3 => {
+                let pointed_by_sp = self.bus.read_word(self.sp);
+                let hl = self.registers.get_hl();
+                self.bus.write_word(self.sp, hl);
+                self.registers.set_hl(pointed_by_sp);
+            },
 
             _ => {},
         }
