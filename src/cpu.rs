@@ -69,8 +69,8 @@ const CYCLES_ED: [u8; 256] = [
     0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    16, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0,
+    21, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -106,6 +106,26 @@ impl CPU {
             halt: false,
             iff2: false,
         }
+    }
+
+    fn ldi(&mut self) {
+        let bc = self.registers.get_bc();
+        let de = self.registers.get_de();
+        let hl = self.registers.get_hl();
+        self.bus.write_byte(de, self.bus.read_byte(hl));
+        self.registers.set_de(de.saturating_add(1));
+        self.registers.set_hl(hl.saturating_add(1));
+        self.registers.set_bc(bc.saturating_sub(1));
+    }
+
+    fn ldd(&mut self) {
+        let bc = self.registers.get_bc();
+        let de = self.registers.get_de();
+        let hl = self.registers.get_hl();
+        self.bus.write_byte(de, self.bus.read_byte(hl));
+        self.registers.set_de(de.saturating_sub(1));
+        self.registers.set_hl(hl.saturating_sub(1));
+        self.registers.set_bc(bc.saturating_sub(1));
     }
 
     pub fn execute(&mut self) -> u32 {
@@ -455,17 +475,45 @@ impl CPU {
 
             // LDI
             0xEDA0 => {
-                let bc = self.registers.get_bc();
-                let de = self.registers.get_de();
-                let hl = self.registers.get_hl();
-                self.bus.write_byte(de, self.bus.read_byte(hl));
-                self.registers.set_de(de + 1);
-                self.registers.set_hl(hl + 1);
-                self.registers.set_bc(bc -1);
+                self.ldi();
                 self.registers.flags.h = false;
-                if (bc - 1) != 0 { self.registers.flags.p = true } else { self.registers.flags.p = false };
+                let bc = self.registers.get_bc();
+                if bc != 0 { self.registers.flags.p = true } else { self.registers.flags.p = false };
                 self.registers.flags.n = false;
-            }
+            },
+
+            // LDIR
+            0xEDB0 => {
+                while self.registers.get_bc() !=0 {
+                self.ldi();
+                let bc = self.registers.get_bc();
+                self.registers.flags.h = false;
+                if bc != 0 { self.registers.flags.p = true } else { self.registers.flags.p = false };
+                self.registers.flags.n = false;
+                // TODO : return 16 cycles if BC = 0
+                }
+            },
+
+            // LDD
+            0xEDA8 => {
+                self.ldd();
+                self.registers.flags.h = false;
+                let bc = self.registers.get_bc();
+                if bc != 0 { self.registers.flags.p = true } else { self.registers.flags.p = false };
+                self.registers.flags.n = false;
+            },
+
+            // LDDR
+            0xEDB8 => {
+                while self.registers.get_bc() !=0 {
+                self.ldd();
+                let bc = self.registers.get_bc();
+                self.registers.flags.h = false;
+                if bc != 0 { self.registers.flags.p = true } else { self.registers.flags.p = false };
+                self.registers.flags.n = false;
+                // TODO : return 16 cycles if BC = 0
+                }
+            },
 
             _ => {}
         }
@@ -473,7 +521,7 @@ impl CPU {
         match opcode {
             0xED57 | 0xED5F | 0xED47 | 0xED4F | 0xDDF9 | 0xFDF9 |
             0xDDE5 | 0xFDE5 | 0xDDE1 | 0xFDE1 | 0xDDE3 | 0xFDE3 |
-            0xEDA0 => self.pc += 2,
+            0xEDA0 | 0xEDB0 | 0xEDA8 | 0xEDB8 => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |

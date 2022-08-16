@@ -855,3 +855,76 @@ fn ld_d() {
         assert_eq!(c.bus.read_byte(0x2222), 0x88);
         assert_eq!(c.registers.get_bc(), 0x06);
     }
+
+    #[test]
+    fn ldir() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0xB0);
+        c.registers.set_hl(0x1111);
+        c.registers.set_de(0x2222);
+        c.registers.set_bc(0x0003);
+        c.bus.write_byte(0x1111, 0x88);
+        c.bus.write_byte(0x2222, 0x66);
+        c.bus.write_byte(0x1112, 0x36);
+        c.bus.write_byte(0x2223, 0x59);
+        c.bus.write_byte(0x1113, 0xA5);
+        c.bus.write_byte(0x2224, 0xC5);
+        assert_eq!(c.execute(), 21);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.get_hl(), 0x1114);
+        assert_eq!(c.bus.read_byte(0x1111), 0x88);
+        assert_eq!(c.bus.read_byte(0x1112), 0x36);
+        assert_eq!(c.bus.read_byte(0x1113), 0xA5);
+        assert_eq!(c.registers.get_de(), 0x2225);
+        assert_eq!(c.bus.read_byte(0x2222), 0x88);
+        assert_eq!(c.bus.read_byte(0x2223), 0x36);
+        assert_eq!(c.bus.read_byte(0x2224), 0xA5);
+        assert_eq!(c.registers.get_bc(), 0x00);
+    }
+
+    #[test]
+    fn ldd() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0xA8);
+        c.registers.set_hl(0x1111);
+        c.registers.set_de(0x2222);
+        c.registers.set_bc(0x07);
+        c.bus.write_byte(0x1111, 0x88);
+        c.bus.write_byte(0x2222, 0x66);
+        assert_eq!(c.execute(), 16);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.get_hl(), 0x1110);
+        assert_eq!(c.bus.read_byte(0x1111), 0x88);
+        assert_eq!(c.registers.get_de(), 0x2221);
+        assert_eq!(c.bus.read_byte(0x2222), 0x88);
+        assert_eq!(c.registers.get_bc(), 0x06);
+    }
+
+    #[test]
+    fn lddr() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0xB8);
+        c.registers.set_hl(0x1114);
+        c.registers.set_de(0x2225);
+        c.registers.set_bc(0x0003);
+        c.bus.write_byte(0x1112, 0x88);
+        c.bus.write_byte(0x2223, 0x66);
+        c.bus.write_byte(0x1113, 0x36);
+        c.bus.write_byte(0x2224, 0x59);
+        c.bus.write_byte(0x1114, 0xA5);
+        c.bus.write_byte(0x2225, 0xC5);
+        assert_eq!(c.execute(), 21);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.get_hl(), 0x1111);
+        assert_eq!(c.bus.read_byte(0x1112), 0x88);
+        assert_eq!(c.bus.read_byte(0x1113), 0x36);
+        assert_eq!(c.bus.read_byte(0x1114), 0xA5);
+        assert_eq!(c.registers.get_de(), 0x2222);
+        assert_eq!(c.bus.read_byte(0x2223), 0x88);
+        assert_eq!(c.bus.read_byte(0x2224), 0x36);
+        assert_eq!(c.bus.read_byte(0x2225), 0xA5);
+        assert_eq!(c.registers.get_bc(), 0x00);
+    }
