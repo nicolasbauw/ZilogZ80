@@ -836,3 +836,22 @@ fn ld_d() {
         assert_eq!(c.bus.read_byte(0x0101), 0x39);
         assert_eq!(c.sp, 0x0100);
     }
+
+    #[test]
+    fn ldi() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0xA0);
+        c.registers.set_hl(0x1111);
+        c.registers.set_de(0x2222);
+        c.registers.set_bc(0x07);
+        c.bus.write_byte(0x1111, 0x88);
+        c.bus.write_byte(0x2222, 0x66);
+        assert_eq!(c.execute(), 16);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.get_hl(), 0x1112);
+        assert_eq!(c.bus.read_byte(0x1111), 0x88);
+        assert_eq!(c.registers.get_de(), 0x2223);
+        assert_eq!(c.bus.read_byte(0x2222), 0x88);
+        assert_eq!(c.registers.get_bc(), 0x06);
+    }
