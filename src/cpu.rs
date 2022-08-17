@@ -69,7 +69,7 @@ const CYCLES_ED: [u8; 256] = [
     0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    16, 16, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0,
+    16, 16, 0, 0, 0, 0, 0, 0, 16, 16, 0, 0, 0, 0, 0, 0,
     21, 21, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -134,6 +134,16 @@ impl CPU {
         let hl = self.registers.get_hl();
         let r = self.registers.a.wrapping_sub(self.bus.read_byte(hl));
         self.registers.set_hl(hl.wrapping_add(1));
+        self.registers.set_bc(bc.wrapping_sub(1));
+        r
+    }
+
+    // Returns A - (HL)
+    fn cpd(&mut self) -> u8 {
+        let bc = self.registers.get_bc();
+        let hl = self.registers.get_hl();
+        let r = self.registers.a.wrapping_sub(self.bus.read_byte(hl));
+        self.registers.set_hl(hl.wrapping_sub(1));
         self.registers.set_bc(bc.wrapping_sub(1));
         r
     }
@@ -550,7 +560,17 @@ impl CPU {
                 if self.registers.flags.z { break }
                 // TODO : return cycles * number of executions
                 }
-            }
+            },
+
+            // CPD
+            0xEDA9 => {
+                let r = self.cpd();
+                self.registers.flags.s = (r as i8) < 0;
+                self.registers.flags.z = (r as i8) == 0;
+                self.registers.flags.h = (r & 0x0f) != 0x0f;
+                self.registers.flags.p = self.registers.get_bc() != 0;
+                self.registers.flags.n = true;
+            },
 
             _ => {}
         }
@@ -558,7 +578,8 @@ impl CPU {
         match opcode {
             0xED57 | 0xED5F | 0xED47 | 0xED4F | 0xDDF9 | 0xFDF9 |
             0xDDE5 | 0xFDE5 | 0xDDE1 | 0xFDE1 | 0xDDE3 | 0xFDE3 |
-            0xEDA0 | 0xEDB0 | 0xEDA8 | 0xEDB8 | 0xEDA1 | 0xEDB1 => self.pc += 2,
+            0xEDA0 | 0xEDB0 | 0xEDA8 | 0xEDB8 | 0xEDA1 | 0xEDB1 |
+            0xEDA9 => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
