@@ -10,7 +10,7 @@ const CYCLES: [u8; 256] = [
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     7, 7, 7, 7, 7, 7, 4, 7, 4, 4, 4, 4, 4, 4, 7, 4,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    4, 4, 4, 4, 4, 4, 7, 4, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -76,6 +76,19 @@ const CYCLES_ED: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
+
+// Check addition overflow
+pub fn check_add_overflow(n1: u8, n2: u8) -> bool {
+    let r = n1 + n2;
+    // n1 and n2 have different signs : their addition will never cause overflow
+    if (n1 as i8) < 0 && (n1 as i8) > 0 { return false };
+    if (n1 as i8) > 0 && (n1 as i8) < 0 { return false };
+    // operands have similar signs : if the result contains a different sign, the Overflow Flag is set
+    if (n1 as i8) < 0 && (r as i8) > 0 { return true };
+    if (n1 as i8) > 0 && (r as i8) < 0 { return true };
+    // operands have similar signs and result have the same sign : no overflow
+    return false;
+}
 
 pub struct CPU {
     pub registers: Registers,
@@ -146,6 +159,19 @@ impl CPU {
         self.registers.set_hl(hl.wrapping_sub(1));
         self.registers.set_bc(bc.wrapping_sub(1));
         r
+    }
+
+    // ADD A,r
+    fn addar(&mut self, n: u8)  {
+        let a = self.registers.a;
+        let r = a.wrapping_add(n);
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.p = check_add_overflow(self.registers.a, n);
+        self.registers.flags.h = (a & 0x0f) + (n & 0x0f) > 0x0f;
+        self.registers.flags.c = u16::from(a) + u16::from(n) > 0xff;
+        self.registers.flags.n = false;
+        self.registers.a = r;
     }
 
     pub fn execute(&mut self) -> u32 {
@@ -586,6 +612,8 @@ impl CPU {
                 }
             },
 
+            // 8-Bit Arithmetic Group
+
             _ => {}
         }
 
@@ -905,6 +933,21 @@ impl CPU {
                 self.bus.write_word(self.sp, hl);
                 self.registers.set_hl(pointed_by_sp);
             },
+
+            // 8-Bit Arithmetic Group
+            // ADD A,r
+            0x80 => self.addar(self.registers.b),                                   // ADD A,B
+            0x81 => self.addar(self.registers.c),                                   // ADD C
+            0x82 => self.addar(self.registers.d),                                   // ADD D
+            0x83 => self.addar(self.registers.e),                                   // ADD E
+            0x84 => self.addar(self.registers.h),                                   // ADD H
+            0x85 => self.addar(self.registers.l),                                   // ADD L
+            0x86 => {                                                               // ADD (HL)
+                let addr = self.registers.get_hl();
+                let n = self.bus.read_byte(addr);
+                self.addar(n)
+            },
+            0x87 => self.addar(self.registers.a),                                   // ADD A
 
             _ => {},
         }

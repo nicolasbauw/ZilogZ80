@@ -1000,3 +1000,19 @@ fn ld_d() {
         assert_eq!(c.registers.flags.z, true);
         assert_eq!(c.registers.flags.p, true);
     }
+
+    #[test]
+    fn chk_add_overflow() {
+        assert_eq!(crate::cpu::check_add_overflow(120, 105), true);
+    }
+
+    #[test]
+    fn add_a_r() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x81);
+        c.registers.a = 0x44;
+        c.registers.c = 0x11;
+        assert_eq!(c.execute(), 4);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.a, 0x55);
+    }
