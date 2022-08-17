@@ -328,8 +328,8 @@ impl CPU {
             // LD A,I
             0xED57 => {
                 self.registers.a = self.i;
-                if (self.i as i8) < 0 { self.registers.flags.s = true } else { self.registers.flags.s = false }
-                if (self.i as i8) == 0 { self.registers.flags.z = true }
+                self.registers.flags.s = (self.i as i8) < 0;
+                self.registers.flags.z = self.i == 0;
                 self.registers.flags.h = false;
                 self.registers.flags.p = self.iff2;
                 self.registers.flags.n = false;
@@ -340,8 +340,8 @@ impl CPU {
             // LD A,R
             0xED5F => {
                 self.registers.a = self.r;
-                if (self.r as i8) < 0 { self.registers.flags.s = true } else { self.registers.flags.s = false }
-                if (self.r as i8) == 0 { self.registers.flags.z = true }
+                self.registers.flags.s = (self.r as i8) < 0;
+                self.registers.flags.z = self.r == 0;
                 self.registers.flags.h = false;
                 self.registers.flags.p = self.iff2;
                 self.registers.flags.n = false;
@@ -514,6 +514,12 @@ impl CPU {
                 // TODO : return 16 cycles if BC = 0
                 }
             },
+
+            // CPI
+            0xEDA1 => {
+                //self.cpi();
+
+            }
 
             _ => {}
         }
