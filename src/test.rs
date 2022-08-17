@@ -1027,3 +1027,31 @@ fn ld_d() {
         assert_eq!(c.pc, 2);
         assert_eq!(c.registers.a, 0x56);
     }
+
+    #[test]
+    fn add_a_ix_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xDD);
+        c.bus.write_byte(0x0001, 0x86);
+        c.bus.write_byte(0x0002, 0x05);
+        c.bus.write_byte(0x1005, 0x22);
+        c.registers.a = 0x11;
+        c.ix = 0x1000;
+        assert_eq!(c.execute(), 19);
+        assert_eq!(c.pc, 3);
+        assert_eq!(c.registers.a, 0x33);
+    }
+
+    #[test]
+    fn add_a_iy_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xFD);
+        c.bus.write_byte(0x0001, 0x86);
+        c.bus.write_byte(0x0002, 0x05);
+        c.bus.write_byte(0x1005, 0x22);
+        c.registers.a = 0x11;
+        c.iy = 0x1000;
+        assert_eq!(c.execute(), 19);
+        assert_eq!(c.pc, 3);
+        assert_eq!(c.registers.a, 0x33);
+    }
