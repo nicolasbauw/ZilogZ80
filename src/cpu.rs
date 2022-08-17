@@ -478,7 +478,7 @@ impl CPU {
                 self.ldi();
                 self.registers.flags.h = false;
                 let bc = self.registers.get_bc();
-                if bc != 0 { self.registers.flags.p = true } else { self.registers.flags.p = false };
+                self.registers.flags.p = bc != 0;
                 self.registers.flags.n = false;
             },
 
@@ -488,7 +488,7 @@ impl CPU {
                 self.ldi();
                 let bc = self.registers.get_bc();
                 self.registers.flags.h = false;
-                if bc != 0 { self.registers.flags.p = true } else { self.registers.flags.p = false };
+                self.registers.flags.p = bc != 0;
                 self.registers.flags.n = false;
                 // TODO : return 16 cycles if BC = 0
                 }
@@ -499,7 +499,7 @@ impl CPU {
                 self.ldd();
                 self.registers.flags.h = false;
                 let bc = self.registers.get_bc();
-                if bc != 0 { self.registers.flags.p = true } else { self.registers.flags.p = false };
+                self.registers.flags.p = bc != 0;
                 self.registers.flags.n = false;
             },
 
@@ -509,7 +509,7 @@ impl CPU {
                 self.ldd();
                 let bc = self.registers.get_bc();
                 self.registers.flags.h = false;
-                if bc != 0 { self.registers.flags.p = true } else { self.registers.flags.p = false };
+                self.registers.flags.p = bc != 0;
                 self.registers.flags.n = false;
                 // TODO : return 16 cycles if BC = 0
                 }
