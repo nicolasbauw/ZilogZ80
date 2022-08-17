@@ -945,3 +945,22 @@ fn ld_d() {
         assert_eq!(c.registers.flags.z, true);
         assert_eq!(c.registers.flags.p, false);
     }
+
+    #[test]
+    fn cpir() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0xB1);
+        c.registers.a = 0x3B;
+        c.registers.set_hl(0x1111);
+        c.registers.set_bc(0x07);
+        c.bus.write_byte(0x1111, 0x52);
+        c.bus.write_byte(0x1112, 0x00);
+        c.bus.write_byte(0x1113, 0xF3);
+        assert_eq!(c.execute(), 21);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.get_hl(), 0x1114);
+        assert_eq!(c.registers.get_bc(), 4);
+        assert_eq!(c.registers.flags.z, true);
+        assert_eq!(c.registers.flags.p, true);
+    }
