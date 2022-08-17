@@ -113,9 +113,9 @@ impl CPU {
         let de = self.registers.get_de();
         let hl = self.registers.get_hl();
         self.bus.write_byte(de, self.bus.read_byte(hl));
-        self.registers.set_de(de.saturating_add(1));
-        self.registers.set_hl(hl.saturating_add(1));
-        self.registers.set_bc(bc.saturating_sub(1));
+        self.registers.set_de(de.wrapping_add(1));
+        self.registers.set_hl(hl.wrapping_add(1));
+        self.registers.set_bc(bc.wrapping_sub(1));
     }
 
     fn ldd(&mut self) {
@@ -123,9 +123,9 @@ impl CPU {
         let de = self.registers.get_de();
         let hl = self.registers.get_hl();
         self.bus.write_byte(de, self.bus.read_byte(hl));
-        self.registers.set_de(de.saturating_sub(1));
-        self.registers.set_hl(hl.saturating_sub(1));
-        self.registers.set_bc(bc.saturating_sub(1));
+        self.registers.set_de(de.wrapping_sub(1));
+        self.registers.set_hl(hl.wrapping_sub(1));
+        self.registers.set_bc(bc.wrapping_sub(1));
     }
 
     // Returns A - (HL)
@@ -133,8 +133,8 @@ impl CPU {
         let bc = self.registers.get_bc();
         let hl = self.registers.get_hl();
         let r = self.registers.a.wrapping_sub(self.bus.read_byte(hl));
-        self.registers.set_hl(hl.saturating_add(1));
-        self.registers.set_bc(bc.saturating_sub(1));
+        self.registers.set_hl(hl.wrapping_add(1));
+        self.registers.set_bc(bc.wrapping_sub(1));
         r
     }
 
