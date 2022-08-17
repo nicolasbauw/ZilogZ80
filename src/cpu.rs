@@ -494,6 +494,7 @@ impl CPU {
 
             // LDIR
             0xEDB0 => {
+                // TODO : When the BC is set to 0 prior to instruction execution, the instruction loops through 64 KB.
                 while self.registers.get_bc() !=0 {
                 self.ldi();
                 let bc = self.registers.get_bc();
