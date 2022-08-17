@@ -981,3 +981,22 @@ fn ld_d() {
         assert_eq!(c.registers.flags.z, true);
         assert_eq!(c.registers.flags.p, false);
     }
+
+    #[test]
+    fn cpdr() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0xB9);
+        c.registers.a = 0xF3;
+        c.registers.set_hl(0x1118);
+        c.registers.set_bc(0x07);
+        c.bus.write_byte(0x1116, 0xF3);
+        c.bus.write_byte(0x1117, 0x00);
+        c.bus.write_byte(0x1118, 0x52);
+        assert_eq!(c.execute(), 21);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.get_hl(), 0x1115);
+        assert_eq!(c.registers.get_bc(), 4);
+        assert_eq!(c.registers.flags.z, true);
+        assert_eq!(c.registers.flags.p, true);
+    }
