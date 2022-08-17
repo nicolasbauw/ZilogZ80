@@ -532,12 +532,12 @@ impl CPU {
             0xEDB0 => {
                 // TODO : When the BC is set to 0 prior to instruction execution, the instruction loops through 64 KB.
                 while self.registers.get_bc() !=0 {
-                self.ldi();
-                let bc = self.registers.get_bc();
-                self.registers.flags.h = false;
-                self.registers.flags.p = bc != 0;
-                self.registers.flags.n = false;
-                // TODO : return cycles * number of executions
+                    self.ldi();
+                    let bc = self.registers.get_bc();
+                    self.registers.flags.h = false;
+                    self.registers.flags.p = bc != 0;
+                    self.registers.flags.n = false;
+                    // TODO : return cycles * number of executions
                 }
             },
 
@@ -554,12 +554,12 @@ impl CPU {
             0xEDB8 => {
                 // TODO : When the BC is set to 0 prior to instruction execution, the instruction loops through 64 KB.
                 while self.registers.get_bc() !=0 {
-                self.ldd();
-                let bc = self.registers.get_bc();
-                self.registers.flags.h = false;
-                self.registers.flags.p = bc != 0;
-                self.registers.flags.n = false;
-                // TODO : return cycles * number of executions
+                    self.ldd();
+                    let bc = self.registers.get_bc();
+                    self.registers.flags.h = false;
+                    self.registers.flags.p = bc != 0;
+                    self.registers.flags.n = false;
+                    // TODO : return cycles * number of executions
                 }
             },
 
@@ -577,14 +577,14 @@ impl CPU {
             0xEDB1 => {
                 // TODO : When the BC is set to 0 prior to instruction execution, the instruction loops through 64 KB.
                 while self.registers.get_bc() !=0 {
-                let r = self.cpi();
-                self.registers.flags.s = (r as i8) < 0;
-                self.registers.flags.z = (r as i8) == 0;
-                self.registers.flags.h = (r & 0x0f) != 0x0f;
-                self.registers.flags.p = self.registers.get_bc() != 0;
-                self.registers.flags.n = true;
-                if self.registers.flags.z { break }
-                // TODO : return cycles * number of executions
+                    let r = self.cpi();
+                    self.registers.flags.s = (r as i8) < 0;
+                    self.registers.flags.z = (r as i8) == 0;
+                    self.registers.flags.h = (r & 0x0f) != 0x0f;
+                    self.registers.flags.p = self.registers.get_bc() != 0;
+                    self.registers.flags.n = true;
+                    if self.registers.flags.z { break }
+                    // TODO : return cycles * number of executions
                 }
             },
 
@@ -601,14 +601,14 @@ impl CPU {
             // CPDR
             0xEDB9 => {
                 while self.registers.get_bc() !=0 {
-                let r = self.cpd();
-                self.registers.flags.s = (r as i8) < 0;
-                self.registers.flags.z = (r as i8) == 0;
-                self.registers.flags.h = (r & 0x0f) != 0x0f;
-                self.registers.flags.p = self.registers.get_bc() != 0;
-                self.registers.flags.n = true;
-                if self.registers.flags.z { break }
-                // TODO : return cycles * number of executions
+                    let r = self.cpd();
+                    self.registers.flags.s = (r as i8) < 0;
+                    self.registers.flags.z = (r as i8) == 0;
+                    self.registers.flags.h = (r & 0x0f) != 0x0f;
+                    self.registers.flags.p = self.registers.get_bc() != 0;
+                    self.registers.flags.n = true;
+                    if self.registers.flags.z { break }
+                    // TODO : return cycles * number of executions
                 }
             },
 
