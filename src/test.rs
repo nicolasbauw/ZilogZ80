@@ -1016,3 +1016,14 @@ fn ld_d() {
         assert_eq!(c.pc, 1);
         assert_eq!(c.registers.a, 0x55);
     }
+
+    #[test]
+    fn add_a_n() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xC6);
+        c.bus.write_byte(0x0001, 0x33);
+        c.registers.a = 0x23;
+        assert_eq!(c.execute(), 7);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.a, 0x56);
+    }

@@ -14,7 +14,7 @@ const CYCLES: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 10, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 10, 0, 0, 0, 11, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0,
     0, 10, 0, 19, 0, 11, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0,
@@ -162,7 +162,7 @@ impl CPU {
     }
 
     // ADD A,r
-    fn addar(&mut self, n: u8)  {
+    fn adda(&mut self, n: u8)  {
         let a = self.registers.a;
         let r = a.wrapping_add(n);
         self.registers.flags.z = r == 0x00;
@@ -936,24 +936,30 @@ impl CPU {
 
             // 8-Bit Arithmetic Group
             // ADD A,r
-            0x80 => self.addar(self.registers.b),                                   // ADD A,B
-            0x81 => self.addar(self.registers.c),                                   // ADD C
-            0x82 => self.addar(self.registers.d),                                   // ADD D
-            0x83 => self.addar(self.registers.e),                                   // ADD E
-            0x84 => self.addar(self.registers.h),                                   // ADD H
-            0x85 => self.addar(self.registers.l),                                   // ADD L
-            0x86 => {                                                               // ADD (HL)
+            0x80 => self.adda(self.registers.b),                                   // ADD A,B
+            0x81 => self.adda(self.registers.c),                                   // ADD C
+            0x82 => self.adda(self.registers.d),                                   // ADD D
+            0x83 => self.adda(self.registers.e),                                   // ADD E
+            0x84 => self.adda(self.registers.h),                                   // ADD H
+            0x85 => self.adda(self.registers.l),                                   // ADD L
+            0x86 => {                                                              // ADD (HL)
                 let addr = self.registers.get_hl();
                 let n = self.bus.read_byte(addr);
-                self.addar(n)
+                self.adda(n)
             },
-            0x87 => self.addar(self.registers.a),                                   // ADD A
+            0x87 => self.adda(self.registers.a),                                    // ADD A
+
+            0xC6 => {                                                               // ADD A,n
+                let n = self.bus.read_byte(self.pc + 1);
+                self.adda(n);
+            },
 
             _ => {},
         }
 
         match opcode {
-            0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E => self.pc += 2,
+            0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
+            0xC6 => self.pc += 2,
             0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 => self.pc += 3,
             _ => self.pc +=1,
         }
