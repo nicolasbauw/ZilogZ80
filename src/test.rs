@@ -951,7 +951,7 @@ fn ld_d() {
         let mut c = CPU::new();
         c.bus.write_byte(0x0000, 0xED);
         c.bus.write_byte(0x0001, 0xB1);
-        c.registers.a = 0x3B;
+        c.registers.a = 0xF3;
         c.registers.set_hl(0x1111);
         c.registers.set_bc(0x07);
         c.bus.write_byte(0x1111, 0x52);

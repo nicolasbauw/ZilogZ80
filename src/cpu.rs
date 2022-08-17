@@ -547,7 +547,7 @@ impl CPU {
                 self.registers.flags.h = (r & 0x0f) != 0x0f;
                 self.registers.flags.p = self.registers.get_bc() != 0;
                 self.registers.flags.n = true;
-                if self.registers.a == self.bus.read_byte(self.registers.get_hl()) { break }
+                if self.registers.flags.z { break }
                 // TODO : return cycles * number of executions
                 }
             }
