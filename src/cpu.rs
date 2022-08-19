@@ -10,7 +10,7 @@ const CYCLES: [u8; 256] = [
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     7, 7, 7, 7, 7, 7, 4, 7, 4, 4, 4, 4, 4, 4, 7, 4,
-    4, 4, 4, 4, 4, 4, 7, 4, 0, 0, 0, 0, 0, 0, 0, 0,
+    4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -170,6 +170,23 @@ impl CPU {
         self.registers.flags.p = check_add_overflow(self.registers.a, n);
         self.registers.flags.h = (a & 0x0f) + (n & 0x0f) > 0x0f;
         self.registers.flags.c = u16::from(a) + u16::from(n) > 0xff;
+        self.registers.flags.n = false;
+        self.registers.a = r;
+    }
+
+    // ADD A,s : ADD with carry
+    fn addc(&mut self, n: u8)  {
+        let c: u8 = match self.registers.flags.c {
+            false => 0,
+            true => 1,
+        };
+        let a = self.registers.a;
+        let r = a.wrapping_add(n).wrapping_add(c);
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.p = check_add_overflow(self.registers.a, n.wrapping_add(c));
+        self.registers.flags.h = (a & 0x0f) + (n & 0x0f) > 0x0f;
+        self.registers.flags.c = u16::from(a) + u16::from(n) + u16::from(c) > 0xff;
         self.registers.flags.n = false;
         self.registers.a = r;
     }
@@ -639,6 +656,9 @@ impl CPU {
                 }
             },
 
+            // ADC A,s
+
+
             _ => {}
         }
 
@@ -978,6 +998,21 @@ impl CPU {
                 let n = self.bus.read_byte(self.pc + 1);
                 self.adda(n);
             },
+
+            // ADC A,r
+            0x88 => self.addc(self.registers.b),                                    // ADC A,B
+            0x89 => self.addc(self.registers.c),                                    // ADC A,C
+            0x8A => self.addc(self.registers.d),                                    // ADC A,D
+            0x8B => self.addc(self.registers.e),                                    // ADC A,E
+            0x8C => self.addc(self.registers.h),                                    // ADC A,H
+            0x8D => self.addc(self.registers.l),                                    // ADC A,L
+            0x8E => {                                                               // ADC A,(HL)
+                let addr = self.registers.get_hl();
+                let n = self.bus.read_byte(addr);
+                self.addc(n)
+            },
+            0x8F => self.addc(self.registers.a),                                    // ADC A,A
+
 
             _ => {},
         }
