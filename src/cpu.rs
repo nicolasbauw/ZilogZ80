@@ -11,7 +11,7 @@ const CYCLES: [u8; 256] = [
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     7, 7, 7, 7, 7, 7, 4, 7, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    4, 4, 4, 4, 4, 4, 7, 4, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
@@ -34,7 +34,7 @@ const CYCLES_DD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 14, 0, 23, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0,
 ];
@@ -187,6 +187,19 @@ impl CPU {
         self.registers.flags.h = (a & 0x0f) + (n & 0x0f) > 0x0f;
         self.registers.flags.c = u16::from(a) + u16::from(n) + u16::from(c) > 0xff;
         self.registers.flags.n = false;
+        self.registers.a = r;
+    }
+
+    // SUB s
+    fn sub(&mut self, n: u8)  {
+        let a = self.registers.a;
+        let r = a.wrapping_sub(n);
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.p = check_sub_overflow(self.registers.a, n);
+        self.registers.flags.h = (a as i8 & 0x0f) - (n as i8 & 0x0f) >= 0x00;
+        self.registers.flags.c = u16::from(a) < u16::from(n);
+        self.registers.flags.n = true;
         self.registers.a = r;
     }
 
@@ -1016,7 +1029,8 @@ impl CPU {
             },
             0x87 => self.adda(self.registers.a),                                    // ADD A
 
-            0xC6 => {                                                               // ADD A,n
+            // ADD A,n
+            0xC6 => {
                 let n = self.bus.read_byte(self.pc + 1);
                 self.adda(n);
             },
@@ -1041,12 +1055,32 @@ impl CPU {
                 self.addc(n)
             },
 
+            // SUB s
+            0x90 => self.sub(self.registers.b),                                     // SUB B
+            0x91 => self.sub(self.registers.c),                                     // SUB C
+            0x92 => self.sub(self.registers.d),                                     // SUB D
+            0x93 => self.sub(self.registers.e),                                     // SUB E
+            0x94 => self.sub(self.registers.h),                                     // SUB H
+            0x95 => self.sub(self.registers.l),                                     // SUB L
+            0x96 => {                                                               // SUB (HL)
+                let addr = self.registers.get_hl();
+                let n = self.bus.read_byte(addr);
+                self.sub(n)
+            },
+            0x97 => self.sub(self.registers.a),                                     // SUB A
+
+            // SUB n
+            0xD6 => {
+                let n = self.bus.read_byte(self.pc + 1);
+                self.sub(n);
+            },
+
             _ => {},
         }
 
         match opcode {
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
-            0xC6 | 0xCE => self.pc += 2,
+            0xC6 | 0xCE | 0xD6 => self.pc += 2,
             0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 => self.pc += 3,
             _ => self.pc +=1,
         }

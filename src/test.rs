@@ -1085,3 +1085,14 @@ fn ld_d() {
         assert_eq!(c.pc, 2);
         assert_eq!(c.registers.a, 0x27);
     }
+
+    #[test]
+    fn sub_r() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x92);
+        c.registers.a = 0x29;
+        c.registers.d = 0x11;
+        assert_eq!(c.execute(), 4);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.a, 0x18);
+    }
