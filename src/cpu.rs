@@ -79,15 +79,14 @@ const CYCLES_ED: [u8; 256] = [
 
 // Check addition overflow
 pub fn check_add_overflow(n1: u8, n2: u8) -> bool {
-    let r = n1 + n2;
-    // n1 and n2 have different signs : their addition will never cause overflow
-    if (n1 as i8) < 0 && (n1 as i8) > 0 { return false };
-    if (n1 as i8) > 0 && (n1 as i8) < 0 { return false };
-    // operands have similar signs : if the result contains a different sign, the Overflow Flag is set
-    if (n1 as i8) < 0 && (r as i8) > 0 { return true };
-    if (n1 as i8) > 0 && (r as i8) < 0 { return true };
-    // operands have similar signs and result have the same sign : no overflow
-    return false;
+    let r = (n1 as i8).overflowing_add(n2 as i8);
+    r.1
+}
+
+// Check substraction overflow
+pub fn check_sub_overflow(n1: u8, n2: u8) -> bool {
+    let r = (n1 as i8).overflowing_sub(n2 as i8);
+    r.1
 }
 
 pub struct CPU {

@@ -1007,6 +1007,11 @@ fn ld_d() {
     }
 
     #[test]
+    fn chk_sub_overflow() {
+        assert_eq!(crate::cpu::check_sub_overflow(129, 10), true);
+    }
+
+    #[test]
     fn add_a_r() {
         let mut c = CPU::new();
         c.bus.write_byte(0x0000, 0x81);
