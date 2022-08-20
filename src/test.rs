@@ -1179,3 +1179,14 @@ fn ld_d() {
         assert_eq!(c.pc, 3);
         assert_eq!(c.registers.a, 0x40);
     }
+
+    #[test]
+    fn and_r() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xA0);
+        c.registers.a = 0xC3;
+        c.registers.b = 0x7B;
+        assert_eq!(c.execute(), 4);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.a, 0x43);
+    }
