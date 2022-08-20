@@ -11,7 +11,7 @@ const CYCLES: [u8; 256] = [
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     7, 7, 7, 7, 7, 7, 4, 7, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-    4, 4, 4, 4, 4, 4, 7, 4, 0, 0, 0, 0, 0, 0, 0, 0,
+    4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
@@ -1117,6 +1117,20 @@ impl CPU {
                 let n = self.bus.read_byte(self.pc + 1);
                 self.sub(n);
             },
+
+            // SBC A,s
+            0x98 => self.subc(self.registers.b),                                    // SBC A,B
+            0x99 => self.subc(self.registers.c),                                    // SBC A,C
+            0x9A => self.subc(self.registers.d),                                    // SBC A,D
+            0x9B => self.subc(self.registers.e),                                    // SBC A,E
+            0x9C => self.subc(self.registers.h),                                    // SBC A,H
+            0x9D => self.subc(self.registers.l),                                    // SBC A,L
+            0x9E => {                                                               // SBC A,(HL)
+                let addr = self.registers.get_hl();
+                let n = self.bus.read_byte(addr);
+                self.subc(n)
+            },
+            0x9F => self.subc(self.registers.a),                                    // SBC A,A
 
             _ => {},
         }
