@@ -203,6 +203,23 @@ impl CPU {
         self.registers.a = r;
     }
 
+    // SBC s
+    fn subc(&mut self, n: u8)  {
+        let c: u8 = match self.registers.flags.c {
+            false => 0,
+            true => 1,
+        };
+        let a = self.registers.a;
+        let r = a.wrapping_sub(n.wrapping_add(c));
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.p = check_sub_overflow(self.registers.a, n.wrapping_add(c));
+        self.registers.flags.h = (a as i8 & 0x0f) - (n as i8 & 0x0f) >= 0x00;
+        self.registers.flags.c = u16::from(a) < u16::from(n) + u16::from(c);
+        self.registers.flags.n = true;
+        self.registers.a = r;
+    }
+
     pub fn execute(&mut self) -> u32 {
         let opcode = self.bus.read_byte(self.pc);
 
