@@ -220,6 +220,18 @@ impl CPU {
         self.registers.a = r;
     }
 
+    // Logical AND
+    fn and(&mut self, n: u8) {
+        let r = self.registers.a & n;
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
+        self.registers.flags.h = true;
+        self.registers.flags.c = false;
+        self.registers.flags.n = false;
+        self.registers.a = r;
+    }
+
     pub fn execute(&mut self) -> u32 {
         let opcode = self.bus.read_byte(self.pc);
 
@@ -1162,6 +1174,20 @@ impl CPU {
                 let n = self.bus.read_byte(self.pc + 1);
                 self.subc(n);
             },
+
+            // AND s
+            0xA0 => self.and(self.registers.b),                                     // AND B
+            0xA1 => self.and(self.registers.c),                                     // AND C
+            0xA2 => self.and(self.registers.d),                                     // AND D
+            0xA3 => self.and(self.registers.e),                                     // AND E
+            0xA4 => self.and(self.registers.h),                                     // AND H
+            0xA5 => self.and(self.registers.l),                                     // AND L
+            0xA6 => {                                                               // AND (HL)
+                let addr = self.registers.get_hl();
+                let n = self.bus.read_byte(addr);
+                self.and(n)
+            },
+            0xA7 => self.and(self.registers.a),                                     // AND A
 
             _ => {},
         }
