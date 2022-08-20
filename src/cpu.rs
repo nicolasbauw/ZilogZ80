@@ -31,7 +31,7 @@ const CYCLES_DD: [u8; 256] = [
     19, 19, 19, 19, 19, 19, 0, 19, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -50,7 +50,7 @@ const CYCLES_FD: [u8; 256] = [
     19, 19, 19, 19, 19, 19, 0, 19, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -775,6 +775,32 @@ impl CPU {
                 }
             },
 
+            // AND (IX+d)
+            0xDDA6 => {
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let d = self.bus.read_byte(self.ix - ( displacement as u16 ));
+                    self.and(d);
+                }
+                else {
+                    let d = self.bus.read_byte(self.ix + ( displacement as u16 ));
+                    self.and(d);
+                }
+            },
+
+            // AND (IY+d)
+            0xFDA6 => {
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let d = self.bus.read_byte(self.iy - ( displacement as u16 ));
+                    self.and(d);
+                }
+                else {
+                    let d = self.bus.read_byte(self.iy + ( displacement as u16 ));
+                    self.and(d);
+                }
+            },
+
             _ => {}
         }
 
@@ -790,7 +816,7 @@ impl CPU {
             0xDD77 |
             0xFD70 | 0xFD71 | 0xFD72 | 0xFD73 | 0xFD74 | 0xFD75 |
             0xFD77 | 0xDD86 | 0xFD86 | 0xDD8E | 0xFD8E |
-            0xDD96 | 0xFD96 | 0xDD9E | 0xFD9E => self.pc += 3,
+            0xDD96 | 0xFD96 | 0xDD9E | 0xFD9E | 0xDDA6 | 0xFDA6 => self.pc += 3,
             0xDD36 | 0xFD36 | 0xDD21 | 0xFD21 | 0xED4B | 0xED5B |
             0xED6B | 0xED7B | 0xDD2A | 0xFD2A |
             0xED43 | 0xED53 | 0xED63 | 0xED73 |
