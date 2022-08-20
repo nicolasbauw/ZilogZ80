@@ -762,7 +762,7 @@ impl CPU {
                 }
             },
 
-            // SUB (IX+d)
+            // SUB (IY+d)
             0xFD9E => {
                 let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
                 if displacement < 0 {
