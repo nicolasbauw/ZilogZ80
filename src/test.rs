@@ -1218,3 +1218,42 @@ fn ld_d() {
         assert_eq!(c.pc, 3);
         assert_eq!(c.registers.a, 0x43);
     }
+
+    #[test]
+    fn or_r() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xB4);
+        c.registers.a = 0x12;
+        c.registers.h = 0x48;
+        assert_eq!(c.execute(), 4);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.a, 0x5A);
+    }
+
+    #[test]
+    fn or_ix_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xDD);
+        c.bus.write_byte(0x0001, 0xB6);
+        c.bus.write_byte(0x0002, 0x05);
+        c.bus.write_byte(0x1005, 0x48);
+        c.registers.a = 0x12;
+        c.ix = 0x1000;
+        assert_eq!(c.execute(), 19);
+        assert_eq!(c.pc, 3);
+        assert_eq!(c.registers.a, 0x5A);
+    }
+
+    #[test]
+    fn or_iy_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xFD);
+        c.bus.write_byte(0x0001, 0xB6);
+        c.bus.write_byte(0x0002, 0x05);
+        c.bus.write_byte(0x1005, 0x48);
+        c.registers.a = 0x12;
+        c.iy = 0x1000;
+        assert_eq!(c.execute(), 19);
+        assert_eq!(c.pc, 3);
+        assert_eq!(c.registers.a, 0x5A);
+    }
