@@ -1126,7 +1126,7 @@ fn ld_d() {
     }
 
     #[test]
-    fn subc_r() {
+    fn sbc_a_r() {
         let mut c = CPU::new();
         c.bus.write_byte(0x0000, 0x9E);
         c.bus.write_byte(0x3433, 0x05);
@@ -1136,4 +1136,46 @@ fn ld_d() {
         assert_eq!(c.execute(), 7);
         assert_eq!(c.pc, 1);
         assert_eq!(c.registers.a, 0x10);
+    }
+
+    #[test]
+    fn sbc_a_n() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xDE);
+        c.bus.write_byte(0x0001, 0x05);
+        c.registers.a = 0x16;
+        c.registers.flags.c = true;
+        assert_eq!(c.execute(), 7);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.a, 0x10);
+    }
+
+    #[test]
+    fn sbc_a_ix_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xDD);
+        c.bus.write_byte(0x0001, 0x9E);
+        c.bus.write_byte(0x0002, 0x05);
+        c.bus.write_byte(0x1005, 0x22);
+        c.registers.a = 0x63;
+        c.registers.flags.c = true;
+        c.ix = 0x1000;
+        assert_eq!(c.execute(), 19);
+        assert_eq!(c.pc, 3);
+        assert_eq!(c.registers.a, 0x40);
+    }
+
+    #[test]
+    fn sbc_a_iy_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xFD);
+        c.bus.write_byte(0x0001, 0x9E);
+        c.bus.write_byte(0x0002, 0x05);
+        c.bus.write_byte(0x1005, 0x22);
+        c.registers.a = 0x63;
+        c.registers.flags.c = true;
+        c.iy = 0x1000;
+        assert_eq!(c.execute(), 19);
+        assert_eq!(c.pc, 3);
+        assert_eq!(c.registers.a, 0x40);
     }
