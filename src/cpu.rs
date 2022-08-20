@@ -1076,7 +1076,7 @@ impl CPU {
             },
             0x8F => self.addc(self.registers.a),                                    // ADC A,A
 
-            // adc a,n
+            // ADC a,n
             0xCE => {                                                               // ADC A,(HL)
                 let n = self.bus.read_byte(self.pc + 1);
                 self.addc(n)
@@ -1096,8 +1096,7 @@ impl CPU {
             },
             0x97 => self.sub(self.registers.a),                                     // SUB A
 
-            // SUB n
-            0xD6 => {
+            0xD6 => {                                                               // SUB n
                 let n = self.bus.read_byte(self.pc + 1);
                 self.sub(n);
             },
