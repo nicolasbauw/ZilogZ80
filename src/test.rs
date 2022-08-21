@@ -1257,3 +1257,42 @@ fn ld_d() {
         assert_eq!(c.pc, 3);
         assert_eq!(c.registers.a, 0x5A);
     }
+
+    #[test]
+    fn xor_n() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xEE);
+        c.bus.write_byte(0x0001, 0x5D);
+        c.registers.a = 0x96;
+        assert_eq!(c.execute(), 7);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.a, 0xCB);
+    }
+
+    #[test]
+    fn xor_ix_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xDD);
+        c.bus.write_byte(0x0001, 0xAE);
+        c.bus.write_byte(0x0002, 0x05);
+        c.bus.write_byte(0x1005, 0x5D);
+        c.registers.a = 0x96;
+        c.ix = 0x1000;
+        assert_eq!(c.execute(), 19);
+        assert_eq!(c.pc, 3);
+        assert_eq!(c.registers.a, 0xCB);
+    }
+
+    #[test]
+    fn xor_iy_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xFD);
+        c.bus.write_byte(0x0001, 0xAE);
+        c.bus.write_byte(0x0002, 0x05);
+        c.bus.write_byte(0x1005, 0x5D);
+        c.registers.a = 0x96;
+        c.iy = 0x1000;
+        assert_eq!(c.execute(), 19);
+        assert_eq!(c.pc, 3);
+        assert_eq!(c.registers.a, 0xCB);
+    }

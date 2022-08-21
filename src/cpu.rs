@@ -12,11 +12,11 @@ const CYCLES: [u8; 256] = [
     7, 7, 7, 7, 7, 7, 4, 7, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-    4, 4, 4, 4, 4, 4, 7, 4, 0, 0, 0, 0, 0, 0, 0, 0,
+    4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 11, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
     0, 10, 0, 0, 0, 11, 7, 0, 0, 4, 0, 0, 0, 0, 7, 0,
-    0, 10, 0, 19, 0, 11, 7, 0, 0, 0, 0, 4, 0, 0, 0, 0,
+    0, 10, 0, 19, 0, 11, 7, 0, 0, 0, 0, 4, 0, 0, 7, 0,
     0, 10, 0, 0, 0, 11, 7, 0, 0, 6, 0, 0, 0, 0, 0, 0,
 ];
 
@@ -31,7 +31,7 @@ const CYCLES_DD: [u8; 256] = [
     19, 19, 19, 19, 19, 19, 0, 19, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
-    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -50,7 +50,7 @@ const CYCLES_FD: [u8; 256] = [
     19, 19, 19, 19, 19, 19, 0, 19, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
-    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -852,6 +852,32 @@ impl CPU {
                 }
             },
 
+            // XOR (IX+d)
+            0xDDAE => {
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let d = self.bus.read_byte(self.ix - ( displacement as u16 ));
+                    self.xor(d);
+                }
+                else {
+                    let d = self.bus.read_byte(self.ix + ( displacement as u16 ));
+                    self.xor(d);
+                }
+            },
+
+            // XOR (IY+d)
+            0xFDAE => {
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let d = self.bus.read_byte(self.iy - ( displacement as u16 ));
+                    self.xor(d);
+                }
+                else {
+                    let d = self.bus.read_byte(self.iy + ( displacement as u16 ));
+                    self.xor(d);
+                }
+            },
+
             _ => {}
         }
 
@@ -868,7 +894,7 @@ impl CPU {
             0xFD70 | 0xFD71 | 0xFD72 | 0xFD73 | 0xFD74 | 0xFD75 |
             0xFD77 | 0xDD86 | 0xFD86 | 0xDD8E | 0xFD8E |
             0xDD96 | 0xFD96 | 0xDD9E | 0xFD9E | 0xDDA6 | 0xFDA6 |
-            0xDDB6 | 0xFDB6 => self.pc += 3,
+            0xDDB6 | 0xFDB6 | 0xDDAE | 0xFDAE => self.pc += 3,
             0xDD36 | 0xFD36 | 0xDD21 | 0xFD21 | 0xED4B | 0xED5B |
             0xED6B | 0xED7B | 0xDD2A | 0xFD2A |
             0xED43 | 0xED53 | 0xED63 | 0xED73 |
@@ -1291,12 +1317,31 @@ impl CPU {
                 self.or(n);
             },
 
+            // XOR s
+            0xA8 => self.xor(self.registers.b),                                     // XOR B
+            0xA9 => self.xor(self.registers.c),                                     // XOR C
+            0xAA => self.xor(self.registers.d),                                     // XOR D
+            0xAB => self.xor(self.registers.e),                                     // XOR E
+            0xAC => self.xor(self.registers.h),                                     // XOR H
+            0xAD => self.xor(self.registers.l),                                     // XOR L
+            0xAE => {                                                               // XOR (HL)
+                let addr = self.registers.get_hl();
+                let n = self.bus.read_byte(addr);
+                self.xor(n)
+            },
+            0xAF => self.xor(self.registers.a),                                     // XOR A
+
+            0xEE => {                                                               // XOR n
+                let n = self.bus.read_byte(self.pc + 1);
+                self.xor(n);
+            },
+
             _ => {},
         }
 
         match opcode {
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
-            0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 => self.pc += 2,
+            0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE => self.pc += 2,
             0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 => self.pc += 3,
             _ => self.pc +=1,
         }
