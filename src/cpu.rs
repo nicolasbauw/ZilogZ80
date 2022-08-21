@@ -243,6 +243,19 @@ impl CPU {
         self.registers.flags.n = false;
         self.registers.a = r;
     }
+    
+    // Logical exclusive-OR
+    fn xor(&mut self, n: u8) {
+        let a = self.registers.a;
+        let r = a ^ n;
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
+        self.registers.flags.h = false;
+        self.registers.flags.c = false;
+        self.registers.flags.n = false;
+        self.registers.a = r;
+    }
 
     pub fn execute(&mut self) -> u32 {
         let opcode = self.bus.read_byte(self.pc);
