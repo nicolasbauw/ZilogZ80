@@ -264,6 +264,16 @@ impl CPU {
         self.registers.a = r;
     }
 
+    // Increment
+    fn inc(&mut self, n: u8) -> u8 {
+        let r = n.wrapping_add(1);
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.p = n == 0x7F;
+        self.registers.flags.h = (n & 0x0f) + 0x01 > 0x0f;
+        r
+    }
+
     pub fn execute(&mut self) -> u32 {
         let opcode = self.bus.read_byte(self.pc);
 
