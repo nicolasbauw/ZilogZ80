@@ -257,6 +257,7 @@ impl CPU {
         self.registers.a = r;
     }
 
+    // Comparison with accumulator
     fn cp(&mut self, n: u8) {
         let r = self.registers.a;
         self.sub(n);
