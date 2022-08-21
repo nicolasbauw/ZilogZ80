@@ -1296,3 +1296,55 @@ fn ld_d() {
         assert_eq!(c.pc, 3);
         assert_eq!(c.registers.a, 0xCB);
     }
+
+    #[test]
+    fn cp_r() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xBB);
+        c.registers.a = 0x0A;
+        c.registers.e = 0x05;
+        assert_eq!(c.execute(), 4);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.flags.z, false);
+        assert_eq!(c.registers.flags.c, false);
+    }
+
+    #[test]
+    fn cp_n() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xFE);
+        c.bus.write_byte(0x0001, 0x05);
+        c.registers.a = 0x0A;
+        assert_eq!(c.execute(), 7);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.flags.z, false);
+        assert_eq!(c.registers.flags.c, false);
+    }
+
+    #[test]
+    fn cp_ix_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xDD);
+        c.bus.write_byte(0x0001, 0xBE);
+        c.bus.write_byte(0x0002, 0x05);
+        c.bus.write_byte(0x1005, 0x05);
+        c.registers.a = 0x0A;
+        assert_eq!(c.execute(), 19);
+        assert_eq!(c.pc, 3);
+        assert_eq!(c.registers.flags.z, false);
+        assert_eq!(c.registers.flags.c, false);
+    }
+
+    #[test]
+    fn cp_iy_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xFD);
+        c.bus.write_byte(0x0001, 0xBE);
+        c.bus.write_byte(0x0002, 0x05);
+        c.bus.write_byte(0x1005, 0x05);
+        c.registers.a = 0x0A;
+        assert_eq!(c.execute(), 19);
+        assert_eq!(c.pc, 3);
+        assert_eq!(c.registers.flags.z, false);
+        assert_eq!(c.registers.flags.c, false);
+    }

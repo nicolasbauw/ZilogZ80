@@ -13,11 +13,11 @@ const CYCLES: [u8; 256] = [
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-    4, 4, 4, 4, 4, 4, 7, 4, 0, 0, 0, 0, 0, 0, 0, 0,
+    4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     0, 10, 0, 0, 0, 11, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
     0, 10, 0, 0, 0, 11, 7, 0, 0, 4, 0, 0, 0, 0, 7, 0,
     0, 10, 0, 19, 0, 11, 7, 0, 0, 0, 0, 4, 0, 0, 7, 0,
-    0, 10, 0, 0, 0, 11, 7, 0, 0, 6, 0, 0, 0, 0, 0, 0,
+    0, 10, 0, 0, 0, 11, 7, 0, 0, 6, 0, 0, 0, 0, 7, 0,
 ];
 
 const CYCLES_DD: [u8; 256] = [
@@ -32,7 +32,7 @@ const CYCLES_DD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
-    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 14, 0, 23, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -51,7 +51,7 @@ const CYCLES_FD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
-    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 14, 0, 23, 0, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -254,6 +254,12 @@ impl CPU {
         self.registers.flags.h = false;
         self.registers.flags.c = false;
         self.registers.flags.n = false;
+        self.registers.a = r;
+    }
+
+    fn cp(&mut self, n: u8) {
+        let r = self.registers.a;
+        self.sub(n);
         self.registers.a = r;
     }
 
@@ -878,6 +884,32 @@ impl CPU {
                 }
             },
 
+            // CP (IX+d)
+            0xDDBE => {
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let d = self.bus.read_byte(self.ix - ( displacement as u16 ));
+                    self.cp(d);
+                }
+                else {
+                    let d = self.bus.read_byte(self.ix + ( displacement as u16 ));
+                    self.cp(d);
+                }
+            },
+
+            // CP (IY+d)
+            0xFDBE => {
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let d = self.bus.read_byte(self.iy - ( displacement as u16 ));
+                    self.cp(d);
+                }
+                else {
+                    let d = self.bus.read_byte(self.iy + ( displacement as u16 ));
+                    self.cp(d);
+                }
+            },
+
             _ => {}
         }
 
@@ -894,7 +926,7 @@ impl CPU {
             0xFD70 | 0xFD71 | 0xFD72 | 0xFD73 | 0xFD74 | 0xFD75 |
             0xFD77 | 0xDD86 | 0xFD86 | 0xDD8E | 0xFD8E |
             0xDD96 | 0xFD96 | 0xDD9E | 0xFD9E | 0xDDA6 | 0xFDA6 |
-            0xDDB6 | 0xFDB6 | 0xDDAE | 0xFDAE => self.pc += 3,
+            0xDDB6 | 0xFDB6 | 0xDDAE | 0xFDAE | 0xDDBE | 0xFDBE => self.pc += 3,
             0xDD36 | 0xFD36 | 0xDD21 | 0xFD21 | 0xED4B | 0xED5B |
             0xED6B | 0xED7B | 0xDD2A | 0xFD2A |
             0xED43 | 0xED53 | 0xED63 | 0xED73 |
@@ -1336,12 +1368,31 @@ impl CPU {
                 self.xor(n);
             },
 
+            // CMP s
+            0xB8 => self.cp(self.registers.b),                                      // CP B
+            0xB9 => self.cp(self.registers.c),                                      // CP C
+            0xBA => self.cp(self.registers.d),                                      // CP D
+            0xBB => self.cp(self.registers.e),                                      // CP E
+            0xBC => self.cp(self.registers.h),                                      // CP H
+            0xBD => self.cp(self.registers.l),                                      // CP L
+            0xBE => {                                                               // CP (HL)
+                let addr = self.registers.get_hl();
+                let n = self.bus.read_byte(addr);
+                self.cp(n)
+            },
+            0xBF => self.cp(self.registers.a),                                      // CP A
+
+            0xFE => {                                                               // XOR n
+                let n = self.bus.read_byte(self.pc + 1);
+                self.cp(n);
+            },
+
             _ => {},
         }
 
         match opcode {
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
-            0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE => self.pc += 2,
+            0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE | 0xFE => self.pc += 2,
             0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 => self.pc += 3,
             _ => self.pc +=1,
         }
