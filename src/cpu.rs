@@ -78,13 +78,13 @@ const CYCLES_ED: [u8; 256] = [
 ];
 
 // Check addition overflow
-pub fn check_add_overflow(n1: u8, n2: u8) -> bool {
+fn check_add_overflow(n1: u8, n2: u8) -> bool {
     let r = (n1 as i8).overflowing_add(n2 as i8);
     r.1
 }
 
 // Check substraction overflow
-pub fn check_sub_overflow(n1: u8, n2: u8) -> bool {
+fn check_sub_overflow(n1: u8, n2: u8) -> bool {
     let r = (n1 as i8).overflowing_sub(n2 as i8);
     r.1
 }
