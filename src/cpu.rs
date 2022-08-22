@@ -281,7 +281,7 @@ impl CPU {
         self.registers.flags.z = r == 0x00;
         self.registers.flags.s = (r as i8) < 0;
         self.registers.flags.p = n == 0x80;
-        self.registers.flags.h = (n & 0x0f) + 0x01 > 0x0f;
+        self.registers.flags.h = (r & 0x0f) != 0x0f;
         self.registers.flags.n = true;
         r
     }
