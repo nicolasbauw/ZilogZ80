@@ -24,7 +24,7 @@ const CYCLES_DD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 14, 20, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 23, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
@@ -43,7 +43,7 @@ const CYCLES_FD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 14, 20, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 23, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
@@ -921,6 +921,40 @@ impl CPU {
                 }
             },
 
+            // INC (IX+d)
+            0xDD34 => {
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let m = self.ix - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.inc(d);
+                    self.bus.write_byte(m, r);
+                }
+                else {
+                    let m =self.ix + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.inc(d);
+                    self.bus.write_byte(m, r);
+                }
+            },
+
+            // INC (IY+d)
+            0xFD34 => {
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let m = self.iy - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.inc(d);
+                    self.bus.write_byte(m, r);
+                }
+                else {
+                    let m = self.iy + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.inc(d);
+                    self.bus.write_byte(m, r);
+                }
+            },
+
             _ => {}
         }
 
@@ -937,7 +971,8 @@ impl CPU {
             0xFD70 | 0xFD71 | 0xFD72 | 0xFD73 | 0xFD74 | 0xFD75 |
             0xFD77 | 0xDD86 | 0xFD86 | 0xDD8E | 0xFD8E |
             0xDD96 | 0xFD96 | 0xDD9E | 0xFD9E | 0xDDA6 | 0xFDA6 |
-            0xDDB6 | 0xFDB6 | 0xDDAE | 0xFDAE | 0xDDBE | 0xFDBE => self.pc += 3,
+            0xDDB6 | 0xFDB6 | 0xDDAE | 0xFDAE | 0xDDBE | 0xFDBE |
+            0xDD34 | 0xFD34 => self.pc += 3,
             0xDD36 | 0xFD36 | 0xDD21 | 0xFD21 | 0xED4B | 0xED5B |
             0xED6B | 0xED7B | 0xDD2A | 0xFD2A |
             0xED43 | 0xED53 | 0xED63 | 0xED73 |

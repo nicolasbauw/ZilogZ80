@@ -1433,3 +1433,31 @@ fn ld_d() {
         assert_eq!(false, c.registers.flags.z);
         assert_eq!(true, c.registers.flags.h);
     }
+
+    #[test]
+    fn inc_ix_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xDD);
+        c.bus.write_byte(0x0001, 0x34);
+        c.bus.write_byte(0x0002, 0x05);
+        c.bus.write_byte(0x105, 0xff);
+        c.ix = 0x100;
+        assert_eq!(c.execute(), 23);
+        assert_eq!(c.pc, 0x03);
+        assert_eq!(0, c.bus.read_byte(0x100));
+        assert_eq!(true, c.registers.flags.z);
+    }
+
+    #[test]
+    fn inc_iy_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xFD);
+        c.bus.write_byte(0x0001, 0x34);
+        c.bus.write_byte(0x0002, 0x05);
+        c.bus.write_byte(0x105, 0xff);
+        c.iy = 0x100;
+        assert_eq!(c.execute(), 23);
+        assert_eq!(c.pc, 0x03);
+        assert_eq!(0, c.bus.read_byte(0x100));
+        assert_eq!(true, c.registers.flags.z);
+    }
