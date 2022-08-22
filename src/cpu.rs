@@ -5,7 +5,7 @@ const CYCLES: [u8; 256] = [
     0, 10, 0, 0, 4, 4, 7, 0, 4, 0, 7, 0, 4, 4, 7, 0,
     0, 10, 0, 0, 4, 4, 7, 0, 0, 0, 7, 0, 4, 4, 7, 0,
     0, 10, 16, 0, 4, 4, 7, 0, 0, 0, 16, 0, 4, 4, 7, 4,
-    0, 10, 13, 0, 11, 11, 7, 0, 0, 0, 0, 0, 4, 4, 7, 0,
+    0, 10, 13, 0, 11, 11, 7, 0, 0, 0, 0, 0, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -1549,14 +1549,21 @@ impl CPU {
             0x3D => self.registers.a = self.dec(self.registers.a),                  // DEC A
 
             // General-Purpose Arithmetic and CPU Control Groups
-            // Decimal adjust accumulator
+            // DAA
             0x27 => self.daa(),
 
-            // One's complement
+            // CPL
             0x2F => {
                 self.registers.a = !self.registers.a;
                 self.registers.flags.h = true;
                 self.registers.flags.n = true;
+            },
+
+            // CCF
+            0x3F => {
+                self.registers.flags.h = self.registers.flags.c;
+                self.registers.flags.c = !self.registers.flags.c;
+                self.registers.flags.n = false;
             },
 
             _ => {},

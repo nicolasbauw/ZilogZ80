@@ -1643,3 +1643,16 @@ fn ld_d() {
         assert_eq!(c.pc, 2);
         assert_eq!(0b01101000, c.registers.a);
     }
+
+    #[test]
+    fn ccf() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x3f);
+        c.bus.write_byte(0x0001, 0x3f);
+        assert_eq!(c.execute(), 4);
+        assert_eq!(true, c.registers.flags.c);
+        assert_eq!(c.pc, 0x0001);
+        c.execute();
+        assert_eq!(false, c.registers.flags.c);
+        assert_eq!(c.pc, 0x0002);
+    }
