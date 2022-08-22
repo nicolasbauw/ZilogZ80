@@ -4,7 +4,7 @@ use crate::memory::AddressBus;
 const CYCLES: [u8; 256] = [
     0, 10, 0, 0, 4, 4, 7, 0, 4, 0, 7, 0, 4, 4, 7, 0,
     0, 10, 0, 0, 4, 4, 7, 0, 0, 0, 7, 0, 4, 4, 7, 0,
-    0, 10, 16, 0, 4, 4, 7, 0, 0, 0, 16, 0, 4, 4, 7, 0,
+    0, 10, 16, 0, 4, 4, 7, 0, 0, 0, 16, 0, 4, 4, 7, 4,
     0, 10, 13, 0, 11, 11, 7, 0, 0, 0, 0, 0, 4, 4, 7, 0,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -63,7 +63,7 @@ const CYCLES_ED: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 20, 0, 0, 0, 9, 0, 0, 0, 20, 0, 0, 0, 9,
+    0, 0, 0, 20, 8, 0, 0, 9, 0, 0, 0, 20, 0, 0, 0, 9,
     0, 0, 0, 20, 0, 0, 0, 9, 0, 0, 0, 20, 0, 0, 0, 9,
     0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0,
     0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0,
@@ -284,6 +284,41 @@ impl CPU {
         self.registers.flags.h = (r & 0x0f) != 0x0f;
         self.registers.flags.n = true;
         r
+    }
+
+    // Decimal adjust accumulator
+    fn daa(&mut self) {
+        let mut inc_a: u8 = 0;
+        let mut c = self.registers.flags.c;
+        let lsb = self.registers.a & 0x0F;
+        if (lsb > 9) || self.registers.flags.h {
+            inc_a += 0x06;
+        }
+
+        let msb = self.registers.a >> 4;
+        if (msb > 9) || self.registers.flags.c || (msb >= 9 && lsb > 9) {
+            inc_a += 0x60;
+            c = true;
+        }
+
+        self.adda(inc_a);
+        self.registers.flags.c = c;
+        self.registers.flags.z = self.registers.a == 0x00;
+        self.registers.flags.s = (self.registers.a as i8) < 0;
+        self.registers.flags.p = self.registers.a.count_ones() & 0x01 == 0x00;
+    }
+
+    // NEG
+    fn neg(&mut self) {
+        let t = !self.registers.a;
+        let r = t.wrapping_add(1);
+        self.registers.flags.p = self.registers.a == 0x80;
+        self.registers.flags.c = self.registers.a != 0;
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.h = (r & 0x0f) != 0x0f;
+        self.registers.flags.n = true;
+        self.registers.a = r;
     }
 
     pub fn execute(&mut self) -> u32 {
@@ -1001,6 +1036,12 @@ impl CPU {
                 }
             },
 
+            // General-Purpose Arithmetic and CPU Control Groups
+            // NEG
+            0xED44 => {
+                self.neg();
+            },
+
             _ => {}
         }
 
@@ -1008,7 +1049,7 @@ impl CPU {
             0xED57 | 0xED5F | 0xED47 | 0xED4F | 0xDDF9 | 0xFDF9 |
             0xDDE5 | 0xFDE5 | 0xDDE1 | 0xFDE1 | 0xDDE3 | 0xFDE3 |
             0xEDA0 | 0xEDB0 | 0xEDA8 | 0xEDB8 | 0xEDA1 | 0xEDB1 |
-            0xEDA9 | 0xEDB9 => self.pc += 2,
+            0xEDA9 | 0xEDB9 | 0xED44 => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
@@ -1506,6 +1547,17 @@ impl CPU {
                 self.bus.write_byte(addr, r);
             },
             0x3D => self.registers.a = self.dec(self.registers.a),                  // DEC A
+
+            // General-Purpose Arithmetic and CPU Control Groups
+            // Decimal adjust accumulator
+            0x27 => self.daa(),
+
+            // One's complement
+            0x2F => {
+                self.registers.a = !self.registers.a;
+                self.registers.flags.h = true;
+                self.registers.flags.n = true;
+            },
 
             _ => {},
         }

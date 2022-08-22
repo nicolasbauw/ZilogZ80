@@ -1618,3 +1618,28 @@ fn ld_d() {
         assert_eq!(0xFE, c.bus.read_byte(0x105));
         assert_eq!(false, c.registers.flags.z);
     }
+
+    #[test]
+    fn daa() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x27);
+        c.registers.a = 0x9B;
+        c.registers.flags.h = false;
+        c.registers.flags.c = false;
+        c.execute();
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.a, 1);
+        assert_eq!(c.registers.flags.h, true);
+        assert_eq!(c.registers.flags.c, true);
+    }
+
+    #[test]
+    fn neg() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0x44);
+        c.registers.a = 0b10011000;
+        assert_eq!(c.execute(), 8);
+        assert_eq!(c.pc, 2);
+        assert_eq!(0b01101000, c.registers.a);
+    }
