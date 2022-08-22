@@ -2,10 +2,10 @@ use crate::registers::Registers;
 use crate::memory::AddressBus;
 
 const CYCLES: [u8; 256] = [
-    0, 10, 0, 0, 4, 4, 7, 0, 4, 0, 7, 0, 4, 4, 7, 0,
-    0, 10, 0, 0, 4, 4, 7, 0, 0, 0, 7, 0, 4, 4, 7, 0,
-    0, 10, 16, 0, 4, 4, 7, 0, 0, 0, 16, 0, 4, 4, 7, 4,
-    0, 10, 13, 0, 11, 11, 7, 4, 0, 0, 0, 0, 4, 4, 7, 4,
+    0, 10, 0, 0, 4, 4, 7, 0, 4, 11, 7, 0, 4, 4, 7, 0,
+    0, 10, 0, 0, 4, 4, 7, 0, 0, 11, 7, 0, 4, 4, 7, 0,
+    0, 10, 16, 0, 4, 4, 7, 0, 0, 11, 16, 0, 4, 4, 7, 4,
+    0, 10, 13, 0, 11, 11, 7, 4, 0, 11, 0, 0, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -323,6 +323,16 @@ impl CPU {
         self.registers.flags.h = (r & 0x0f) != 0x0f;
         self.registers.flags.n = true;
         self.registers.a = r;
+    }
+
+    // 16 bits add
+    fn add_16(&mut self, n: u16) {
+        let h = self.registers.get_hl();
+        let r = h.wrapping_add(n);
+        self.registers.set_hl(r);
+        self.registers.flags.c = u32::from(h) + u32::from(n) > 0xffff;
+        self.registers.flags.h = (h & 0x0800) + (n & 0x0800) > 0x0800;
+        self.registers.flags.n = false;
     }
 
     pub fn execute(&mut self) -> u32 {
@@ -1597,6 +1607,25 @@ impl CPU {
             0xFB => {
                 self.iff1 = true;
                 self.iff2 = true;
+            },
+
+            // 16-Bit Arithmetic Group
+            // ADD HL,ss
+            0x09 => {                                                       // ADD HL,BC
+                let reg = self.registers.get_bc();
+                self.add_16(reg);
+            },
+            0x19 => {                                                       // ADD HL,DE
+                let reg = self.registers.get_de();
+                self.add_16(reg);
+            },
+            0x29 => {                                                       // ADD HL,HL
+                let reg = self.registers.get_hl();
+                self.add_16(reg);
+            },
+            0x39 => {                                                       // ADD HL,SP
+                let reg = self.sp;
+                self.add_16(reg);
             },
 
             _ => {},
