@@ -2,10 +2,10 @@ use crate::registers::Registers;
 use crate::memory::AddressBus;
 
 const CYCLES: [u8; 256] = [
-    0, 10, 0, 0, 0, 0, 7, 0, 4, 0, 7, 0, 0, 0, 7, 0,
-    0, 10, 0, 0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 7, 0,
-    0, 10, 16, 0, 0, 0, 7, 0, 0, 0, 16, 0, 0, 0, 7, 0,
-    0, 10, 13, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
+    0, 10, 0, 0, 4, 0, 7, 0, 4, 0, 7, 0, 4, 0, 7, 0,
+    0, 10, 0, 0, 4, 0, 7, 0, 0, 0, 7, 0, 4, 0, 7, 0,
+    0, 10, 16, 0, 4, 0, 7, 0, 0, 0, 16, 0, 4, 0, 7, 0,
+    0, 10, 13, 0, 11, 0, 7, 0, 0, 0, 0, 0, 4, 0, 7, 0,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -1397,6 +1397,20 @@ impl CPU {
                 let n = self.bus.read_byte(self.pc + 1);
                 self.cp(n);
             },
+
+            // INC r
+            0x04 => self.registers.b = self.inc(self.registers.b),                  // INC B
+            0x0C => self.registers.c = self.inc(self.registers.c),                  // INC C
+            0x14 => self.registers.d = self.inc(self.registers.d),                  // INC D
+            0x1C => self.registers.e = self.inc(self.registers.e),                  // INC E
+            0x24 => self.registers.h = self.inc(self.registers.h),                  // INC H
+            0x2C => self.registers.l = self.inc(self.registers.l),                  // INC L
+            0x34 => {                                                               // INC (HL)
+                let addr = self.registers.get_hl();
+                let r = self.inc(self.bus.read_byte(addr));
+                self.bus.write_byte(addr, r);
+            },
+            0x3C => self.registers.a = self.inc(self.registers.a),                  // INC A
 
             _ => {},
         }
