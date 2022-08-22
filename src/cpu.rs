@@ -271,6 +271,18 @@ impl CPU {
         self.registers.flags.s = (r as i8) < 0;
         self.registers.flags.p = n == 0x7F;
         self.registers.flags.h = (n & 0x0f) + 0x01 > 0x0f;
+        self.registers.flags.n = false;
+        r
+    }
+
+    // Decrement
+    fn dec(&mut self, n: u8) -> u8 {
+        let r = n.wrapping_sub(1);
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.p = n == 0x80;
+        self.registers.flags.h = (n & 0x0f) + 0x01 > 0x0f;
+        self.registers.flags.n = true;
         r
     }
 
