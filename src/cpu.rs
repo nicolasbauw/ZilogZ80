@@ -322,6 +322,7 @@ impl CPU {
     }
 
     pub fn execute(&mut self) -> u32 {
+        if self.halt { return 0 };
         let opcode = self.bus.read_byte(self.pc);
 
         match opcode {
@@ -1186,8 +1187,6 @@ impl CPU {
                 self.bus.write_byte(addr, self.registers.l)
             },
 
-            0x76 => self.halt = true,                                               // HLT
-
             0x77 => {                                                               // LD (HL), A
                 let addr = self.registers.get_hl();
                 self.bus.write_byte(addr, self.registers.a)
@@ -1572,6 +1571,12 @@ impl CPU {
                 self.registers.flags.h = false;
                 self.registers.flags.n = false;
             },
+
+            // NOP
+            0x00 => {},
+
+            // HALT
+            0x76 => self.halt = true,
 
             _ => {},
         }
