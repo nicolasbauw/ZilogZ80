@@ -17,7 +17,7 @@ const CYCLES: [u8; 256] = [
     0, 10, 0, 0, 0, 11, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
     0, 10, 0, 0, 0, 11, 7, 0, 0, 4, 0, 0, 0, 0, 7, 0,
     0, 10, 0, 19, 0, 11, 7, 0, 0, 0, 0, 4, 0, 0, 7, 0,
-    0, 10, 0, 0, 0, 11, 7, 0, 0, 6, 0, 0, 0, 0, 7, 0,
+    0, 10, 0, 4, 0, 11, 7, 0, 0, 6, 0, 4, 0, 0, 7, 0,
 ];
 
 const CYCLES_DD: [u8; 256] = [
@@ -100,6 +100,7 @@ pub struct CPU {
     pub pc: u16,
     pub bus: AddressBus,
     pub halt: bool,
+    iff1: bool,
     iff2: bool,
 }
 
@@ -116,6 +117,7 @@ impl CPU {
             pc: 0,
             bus: AddressBus::new(),
             halt: false,
+            iff1: false,
             iff2: false,
         }
     }
@@ -1577,6 +1579,18 @@ impl CPU {
 
             // HALT
             0x76 => self.halt = true,
+
+            // DI
+            0xF3 => {
+                self.iff1 = false;
+                self.iff2 = false;
+            },
+
+            // EI
+            0xFB => {
+                self.iff1 = true;
+                self.iff2 = true;
+            },
 
             _ => {},
         }
