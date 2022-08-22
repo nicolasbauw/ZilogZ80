@@ -5,7 +5,7 @@ const CYCLES: [u8; 256] = [
     0, 10, 0, 0, 4, 4, 7, 0, 4, 0, 7, 0, 4, 4, 7, 0,
     0, 10, 0, 0, 4, 4, 7, 0, 0, 0, 7, 0, 4, 4, 7, 0,
     0, 10, 16, 0, 4, 4, 7, 0, 0, 0, 16, 0, 4, 4, 7, 4,
-    0, 10, 13, 0, 11, 11, 7, 0, 0, 0, 0, 0, 4, 4, 7, 4,
+    0, 10, 13, 0, 11, 11, 7, 4, 0, 0, 0, 0, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -1563,6 +1563,13 @@ impl CPU {
             0x3F => {
                 self.registers.flags.h = self.registers.flags.c;
                 self.registers.flags.c = !self.registers.flags.c;
+                self.registers.flags.n = false;
+            },
+
+            // SCF
+            0x37 => {
+                self.registers.flags.c = true;
+                self.registers.flags.h = false;
                 self.registers.flags.n = false;
             },
 
