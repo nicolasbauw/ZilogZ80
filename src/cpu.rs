@@ -2,10 +2,10 @@ use crate::registers::Registers;
 use crate::memory::AddressBus;
 
 const CYCLES: [u8; 256] = [
-    0, 10, 0, 0, 4, 0, 7, 0, 4, 0, 7, 0, 4, 0, 7, 0,
-    0, 10, 0, 0, 4, 0, 7, 0, 0, 0, 7, 0, 4, 0, 7, 0,
-    0, 10, 16, 0, 4, 0, 7, 0, 0, 0, 16, 0, 4, 0, 7, 0,
-    0, 10, 13, 0, 11, 0, 7, 0, 0, 0, 0, 0, 4, 0, 7, 0,
+    0, 10, 0, 0, 4, 4, 7, 0, 4, 0, 7, 0, 4, 4, 7, 0,
+    0, 10, 0, 0, 4, 4, 7, 0, 0, 0, 7, 0, 4, 4, 7, 0,
+    0, 10, 16, 0, 4, 4, 7, 0, 0, 0, 16, 0, 4, 4, 7, 0,
+    0, 10, 13, 0, 11, 11, 7, 0, 0, 0, 0, 0, 4, 4, 7, 0,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -24,7 +24,7 @@ const CYCLES_DD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 14, 20, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 23, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 23, 23, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
@@ -43,7 +43,7 @@ const CYCLES_FD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 14, 20, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 23, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 23, 23, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
@@ -967,6 +967,40 @@ impl CPU {
                 }
             },
 
+            // DEC (IX+d)
+            0xDD35 => {
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let m = self.ix - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.dec(d);
+                    self.bus.write_byte(m, r);
+                }
+                else {
+                    let m =self.ix + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.dec(d);
+                    self.bus.write_byte(m, r);
+                }
+            },
+
+            // DEC (IY+d)
+            0xFD35 => {
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let m = self.iy - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.dec(d);
+                    self.bus.write_byte(m, r);
+                }
+                else {
+                    let m = self.iy + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.dec(d);
+                    self.bus.write_byte(m, r);
+                }
+            },
+
             _ => {}
         }
 
@@ -984,7 +1018,7 @@ impl CPU {
             0xFD77 | 0xDD86 | 0xFD86 | 0xDD8E | 0xFD8E |
             0xDD96 | 0xFD96 | 0xDD9E | 0xFD9E | 0xDDA6 | 0xFDA6 |
             0xDDB6 | 0xFDB6 | 0xDDAE | 0xFDAE | 0xDDBE | 0xFDBE |
-            0xDD34 | 0xFD34 => self.pc += 3,
+            0xDD34 | 0xFD34 | 0xDD35 | 0xFD35=> self.pc += 3,
             0xDD36 | 0xFD36 | 0xDD21 | 0xFD21 | 0xED4B | 0xED5B |
             0xED6B | 0xED7B | 0xDD2A | 0xFD2A |
             0xED43 | 0xED53 | 0xED63 | 0xED73 |
@@ -1458,6 +1492,20 @@ impl CPU {
                 self.bus.write_byte(addr, r);
             },
             0x3C => self.registers.a = self.inc(self.registers.a),                  // INC A
+
+            // DEC m
+            0x05 => self.registers.b = self.dec(self.registers.b),                  // DEC B
+            0x0D => self.registers.c = self.dec(self.registers.c),                  // DEC C
+            0x15 => self.registers.d = self.dec(self.registers.d),                  // DEC D
+            0x1D => self.registers.e = self.dec(self.registers.e),                  // DEC E
+            0x25 => self.registers.h = self.dec(self.registers.h),                  // DEC H
+            0x2D => self.registers.l = self.dec(self.registers.l),                  // DEC L
+            0x35 => {                                                               // DEC (HL)
+                let addr = self.registers.get_hl();
+                let r = self.dec(self.bus.read_byte(addr));
+                self.bus.write_byte(addr, r);
+            },
+            0x3D => self.registers.a = self.dec(self.registers.a),                  // DEC A
 
             _ => {},
         }
