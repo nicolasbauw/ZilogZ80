@@ -1428,7 +1428,7 @@ impl CPU {
             },
             0xBF => self.cp(self.registers.a),                                      // CP A
 
-            0xFE => {                                                               // XOR n
+            0xFE => {                                                               // CP n
                 let n = self.bus.read_byte(self.pc + 1);
                 self.cp(n);
             },
