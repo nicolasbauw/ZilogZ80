@@ -1792,3 +1792,17 @@ fn ld_d() {
         assert_eq!(c.pc, 2);
         assert_eq!(c.registers.flags.p, true);
     }
+
+    #[test]
+    fn sbc_hl_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0x52);
+        c.registers.set_hl(0x9999);
+        c.registers.set_de(0x1111);
+        c.registers.flags.c = true;
+        assert_eq!(c.execute(), 15);
+        assert_eq!(c.registers.h, 0x88);
+        assert_eq!(c.registers.l, 0x87);
+        assert_eq!(c.pc, 2);
+    }

@@ -63,10 +63,10 @@ const CYCLES_ED: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 20, 8, 0, 8, 9, 0, 0, 15, 20, 0, 0, 0, 9,
-    0, 0, 0, 20, 0, 0, 8, 9, 0, 0, 15, 20, 0, 0, 8, 9,
-    0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 15, 20, 0, 0, 0, 0,
-    0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 15, 20, 0, 0, 0, 0,
+    0, 0, 15, 20, 8, 0, 8, 9, 0, 0, 15, 20, 0, 0, 0, 9,
+    0, 0, 15, 20, 0, 0, 8, 9, 0, 0, 15, 20, 0, 0, 8, 9,
+    0, 0, 15, 20, 0, 0, 0, 0, 0, 0, 15, 20, 0, 0, 0, 0,
+    0, 0, 15, 20, 0, 0, 0, 0, 0, 0, 15, 20, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     16, 16, 0, 0, 0, 0, 0, 0, 16, 16, 0, 0, 0, 0, 0, 0,
@@ -335,7 +335,7 @@ impl CPU {
         self.registers.flags.n = false;
     }
 
-    // 16 bits add with carry
+    // Register pair addition with carry
     fn addc_16(&mut self, n: u16) {
         let c: u16 = match self.registers.flags.c {
             false => 0,
@@ -344,13 +344,33 @@ impl CPU {
         let h = self.registers.get_hl();
         let r = h.wrapping_add(n).wrapping_add(c);
         self.registers.set_hl(r);
-        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.s = (r as i16) < 0;
         self.registers.flags.z = r == 0x00;
         self.registers.flags.c = u32::from(h) + u32::from(n) > 0xffff;
         self.registers.flags.h = (h & 0x0800) + (n & 0x0800) > 0x0800;
         self.registers.flags.n = false;
         self.registers.flags.p = {
             let r = ((h as i16).overflowing_add(n as i16)).0.overflowing_add(c as i16);
+            r.1
+        }
+    }
+
+    // Register pair substraction with carry
+    fn subc_16(&mut self, n: u16)  {
+        let c: u16 = match self.registers.flags.c {
+            false => 0,
+            true => 1,
+        };
+        let h = self.registers.get_hl();
+        let r = h.wrapping_sub(n).wrapping_sub(c);
+        self.registers.set_hl(r);
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.s = (r as i16) < 0;
+        self.registers.flags.h = (h as i16 & 0x0fff) - (n as i16 & 0x0fff)  - (c as i16) >= 0x00;
+        self.registers.flags.c = u16::from(h) < u16::from(n) + u16::from(c);
+        self.registers.flags.n = true;
+        self.registers.flags.p = {
+            let r = ((h as i16).overflowing_sub(n as i16)).0.overflowing_sub(c as i16);
             r.1
         }
     }
@@ -1101,6 +1121,24 @@ impl CPU {
                 self.addc_16(reg);
             },
 
+            // SBC HL,ss
+            0xED42 => {                                                     // SBC HL,BC
+                let reg = self.registers.get_bc();
+                self.subc_16(reg);
+            },
+            0xED52 => {                                                     // SBC HL,DE
+                let reg = self.registers.get_de();
+                self.subc_16(reg);
+            },
+            0xED62 => {                                                     // SBC HL,HL
+                let reg = self.registers.get_hl();
+                self.subc_16(reg);
+            },
+            0xED72 => {                                                     // SBC HL,SP
+                let reg = self.sp;
+                self.subc_16(reg);
+            },
+
             _ => {}
         }
 
@@ -1109,7 +1147,8 @@ impl CPU {
             0xDDE5 | 0xFDE5 | 0xDDE1 | 0xFDE1 | 0xDDE3 | 0xFDE3 |
             0xEDA0 | 0xEDB0 | 0xEDA8 | 0xEDB8 | 0xEDA1 | 0xEDB1 |
             0xEDA9 | 0xEDB9 | 0xED44 |
-            0xED4A | 0xED5A | 0xED6A | 0xED7A => self.pc += 2,
+            0xED4A | 0xED5A | 0xED6A | 0xED7A |
+            0xED42 | 0xED52 | 0xED62 | 0xED72 => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
