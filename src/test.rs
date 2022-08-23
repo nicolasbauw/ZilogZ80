@@ -1720,3 +1720,61 @@ fn ld_d() {
         assert_eq!(c.registers.flags.c, false);
         assert_eq!(c.pc, 1);
     }
+
+    #[test]
+    fn adc_hl_b() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0x4A);
+        c.registers.set_bc(0x2222);
+        c.registers.set_hl(0x5437);
+        c.registers.flags.c = true;
+        assert_eq!(c.execute(), 15);
+        assert_eq!(c.registers.h, 0x76);
+        assert_eq!(c.registers.l, 0x5A);
+        assert_eq!(c.pc, 2);
+    }
+
+    #[test]
+    fn adc_hl_d_ovf() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0x5A);
+        c.registers.set_de(0x7FF0);
+        c.registers.set_hl(0x000F);
+        c.registers.flags.c = true;
+        assert_eq!(c.execute(), 15);
+        assert_eq!(c.registers.h, 0x80);
+        assert_eq!(c.registers.l, 0x00);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.flags.p, true);
+    }
+
+    #[test]
+    fn adc_hl_h_ovf() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0x6A);
+        c.registers.set_hl(0x000F);
+        c.registers.flags.c = true;
+        assert_eq!(c.execute(), 15);
+        assert_eq!(c.registers.h, 0x00);
+        assert_eq!(c.registers.l, 0x1F);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.flags.p, false);
+    }
+
+    #[test]
+    fn adc_hl_sp_ovf() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0x7A);
+        c.registers.set_hl(0x7FF0);
+        c.sp = 0x000F;
+        c.registers.flags.c = true;
+        assert_eq!(c.execute(), 15);
+        assert_eq!(c.registers.h, 0x80);
+        assert_eq!(c.registers.l, 0x00);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.flags.p, true);
+    }
