@@ -165,7 +165,7 @@ impl CPU {
     }
 
     // ADD A,r
-    fn adda(&mut self, n: u8)  {
+    fn add(&mut self, n: u8)  {
         let a = self.registers.a;
         let r = a.wrapping_add(n);
         self.registers.flags.z = r == 0x00;
@@ -305,7 +305,7 @@ impl CPU {
             c = true;
         }
 
-        self.adda(inc_a);
+        self.add(inc_a);
         self.registers.flags.c = c;
         self.registers.flags.z = self.registers.a == 0x00;
         self.registers.flags.s = (self.registers.a as i8) < 0;
@@ -780,11 +780,11 @@ impl CPU {
                 let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
                 if displacement < 0 {
                     let d = self.bus.read_byte(self.ix - ( displacement as u16 ));
-                    self.adda(d);
+                    self.add(d);
                 }
                 else {
                     let d = self.bus.read_byte(self.ix + ( displacement as u16 ));
-                    self.adda(d);
+                    self.add(d);
                 }
             },
 
@@ -793,11 +793,11 @@ impl CPU {
                 let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
                 if displacement < 0 {
                     let d = self.bus.read_byte(self.iy - ( displacement as u16 ));
-                    self.adda(d);
+                    self.add(d);
                 }
                 else {
                     let d = self.bus.read_byte(self.iy + ( displacement as u16 ));
-                    self.adda(d);
+                    self.add(d);
                 }
             },
 
@@ -806,7 +806,7 @@ impl CPU {
                 let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
                 if displacement < 0 {
                     let d = self.bus.read_byte(self.ix - ( displacement as u16 ));
-                    self.adda(d);
+                    self.add(d);
                 }
                 else {
                     let d = self.bus.read_byte(self.ix + ( displacement as u16 ));
@@ -819,7 +819,7 @@ impl CPU {
                 let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
                 if displacement < 0 {
                     let d = self.bus.read_byte(self.iy - ( displacement as u16 ));
-                    self.adda(d);
+                    self.add(d);
                 }
                 else {
                     let d = self.bus.read_byte(self.iy + ( displacement as u16 ));
@@ -1385,23 +1385,23 @@ impl CPU {
 
             // 8-Bit Arithmetic Group
             // ADD A,r
-            0x80 => self.adda(self.registers.b),                                   // ADD A,B
-            0x81 => self.adda(self.registers.c),                                   // ADD C
-            0x82 => self.adda(self.registers.d),                                   // ADD D
-            0x83 => self.adda(self.registers.e),                                   // ADD E
-            0x84 => self.adda(self.registers.h),                                   // ADD H
-            0x85 => self.adda(self.registers.l),                                   // ADD L
+            0x80 => self.add(self.registers.b),                                   // ADD A,B
+            0x81 => self.add(self.registers.c),                                   // ADD C
+            0x82 => self.add(self.registers.d),                                   // ADD D
+            0x83 => self.add(self.registers.e),                                   // ADD E
+            0x84 => self.add(self.registers.h),                                   // ADD H
+            0x85 => self.add(self.registers.l),                                   // ADD L
             0x86 => {                                                              // ADD (HL)
                 let addr = self.registers.get_hl();
                 let n = self.bus.read_byte(addr);
-                self.adda(n)
+                self.add(n)
             },
-            0x87 => self.adda(self.registers.a),                                    // ADD A
+            0x87 => self.add(self.registers.a),                                    // ADD A
 
             // ADD A,n
             0xC6 => {
                 let n = self.bus.read_byte(self.pc + 1);
-                self.adda(n);
+                self.add(n);
             },
 
             // ADC A,r
