@@ -326,13 +326,12 @@ impl CPU {
     }
 
     // 16 bits add
-    fn add_16(&mut self, n: u16) {
-        let h = self.registers.get_hl();
-        let r = h.wrapping_add(n);
-        self.registers.set_hl(r);
-        self.registers.flags.c = u32::from(h) + u32::from(n) > 0xffff;
-        self.registers.flags.h = (h & 0x0800) + (n & 0x0800) > 0x0800;
+    fn add_16(&mut self, n1: u16, n2: u16) -> u16 {
+        let r = n1.wrapping_add(n2);
+        self.registers.flags.c = u32::from(n1) + u32::from(n2) > 0xffff;
+        self.registers.flags.h = (n1 & 0x0800) + (n2 & 0x0800) > 0x0800;
         self.registers.flags.n = false;
+        r
     }
 
     // Register pair addition with carry
@@ -1692,19 +1691,23 @@ impl CPU {
             // ADD HL,ss
             0x09 => {                                                       // ADD HL,BC
                 let reg = self.registers.get_bc();
-                self.add_16(reg);
+                let r = self.add_16(self.registers.get_hl(), reg);
+                self.registers.set_hl(r);
             },
             0x19 => {                                                       // ADD HL,DE
                 let reg = self.registers.get_de();
-                self.add_16(reg);
+                let r = self.add_16(self.registers.get_hl(), reg);
+                self.registers.set_hl(r);
             },
             0x29 => {                                                       // ADD HL,HL
                 let reg = self.registers.get_hl();
-                self.add_16(reg);
+                let r = self.add_16(self.registers.get_hl(), reg);
+                self.registers.set_hl(r);
             },
             0x39 => {                                                       // ADD HL,SP
                 let reg = self.sp;
-                self.add_16(reg);
+                let r = self.add_16(self.registers.get_hl(), reg);
+                self.registers.set_hl(r);
             },
 
             _ => {},
