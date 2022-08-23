@@ -1806,3 +1806,27 @@ fn ld_d() {
         assert_eq!(c.registers.l, 0x87);
         assert_eq!(c.pc, 2);
     }
+
+    #[test]
+    fn add_ix_bc() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xDD);
+        c.bus.write_byte(0x0001, 0x09);
+        c.ix = 0x3333;
+        c.registers.set_bc(0x5555);
+        assert_eq!(c.execute(), 15);
+        assert_eq!(c.ix, 0x8888);
+        assert_eq!(c.pc, 2);
+    }
+
+    #[test]
+    fn add_iy_bc() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xFD);
+        c.bus.write_byte(0x0001, 0x09);
+        c.iy = 0x3333;
+        c.registers.set_bc(0x5555);
+        assert_eq!(c.execute(), 15);
+        assert_eq!(c.iy, 0x8888);
+        assert_eq!(c.pc, 2);
+    }

@@ -21,10 +21,10 @@ const CYCLES: [u8; 256] = [
 ];
 
 const CYCLES_DD: [u8; 256] = [
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 14, 20, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 23, 23, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0,
+    0, 14, 20, 0, 0, 0, 0, 0, 0, 15, 20, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 23, 23, 19, 0, 0, 15, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
@@ -40,10 +40,10 @@ const CYCLES_DD: [u8; 256] = [
 ];
 
 const CYCLES_FD: [u8; 256] = [
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 14, 20, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 23, 23, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0,
+    0, 14, 20, 0, 0, 0, 0, 0, 0, 15, 20, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 23, 23, 19, 0, 0, 15, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
@@ -1138,6 +1138,50 @@ impl CPU {
                 self.subc_16(reg);
             },
 
+            // ADD IX,pp
+            0xDD09 => {                                                     // ADD IX,BC
+                let reg = self.registers.get_bc();
+                let r = self.add_16(self.ix, reg);
+                self.ix = r;
+            },
+            0xDD19 => {                                                     // ADD IX,DE
+                let reg = self.registers.get_de();
+                let r = self.add_16(self.ix, reg);
+                self.ix = r;
+            },
+            0xDD29 => {                                                     // ADD IX,IX
+                let reg = self.ix;
+                let r = self.add_16(self.ix, reg);
+                self.ix = r;
+            },
+            0xDD39 => {                                                     // ADD IX,SP
+                let reg = self.sp;
+                let r = self.add_16(self.ix, reg);
+                self.ix = r;
+            },
+
+            // ADD IY,pp
+            0xFD09 => {                                                     // ADD IY,BC
+                let reg = self.registers.get_bc();
+                let r = self.add_16(self.iy, reg);
+                self.iy = r;
+            },
+            0xFD19 => {                                                     // ADD IY,DE
+                let reg = self.registers.get_de();
+                let r = self.add_16(self.iy, reg);
+                self.iy = r;
+            },
+            0xFD29 => {                                                     // ADD IY,IY
+                let reg = self.ix;
+                let r = self.add_16(self.iy, reg);
+                self.iy = r;
+            },
+            0xFD39 => {                                                     // ADD IY,SP
+                let reg = self.sp;
+                let r = self.add_16(self.iy, reg);
+                self.iy = r;
+            },
+
             _ => {}
         }
 
@@ -1147,7 +1191,9 @@ impl CPU {
             0xEDA0 | 0xEDB0 | 0xEDA8 | 0xEDB8 | 0xEDA1 | 0xEDB1 |
             0xEDA9 | 0xEDB9 | 0xED44 |
             0xED4A | 0xED5A | 0xED6A | 0xED7A |
-            0xED42 | 0xED52 | 0xED62 | 0xED72 => self.pc += 2,
+            0xED42 | 0xED52 | 0xED62 | 0xED72 |
+            0xDD09 | 0xDD19 | 0xDD29 | 0xDD39 |
+            0xFD09 | 0xFD19 | 0xFD29 | 0xFD39 => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
