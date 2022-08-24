@@ -376,43 +376,47 @@ impl CPU {
     }
 
     // Rotate accumulator left
-    fn rlca(&mut self) {
-        self.registers.flags.c = get_bit(self.registers.a, 7);
-        self.registers.a = (self.registers.a << 1) | u8::from(self.registers.flags.c);
+    fn rlc(&mut self, n: u8) -> u8 {
+        self.registers.flags.c = get_bit(n, 7);
+        let r = (n << 1) | u8::from(self.registers.flags.c);
         self.registers.flags.h = false;
         self.registers.flags.n = false;
+        r
     }
 
     // Rotate accumulator right
-    fn rrca(&mut self) {
+    fn rrc(&mut self, n: u8) -> u8 {
         self.registers.flags.c = get_bit(self.registers.a, 0);
-        self.registers.a = if self.registers.flags.c {0x80 | (self.registers.a >> 1) } else { self.registers.a >> 1 };
+        let r = if self.registers.flags.c {0x80 | (n >> 1) } else { n >> 1 };
         self.registers.flags.h = false;
         self.registers.flags.n = false;
+        r
     }
 
     // RAL Rotate accumulator left through carry
-    fn rla(&mut self) {
+    fn rl(&mut self, n: u8) -> u8 {
         let c = self.registers.flags.c;
-        self.registers.flags.c = get_bit(self.registers.a, 7);
+        self.registers.flags.c = get_bit(n, 7);
         self.registers.flags.h = false;
         self.registers.flags.n = false;
-        self.registers.a = match c {
-            true => (self.registers.a << 1) | 0x01,
-            false => self.registers.a << 1
-        }
+        let r = match c {
+            true => (n << 1) | 0x01,
+            false => n << 1
+        };
+        r
     }
     
     // RAR Rotate accumulator right through carry
-    fn rra(&mut self) {
+    fn rr(&mut self, n: u8) -> u8 {
         let c = self.registers.flags.c;
-        self.registers.flags.c = get_bit(self.registers.a, 0);
+        self.registers.flags.c = get_bit(n, 0);
         self.registers.flags.h = false;
         self.registers.flags.n = false;
-        self.registers.a = match c {
-            true => (self.registers.a >> 1) | 0x80,
-            false => self.registers.a >> 1
-        }
+        let r = match c {
+            true => (n >> 1) | 0x80,
+            false => n >> 1
+        };
+        r
     }
 
     pub fn execute(&mut self) -> u32 {
@@ -1865,16 +1869,28 @@ impl CPU {
 
             // Rotate and Shift Group
             // RLCA
-            0x07 => self.rlca(),
+            0x07 => {
+                let r = self.rlc(self.registers.a);
+                self.registers.a = r;
+            },
 
             // RLA
-            0x17 => self.rla(),
+            0x17 => {
+                let r = self.rl(self.registers.a);
+                self.registers.a = r;
+            },
 
             // RRCA
-            0x0F => self.rrca(),
+            0x0F => {
+                let r = self.rrc(self.registers.a);
+                self.registers.a = r;
+            },
 
             // RRA
-            0x1F => self.rra(),
+            0x1F => {
+                let r = self.rr(self.registers.a);
+                self.registers.a = r;
+            },
 
             _ => {},
         }
