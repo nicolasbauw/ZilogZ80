@@ -2,10 +2,10 @@ use crate::registers::Registers;
 use crate::memory::AddressBus;
 
 const CYCLES: [u8; 256] = [
-    0, 10, 0, 0, 4, 4, 7, 0, 4, 11, 7, 0, 4, 4, 7, 0,
-    0, 10, 0, 0, 4, 4, 7, 0, 0, 11, 7, 0, 4, 4, 7, 0,
-    0, 10, 16, 0, 4, 4, 7, 0, 0, 11, 16, 0, 4, 4, 7, 4,
-    0, 10, 13, 0, 11, 11, 7, 4, 0, 11, 0, 0, 4, 4, 7, 4,
+    0, 10, 0, 6, 4, 4, 7, 0, 4, 11, 7, 0, 4, 4, 7, 0,
+    0, 10, 0, 6, 4, 4, 7, 0, 0, 11, 7, 0, 4, 4, 7, 0,
+    0, 10, 16, 6, 4, 4, 7, 0, 0, 11, 16, 0, 4, 4, 7, 4,
+    0, 10, 13, 6, 11, 11, 7, 4, 0, 11, 0, 0, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -1754,6 +1754,27 @@ impl CPU {
                 let reg = self.sp;
                 let r = self.add_16(self.registers.get_hl(), reg);
                 self.registers.set_hl(r);
+            },
+
+            // INC ss
+            0x03 => {
+                let r = self.registers.get_bc().wrapping_add(1);
+                self.registers.set_bc(r);
+            },
+
+            0x13 => {
+                let r = self.registers.get_de().wrapping_add(1);
+                self.registers.set_de(r);
+            },
+
+            0x23 => {
+                let r = self.registers.get_hl().wrapping_add(1);
+                self.registers.set_hl(r);
+            },
+
+            0x33 => {
+                let r = self.sp.wrapping_add(1);
+                self.sp = r;
             },
 
             _ => {},

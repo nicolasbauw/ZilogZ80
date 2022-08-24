@@ -1420,7 +1420,7 @@ fn ld_d() {
     }
 
     #[test]
-    fn inc_hl() {
+    fn inc_c_hl() {
         let mut c = CPU::new();
         c.bus.write_byte(0x0000, 0x34);
         c.bus.write_byte(0x0001, 0x34);
@@ -1829,4 +1829,13 @@ fn ld_d() {
         assert_eq!(c.execute(), 15);
         assert_eq!(c.iy, 0x8888);
         assert_eq!(c.pc, 2);
+    }
+
+    #[test]
+    fn inc_hl() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x23);
+        c.registers.set_hl(0x1000);
+        assert_eq!(c.execute(), 6);
+        assert_eq!(c.pc, 1);
     }
