@@ -1894,3 +1894,49 @@ fn ld_d() {
         assert_eq!(c.pc, 2);
         assert_eq!(c.iy, 0x2005);
     }
+
+    #[test]
+    fn rlca() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x07);
+        c.registers.a = 0b10001000;
+        assert_eq!(c.execute(), 4);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.a, 0b00010001);
+        assert_eq!(c.registers.flags.c, true);
+    }
+
+    #[test]
+    fn rla() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x17);
+        c.registers.a = 0b01110110;
+        c.registers.flags.c = true;
+        assert_eq!(c.execute(), 4);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.a, 0b11101101);
+        assert_eq!(c.registers.flags.c, false);
+    }
+
+    #[test]
+    fn rrca() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x0F);
+        c.registers.a = 0b00010001;
+        assert_eq!(c.execute(), 4);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.a, 0b10001000);
+        assert_eq!(c.registers.flags.c, true);
+    }
+
+    #[test]
+    fn rra() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0x1F);
+        c.registers.a = 0b11100001;
+        c.registers.flags.c = false;
+        assert_eq!(c.execute(), 4);
+        assert_eq!(c.pc, 1);
+        assert_eq!(c.registers.a, 0b01110000);
+        assert_eq!(c.registers.flags.c, true);
+    }

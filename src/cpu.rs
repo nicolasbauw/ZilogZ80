@@ -1,9 +1,10 @@
 use crate::registers::Registers;
 use crate::memory::AddressBus;
+use crate::bit::get_bit;
 
 const CYCLES: [u8; 256] = [
-    0, 10, 0, 6, 4, 4, 7, 0, 4, 11, 7, 6, 4, 4, 7, 0,
-    0, 10, 0, 6, 4, 4, 7, 0, 0, 11, 7, 6, 4, 4, 7, 0,
+    0, 10, 0, 6, 4, 4, 7, 4, 4, 11, 7, 6, 4, 4, 7, 4,
+    0, 10, 0, 6, 4, 4, 7, 4, 0, 11, 7, 6, 4, 4, 7, 4,
     0, 10, 16, 6, 4, 4, 7, 0, 0, 11, 16, 6, 4, 4, 7, 4,
     0, 10, 13, 6, 11, 11, 7, 4, 0, 11, 0, 6, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -371,6 +372,46 @@ impl CPU {
         self.registers.flags.p = {
             let r = ((h as i16).overflowing_sub(n as i16)).0.overflowing_sub(c as i16);
             r.1
+        }
+    }
+
+    // Rotate accumulator left
+    fn rlca(&mut self) {
+        self.registers.flags.c = get_bit(self.registers.a, 7);
+        self.registers.a = (self.registers.a << 1) | u8::from(self.registers.flags.c);
+        self.registers.flags.h = false;
+        self.registers.flags.n = false;
+    }
+
+    // Rotate accumulator right
+    fn rrca(&mut self) {
+        self.registers.flags.c = get_bit(self.registers.a, 0);
+        self.registers.a = if self.registers.flags.c {0x80 | (self.registers.a >> 1) } else { self.registers.a >> 1 };
+        self.registers.flags.h = false;
+        self.registers.flags.n = false;
+    }
+
+    // RAL Rotate accumulator left through carry
+    fn rla(&mut self) {
+        let c = self.registers.flags.c;
+        self.registers.flags.c = get_bit(self.registers.a, 7);
+        self.registers.flags.h = false;
+        self.registers.flags.n = false;
+        self.registers.a = match c {
+            true => (self.registers.a << 1) | 0x01,
+            false => self.registers.a << 1
+        }
+    }
+    
+    // RAR Rotate accumulator right through carry
+    fn rra(&mut self) {
+        let c = self.registers.flags.c;
+        self.registers.flags.c = get_bit(self.registers.a, 0);
+        self.registers.flags.h = false;
+        self.registers.flags.n = false;
+        self.registers.a = match c {
+            true => (self.registers.a >> 1) | 0x80,
+            false => self.registers.a >> 1
         }
     }
 
@@ -1821,6 +1862,19 @@ impl CPU {
                 let r = self.sp.wrapping_sub(1);
                 self.sp = r;
             },
+
+            // Rotate and Shift Group
+            // RLCA
+            0x07 => self.rlca(),
+
+            // RLA
+            0x17 => self.rla(),
+
+            // RRCA
+            0x0F => self.rrca(),
+
+            // RRA
+            0x1F => self.rra(),
 
             _ => {},
         }
