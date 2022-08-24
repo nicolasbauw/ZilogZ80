@@ -2,10 +2,10 @@ use crate::registers::Registers;
 use crate::memory::AddressBus;
 
 const CYCLES: [u8; 256] = [
-    0, 10, 0, 6, 4, 4, 7, 0, 4, 11, 7, 0, 4, 4, 7, 0,
-    0, 10, 0, 6, 4, 4, 7, 0, 0, 11, 7, 0, 4, 4, 7, 0,
-    0, 10, 16, 6, 4, 4, 7, 0, 0, 11, 16, 0, 4, 4, 7, 4,
-    0, 10, 13, 6, 11, 11, 7, 4, 0, 11, 0, 0, 4, 4, 7, 4,
+    0, 10, 0, 6, 4, 4, 7, 0, 4, 11, 7, 6, 4, 4, 7, 0,
+    0, 10, 0, 6, 4, 4, 7, 0, 0, 11, 7, 6, 4, 4, 7, 0,
+    0, 10, 16, 6, 4, 4, 7, 0, 0, 11, 16, 6, 4, 4, 7, 4,
+    0, 10, 13, 6, 11, 11, 7, 4, 0, 11, 0, 6, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -23,7 +23,7 @@ const CYCLES: [u8; 256] = [
 const CYCLES_DD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0,
-    0, 14, 20, 0, 0, 0, 0, 0, 0, 15, 20, 0, 0, 0, 0, 0,
+    0, 14, 20, 10, 0, 0, 0, 0, 0, 15, 20, 10, 0, 0, 0, 0,
     0, 0, 0, 0, 23, 23, 19, 0, 0, 15, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
@@ -42,7 +42,7 @@ const CYCLES_DD: [u8; 256] = [
 const CYCLES_FD: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0,
-    0, 14, 20, 0, 0, 0, 0, 0, 0, 15, 20, 0, 0, 0, 0, 0,
+    0, 14, 20, 10, 0, 0, 0, 0, 0, 15, 20, 10, 0, 0, 0, 0,
     0, 0, 0, 0, 23, 23, 19, 0, 0, 15, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
     0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 19, 0,
@@ -1166,19 +1166,42 @@ impl CPU {
                 let r = self.add_16(self.iy, reg);
                 self.iy = r;
             },
+
             0xFD19 => {                                                     // ADD IY,DE
                 let reg = self.registers.get_de();
                 let r = self.add_16(self.iy, reg);
                 self.iy = r;
             },
+
             0xFD29 => {                                                     // ADD IY,IY
                 let reg = self.ix;
                 let r = self.add_16(self.iy, reg);
                 self.iy = r;
             },
+
             0xFD39 => {                                                     // ADD IY,SP
                 let reg = self.sp;
                 let r = self.add_16(self.iy, reg);
+                self.iy = r;
+            },
+
+            0xDD23 => {                                                     // INC IX
+                let r = self.ix.wrapping_add(1);
+                self.ix = r;
+            },
+
+            0xFD23 => {                                                     // INC IY
+                let r = self.iy.wrapping_add(1);
+                self.iy = r;
+            },
+
+            0xDD2B => {                                                     // DEC IX
+                let r = self.ix.wrapping_sub(1);
+                self.ix = r;
+            },
+
+            0xFD2B => {                                                     // DEC IY
+                let r = self.iy.wrapping_sub(1);
                 self.iy = r;
             },
 
@@ -1193,7 +1216,8 @@ impl CPU {
             0xED4A | 0xED5A | 0xED6A | 0xED7A |
             0xED42 | 0xED52 | 0xED62 | 0xED72 |
             0xDD09 | 0xDD19 | 0xDD29 | 0xDD39 |
-            0xFD09 | 0xFD19 | 0xFD29 | 0xFD39 => self.pc += 2,
+            0xFD09 | 0xFD19 | 0xFD29 | 0xFD39 |
+            0xDD23 | 0xFD23 | 0xDD2B | 0xFD2B => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
@@ -1757,23 +1781,44 @@ impl CPU {
             },
 
             // INC ss
-            0x03 => {
+            0x03 => {                                                       // INC BC
                 let r = self.registers.get_bc().wrapping_add(1);
                 self.registers.set_bc(r);
             },
 
-            0x13 => {
+            0x13 => {                                                       // INC DE
                 let r = self.registers.get_de().wrapping_add(1);
                 self.registers.set_de(r);
             },
 
-            0x23 => {
+            0x23 => {                                                       // INC HL
                 let r = self.registers.get_hl().wrapping_add(1);
                 self.registers.set_hl(r);
             },
 
-            0x33 => {
+            0x33 => {                                                       // INC SP
                 let r = self.sp.wrapping_add(1);
+                self.sp = r;
+            },
+
+            // DEC ss
+            0x0B => {                                                       // DEC BC
+                let r = self.registers.get_bc().wrapping_sub(1);
+                self.registers.set_bc(r);
+            },
+
+            0x1B => {                                                       // DEC DE
+                let r = self.registers.get_de().wrapping_sub(1);
+                self.registers.set_de(r);
+            },
+
+            0x2B => {                                                       // DEC HL
+                let r = self.registers.get_hl().wrapping_sub(1);
+                self.registers.set_hl(r);
+            },
+
+            0x3B => {                                                       // DEC SP
+                let r = self.sp.wrapping_sub(1);
                 self.sp = r;
             },
 
