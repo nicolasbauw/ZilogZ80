@@ -78,6 +78,25 @@ const CYCLES_ED: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 
+const CYCLES_CB: [u8; 256] = [
+    8, 8, 8, 8, 8, 8, 15, 8, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
+
 // Check addition overflow
 fn check_add_overflow(n1: u8, n2: u8) -> bool {
     let r = (n1 as i8).overflowing_add(n2 as i8);
@@ -424,7 +443,7 @@ impl CPU {
         let opcode = self.bus.read_byte(self.pc);
 
         match opcode {
-            0xDD | 0xFD | 0xED => {
+            0xDD | 0xFD | 0xED | 0xCB => {
                 let opcode_prefixed = self.bus.read_le_word(self.pc);
                 return self.execute_prefixed(opcode_prefixed)
                 },
@@ -437,6 +456,7 @@ impl CPU {
                 0xDD00 => CYCLES_DD[(opcode & 0x00FF) as usize].into(),
                 0xFD00 => CYCLES_FD[(opcode & 0x00FF) as usize].into(),
                 0xED00 => CYCLES_ED[(opcode & 0x00FF) as usize].into(),
+                0xCB00 => CYCLES_CB[(opcode & 0x00FF) as usize].into(),
                 _ => 0
         };
 
@@ -1250,6 +1270,48 @@ impl CPU {
                 self.iy = r;
             },
 
+            // Rotate and Shift Group
+            // RLD r
+            0xCB00 => {                                                       // RLC B
+                let r = self.rlc(self.registers.b);
+                self.registers.b = r;
+            },
+
+            0xCB01 => {                                                       // RLC C
+                let r = self.rlc(self.registers.c);
+                self.registers.c = r;
+            },
+
+            0xCB02 => {                                                       // RLC D
+                let r = self.rlc(self.registers.d);
+                self.registers.d = r;
+            },
+
+            0xCB03 => {                                                       // RLC E
+                let r = self.rlc(self.registers.e);
+                self.registers.e = r;
+            },
+
+            0xCB04 => {                                                       // RLC H
+                let r = self.rlc(self.registers.h);
+                self.registers.h = r;
+            },
+
+            0xCB05 => {                                                       // RLC L
+                let r = self.rlc(self.registers.l);
+                self.registers.l = r;
+            },
+
+            0xCB06 => {                                                       // RLC (HL)
+                let addr = self.registers.get_hl();
+                let r = self.rlc(self.bus.read_byte(addr));
+                self.bus.write_byte(addr, r);
+            },
+            0xCB07 => {                                                       // RLC A
+                let r = self.rlc(self.registers.a);
+                self.registers.a = r;
+            },
+
             _ => {}
         }
 
@@ -1262,7 +1324,9 @@ impl CPU {
             0xED42 | 0xED52 | 0xED62 | 0xED72 |
             0xDD09 | 0xDD19 | 0xDD29 | 0xDD39 |
             0xFD09 | 0xFD19 | 0xFD29 | 0xFD39 |
-            0xDD23 | 0xFD23 | 0xDD2B | 0xFD2B => self.pc += 2,
+            0xDD23 | 0xFD23 | 0xDD2B | 0xFD2B |
+            0xCB00 | 0xCB01 | 0xCB02 | 0xCB03 | 0xCB04 | 0xCB05 |
+            0xCB06 | 0xCB07 => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |

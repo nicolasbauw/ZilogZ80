@@ -1940,3 +1940,28 @@ fn ld_d() {
         assert_eq!(c.registers.a, 0b01110000);
         assert_eq!(c.registers.flags.c, true);
     }
+
+    #[test]
+    fn rlc_a() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xCB);
+        c.bus.write_byte(0x0001, 0x07);
+        c.registers.a = 0b10001000;
+        assert_eq!(c.execute(), 8);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.a, 0b00010001);
+        assert_eq!(c.registers.flags.c, true);
+    }
+
+    #[test]
+    fn rlc_hl() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xCB);
+        c.bus.write_byte(0x0001, 0x06);
+        c.bus.write_byte(0x2828, 0b10001000);
+        c.registers.set_hl(0x2828);
+        assert_eq!(c.execute(), 15);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.bus.read_byte(0x2828), 0b00010001);
+        assert_eq!(c.registers.flags.c, true);
+    }
