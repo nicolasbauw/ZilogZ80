@@ -2050,3 +2050,15 @@ fn ld_d() {
         c.bus.write_byte(0x0003, 0x16);
         assert_eq!(c.bus.read_le_dword(0), 0xFDCB0216);
     }
+
+    #[test]
+    fn rrc_a() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xCB);
+        c.bus.write_byte(0x0000, 0x0F);
+        c.registers.a = 0b00110001;
+        assert_eq!(c.execute(), 8);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.a, 0b10011000);
+        assert_eq!(c.registers.flags.c, true);
+    }

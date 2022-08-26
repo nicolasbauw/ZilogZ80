@@ -1440,6 +1440,48 @@ impl CPU {
                 self.registers.a = r;
             },
 
+            // RRC r
+            0xCB08 => {                                                             // RRC B
+                let r = self.rrc(self.registers.b);
+                self.registers.b = r;
+            },
+
+            0xCB09 => {                                                             // RRC C
+                let r = self.rrc(self.registers.c);
+                self.registers.c = r;
+            },
+
+            0xCB0A => {                                                             // RRC D
+                let r = self.rrc(self.registers.d);
+                self.registers.d = r;
+            },
+
+            0xCB0B => {                                                             // RRC E
+                let r = self.rrc(self.registers.e);
+                self.registers.e = r;
+            },
+
+            0xCB0C => {                                                             // RRC H
+                let r = self.rrc(self.registers.h);
+                self.registers.h = r;
+            },
+
+            0xCB0D => {                                                             // RRC L
+                let r = self.rrc(self.registers.l);
+                self.registers.l = r;
+            },
+
+            0xCB0E => {                                                             // RRC (HL)
+                let addr = self.registers.get_hl();
+                let r = self.rrc(self.bus.read_byte(addr));
+                self.bus.write_byte(addr, r);
+            },
+
+            0xCB0F => {                                                             // RRC A
+                let r = self.rrc(self.registers.a);
+                self.registers.a = r;
+            },
+
             _ => {}
         }
 
