@@ -2055,7 +2055,7 @@ fn ld_d() {
     fn rrc_a() {
         let mut c = CPU::new();
         c.bus.write_byte(0x0000, 0xCB);
-        c.bus.write_byte(0x0000, 0x0F);
+        c.bus.write_byte(0x0001, 0x0F);
         c.registers.a = 0b00110001;
         assert_eq!(c.execute(), 8);
         assert_eq!(c.pc, 2);

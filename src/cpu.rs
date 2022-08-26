@@ -79,7 +79,7 @@ const CYCLES_ED: [u8; 256] = [
 ];
 
 const CYCLES_CB: [u8; 256] = [
-    8, 8, 8, 8, 8, 8, 15, 8, 0, 0, 0, 0, 0, 0, 0, 0,
+    8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
     8, 8, 8, 8, 8, 8, 15, 8, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1497,7 +1497,8 @@ impl CPU {
             0xDD23 | 0xFD23 | 0xDD2B | 0xFD2B |
             0xCB00 | 0xCB01 | 0xCB02 | 0xCB03 | 0xCB04 | 0xCB05 |
             0xCB06 | 0xCB07 | 0xCB10 | 0xCB11 | 0xCB12 | 0xCB13 |
-            0xCB14 | 0xCB15 | 0xCB16 | 0xCB17=> self.pc += 2,
+            0xCB14 | 0xCB15 | 0xCB16 | 0xCB17 | 0xCB08 | 0xCB09 |
+            0xCB0A | 0xCB0B | 0xCB0C | 0xCB0D | 0xCB0E | 0xCB0F => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
