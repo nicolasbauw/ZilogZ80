@@ -39,6 +39,14 @@ impl AddressBus {
         u16::from(self.address_space[usize::from(address)]) << 8 | (u16::from(self.address_space[usize::from(address + 1)]))
     }
 
+    // Reads a dword stored in memory in little endian byte order, returns this dword in LE byte order
+    pub fn read_le_dword(&self, address: u16) -> u32 {
+        u32::from(self.address_space[usize::from(address)]) << 24 |
+        u32::from(self.address_space[usize::from(address + 1)]) << 16 |
+        u32::from(self.address_space[usize::from(address + 2)]) << 8 |
+        u32::from(self.address_space[usize::from(address + 3)])
+    }
+
     /// Writes a word to memory in little endian byte order
     pub fn write_word(&mut self, address: u16, data: u16) {
         // if rom space is declared, and write operation is requested in rom area : we exit
