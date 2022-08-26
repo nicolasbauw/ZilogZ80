@@ -452,7 +452,7 @@ impl CPU {
     }
 
     fn execute_prefixed(&mut self, opcode: u16) -> u32 {
-        let cycles = match opcode & 0xFF00 {
+        let mut cycles = match opcode & 0xFF00 {
                 0xDD00 => CYCLES_DD[(opcode & 0x00FF) as usize].into(),
                 0xFD00 => CYCLES_FD[(opcode & 0x00FF) as usize].into(),
                 0xED00 => CYCLES_ED[(opcode & 0x00FF) as usize].into(),
@@ -1272,45 +1272,84 @@ impl CPU {
 
             // Rotate and Shift Group
             // RLD r
-            0xCB00 => {                                                       // RLC B
+            0xCB00 => {                                                         // RLC B
                 let r = self.rlc(self.registers.b);
                 self.registers.b = r;
             },
 
-            0xCB01 => {                                                       // RLC C
+            0xCB01 => {                                                         // RLC C
                 let r = self.rlc(self.registers.c);
                 self.registers.c = r;
             },
 
-            0xCB02 => {                                                       // RLC D
+            0xCB02 => {                                                         // RLC D
                 let r = self.rlc(self.registers.d);
                 self.registers.d = r;
             },
 
-            0xCB03 => {                                                       // RLC E
+            0xCB03 => {                                                         // RLC E
                 let r = self.rlc(self.registers.e);
                 self.registers.e = r;
             },
 
-            0xCB04 => {                                                       // RLC H
+            0xCB04 => {                                                         // RLC H
                 let r = self.rlc(self.registers.h);
                 self.registers.h = r;
             },
 
-            0xCB05 => {                                                       // RLC L
+            0xCB05 => {                                                         // RLC L
                 let r = self.rlc(self.registers.l);
                 self.registers.l = r;
             },
 
-            0xCB06 => {                                                       // RLC (HL)
+            0xCB06 => {                                                         // RLC (HL)
                 let addr = self.registers.get_hl();
                 let r = self.rlc(self.bus.read_byte(addr));
                 self.bus.write_byte(addr, r);
             },
-            0xCB07 => {                                                       // RLC A
+
+            0xCB07 => {                                                         // RLC A
                 let r = self.rlc(self.registers.a);
                 self.registers.a = r;
             },
+
+            0xDDCB => {                                                         // RLC (IX+d)
+                if self.bus.read_byte(self.pc + 3) == 06 {
+                    let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                    if displacement < 0 {
+                        let m = self.ix - ( displacement as u16 );
+                        let d = self.bus.read_byte(m);
+                        let r = self.rlc(d);
+                        self.bus.write_byte(m, r);
+                    }
+                    else {
+                        let m =self.ix + ( displacement as u16 );
+                        let d = self.bus.read_byte(m);
+                        let r = self.rlc(d);
+                        self.bus.write_byte(m, r);
+                    }
+                    cycles = 23;
+                }
+            }
+
+            0xFDCB => {                                                         // RLC (IY+d)
+                if self.bus.read_byte(self.pc + 3) == 06 {
+                    let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                    if displacement < 0 {
+                        let m = self.iy - ( displacement as u16 );
+                        let d = self.bus.read_byte(m);
+                        let r = self.rlc(d);
+                        self.bus.write_byte(m, r);
+                    }
+                    else {
+                        let m =self.iy + ( displacement as u16 );
+                        let d = self.bus.read_byte(m);
+                        let r = self.rlc(d);
+                        self.bus.write_byte(m, r);
+                    }
+                    cycles = 23;
+                }
+            }
 
             _ => {}
         }
@@ -1340,7 +1379,7 @@ impl CPU {
             0xDD36 | 0xFD36 | 0xDD21 | 0xFD21 | 0xED4B | 0xED5B |
             0xED6B | 0xED7B | 0xDD2A | 0xFD2A |
             0xED43 | 0xED53 | 0xED63 | 0xED73 |
-            0xDD22 | 0xFD22 => self.pc += 4,
+            0xDD22 | 0xFD22 | 0xDDCB | 0xFDCB => self.pc += 4,
             _ => self.pc +=1,
         }
 
