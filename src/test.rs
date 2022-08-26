@@ -2003,7 +2003,7 @@ fn ld_d() {
         c.bus.write_byte(0x0001, 0x12);
         c.registers.d = 0b10001111;
         c.registers.flags.c = false;
-        assert_eq!(c.execute(), 2);
+        assert_eq!(c.execute(), 8);
         assert_eq!(c.pc, 2);
         assert_eq!(c.registers.d, 0b00011110);
         assert_eq!(c.registers.flags.c, true);
