@@ -412,7 +412,7 @@ impl CPU {
         r
     }
 
-    // RAL Rotate accumulator left through carry
+    // Rotate accumulator left through carry
     fn rl(&mut self, n: u8) -> u8 {
         let c = self.registers.flags.c;
         self.registers.flags.c = get_bit(n, 7);
@@ -425,7 +425,7 @@ impl CPU {
         r
     }
     
-    // RAR Rotate accumulator right through carry
+    // Rotate accumulator right through carry
     fn rr(&mut self, n: u8) -> u8 {
         let c = self.registers.flags.c;
         self.registers.flags.c = get_bit(n, 0);
@@ -1168,152 +1168,152 @@ impl CPU {
 
             //16-Bit Arithmetic Group
             // ADC HL,ss
-            0xED4A => {                                                     // ADC HL,BC
+            0xED4A => {                                                             // ADC HL,BC
                 let reg = self.registers.get_bc();
                 self.addc_16(reg);
             },
-            0xED5A => {                                                     // ADC HL,DE
+            0xED5A => {                                                             // ADC HL,DE
                 let reg = self.registers.get_de();
                 self.addc_16(reg);
             },
-            0xED6A => {                                                     // ADC HL,HL
+            0xED6A => {                                                             // ADC HL,HL
                 let reg = self.registers.get_hl();
                 self.addc_16(reg);
             },
-            0xED7A => {                                                     // ADC HL,SP
+            0xED7A => {                                                             // ADC HL,SP
                 let reg = self.sp;
                 self.addc_16(reg);
             },
 
             // SBC HL,ss
-            0xED42 => {                                                     // SBC HL,BC
+            0xED42 => {                                                             // SBC HL,BC
                 let reg = self.registers.get_bc();
                 self.subc_16(reg);
             },
-            0xED52 => {                                                     // SBC HL,DE
+            0xED52 => {                                                             // SBC HL,DE
                 let reg = self.registers.get_de();
                 self.subc_16(reg);
             },
-            0xED62 => {                                                     // SBC HL,HL
+            0xED62 => {                                                             // SBC HL,HL
                 let reg = self.registers.get_hl();
                 self.subc_16(reg);
             },
-            0xED72 => {                                                     // SBC HL,SP
+            0xED72 => {                                                             // SBC HL,SP
                 let reg = self.sp;
                 self.subc_16(reg);
             },
 
             // ADD IX,pp
-            0xDD09 => {                                                     // ADD IX,BC
+            0xDD09 => {                                                             // ADD IX,BC
                 let reg = self.registers.get_bc();
                 let r = self.add_16(self.ix, reg);
                 self.ix = r;
             },
-            0xDD19 => {                                                     // ADD IX,DE
+            0xDD19 => {                                                             // ADD IX,DE
                 let reg = self.registers.get_de();
                 let r = self.add_16(self.ix, reg);
                 self.ix = r;
             },
-            0xDD29 => {                                                     // ADD IX,IX
+            0xDD29 => {                                                             // ADD IX,IX
                 let reg = self.ix;
                 let r = self.add_16(self.ix, reg);
                 self.ix = r;
             },
-            0xDD39 => {                                                     // ADD IX,SP
+            0xDD39 => {                                                             // ADD IX,SP
                 let reg = self.sp;
                 let r = self.add_16(self.ix, reg);
                 self.ix = r;
             },
 
             // ADD IY,pp
-            0xFD09 => {                                                     // ADD IY,BC
+            0xFD09 => {                                                             // ADD IY,BC
                 let reg = self.registers.get_bc();
                 let r = self.add_16(self.iy, reg);
                 self.iy = r;
             },
 
-            0xFD19 => {                                                     // ADD IY,DE
+            0xFD19 => {                                                             // ADD IY,DE
                 let reg = self.registers.get_de();
                 let r = self.add_16(self.iy, reg);
                 self.iy = r;
             },
 
-            0xFD29 => {                                                     // ADD IY,IY
+            0xFD29 => {                                                             // ADD IY,IY
                 let reg = self.ix;
                 let r = self.add_16(self.iy, reg);
                 self.iy = r;
             },
 
-            0xFD39 => {                                                     // ADD IY,SP
+            0xFD39 => {                                                             // ADD IY,SP
                 let reg = self.sp;
                 let r = self.add_16(self.iy, reg);
                 self.iy = r;
             },
 
-            0xDD23 => {                                                     // INC IX
+            0xDD23 => {                                                             // INC IX
                 let r = self.ix.wrapping_add(1);
                 self.ix = r;
             },
 
-            0xFD23 => {                                                     // INC IY
+            0xFD23 => {                                                             // INC IY
                 let r = self.iy.wrapping_add(1);
                 self.iy = r;
             },
 
-            0xDD2B => {                                                     // DEC IX
+            0xDD2B => {                                                             // DEC IX
                 let r = self.ix.wrapping_sub(1);
                 self.ix = r;
             },
 
-            0xFD2B => {                                                     // DEC IY
+            0xFD2B => {                                                             // DEC IY
                 let r = self.iy.wrapping_sub(1);
                 self.iy = r;
             },
 
             // Rotate and Shift Group
-            // RLD r
-            0xCB00 => {                                                         // RLC B
+            // RLC r
+            0xCB00 => {                                                             // RLC B
                 let r = self.rlc(self.registers.b);
                 self.registers.b = r;
             },
 
-            0xCB01 => {                                                         // RLC C
+            0xCB01 => {                                                             // RLC C
                 let r = self.rlc(self.registers.c);
                 self.registers.c = r;
             },
 
-            0xCB02 => {                                                         // RLC D
+            0xCB02 => {                                                             // RLC D
                 let r = self.rlc(self.registers.d);
                 self.registers.d = r;
             },
 
-            0xCB03 => {                                                         // RLC E
+            0xCB03 => {                                                             // RLC E
                 let r = self.rlc(self.registers.e);
                 self.registers.e = r;
             },
 
-            0xCB04 => {                                                         // RLC H
+            0xCB04 => {                                                             // RLC H
                 let r = self.rlc(self.registers.h);
                 self.registers.h = r;
             },
 
-            0xCB05 => {                                                         // RLC L
+            0xCB05 => {                                                             // RLC L
                 let r = self.rlc(self.registers.l);
                 self.registers.l = r;
             },
 
-            0xCB06 => {                                                         // RLC (HL)
+            0xCB06 => {                                                             // RLC (HL)
                 let addr = self.registers.get_hl();
                 let r = self.rlc(self.bus.read_byte(addr));
                 self.bus.write_byte(addr, r);
             },
 
-            0xCB07 => {                                                         // RLC A
+            0xCB07 => {                                                             // RLC A
                 let r = self.rlc(self.registers.a);
                 self.registers.a = r;
             },
 
-            0xDDCB => {                                                         // RLC (IX+d)
+            0xDDCB => {                                                             // RLC (IX+d)
                 if self.bus.read_byte(self.pc + 3) == 06 {
                     let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
                     if displacement < 0 {
@@ -1332,7 +1332,7 @@ impl CPU {
                 }
             }
 
-            0xFDCB => {                                                         // RLC (IY+d)
+            0xFDCB => {                                                             // RLC (IY+d)
                 if self.bus.read_byte(self.pc + 3) == 06 {
                     let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
                     if displacement < 0 {
