@@ -80,7 +80,7 @@ const CYCLES_ED: [u8; 256] = [
 
 const CYCLES_CB: [u8; 256] = [
     8, 8, 8, 8, 8, 8, 15, 8, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    2, 2, 2, 2, 2, 2, 4, 2, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1330,7 +1330,7 @@ impl CPU {
                     }
                     cycles = 23;
                 }
-            }
+            },
 
             0xFDCB => {                                                             // RLC (IY+d)
                 if self.bus.read_byte(self.pc + 3) == 06 {
@@ -1349,7 +1349,49 @@ impl CPU {
                     }
                     cycles = 23;
                 }
-            }
+            },
+
+            // RL r
+            0xCB10 => {                                                             // RL B
+                let r = self.rl(self.registers.b);
+                self.registers.b = r;
+            },
+
+            0xCB11 => {                                                             // RL C
+                let r = self.rl(self.registers.c);
+                self.registers.c = r;
+            },
+
+            0xCB12 => {                                                             // RL D
+                let r = self.rl(self.registers.d);
+                self.registers.d = r;
+            },
+
+            0xCB13 => {                                                             // RL E
+                let r = self.rl(self.registers.e);
+                self.registers.e = r;
+            },
+
+            0xCB14 => {                                                             // RL H
+                let r = self.rl(self.registers.h);
+                self.registers.h = r;
+            },
+
+            0xCB15 => {                                                             // RL L
+                let r = self.rl(self.registers.l);
+                self.registers.l = r;
+            },
+
+            0xCB16 => {                                                             // RL (HL)
+                let addr = self.registers.get_hl();
+                let r = self.rl(self.bus.read_byte(addr));
+                self.bus.write_byte(addr, r);
+            },
+
+            0xCB17 => {                                                             // RL A
+                let r = self.rl(self.registers.a);
+                self.registers.a = r;
+            },
 
             _ => {}
         }
@@ -1365,7 +1407,8 @@ impl CPU {
             0xFD09 | 0xFD19 | 0xFD29 | 0xFD39 |
             0xDD23 | 0xFD23 | 0xDD2B | 0xFD2B |
             0xCB00 | 0xCB01 | 0xCB02 | 0xCB03 | 0xCB04 | 0xCB05 |
-            0xCB06 | 0xCB07 => self.pc += 2,
+            0xCB06 | 0xCB07 | 0xCB10 | 0xCB11 | 0xCB12 | 0xCB13 |
+            0xCB14 | 0xCB15 | 0xCB16 | 0xCB17=> self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
