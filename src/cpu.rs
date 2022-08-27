@@ -394,7 +394,7 @@ impl CPU {
         }
     }
 
-    // Rotate accumulator left
+    // Rotate left
     fn rlc(&mut self, n: u8) -> u8 {
         self.registers.flags.c = get_bit(n, 7);
         let r = (n << 1) | u8::from(self.registers.flags.c);
@@ -403,7 +403,7 @@ impl CPU {
         r
     }
 
-    // Rotate accumulator right
+    // Rotate right
     fn rrc(&mut self, n: u8) -> u8 {
         self.registers.flags.c = get_bit(n, 0);
         let r = if self.registers.flags.c {0x80 | (n >> 1) } else { n >> 1 };
@@ -412,7 +412,7 @@ impl CPU {
         r
     }
 
-    // Rotate accumulator left through carry
+    // Rotate left through carry
     fn rl(&mut self, n: u8) -> u8 {
         let c = self.registers.flags.c;
         self.registers.flags.c = get_bit(n, 7);
@@ -425,7 +425,7 @@ impl CPU {
         r
     }
     
-    // Rotate accumulator right through carry
+    // Rotate right through carry
     fn rr(&mut self, n: u8) -> u8 {
         let c = self.registers.flags.c;
         self.registers.flags.c = get_bit(n, 0);
