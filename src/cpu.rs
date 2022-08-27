@@ -441,10 +441,9 @@ impl CPU {
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 0 };
 
-        let opcode = self.bus.read_byte(self.pc);
-        match opcode {
+        match self.bus.read_byte(self.pc) {
             0xDD | 0xFD | 0xED | 0xCB => return self.execute_2bytes(),
-            _ => return self.execute_1byte(opcode),
+            _ => return self.execute_1byte(),
         }
     }
 
@@ -1627,7 +1626,8 @@ impl CPU {
         cycles
     }
 
-    fn execute_1byte(&mut self, opcode: u8) -> u32 {
+    fn execute_1byte(&mut self) -> u32 {
+        let opcode = self.bus.read_byte(self.pc);
         let cycles = CYCLES[opcode as usize].into();
 
         match opcode {
