@@ -66,7 +66,7 @@ const CYCLES_ED: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 15, 20, 8, 0, 8, 9, 0, 0, 15, 20, 0, 0, 0, 9,
     0, 0, 15, 20, 0, 0, 8, 9, 0, 0, 15, 20, 0, 0, 8, 9,
-    0, 0, 15, 20, 0, 0, 0, 0, 0, 0, 15, 20, 0, 0, 0, 0,
+    0, 0, 15, 20, 0, 0, 0, 0, 0, 0, 15, 20, 0, 0, 0, 18,
     0, 0, 15, 20, 0, 0, 0, 0, 0, 0, 15, 20, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1854,6 +1854,21 @@ impl CPU {
                 let r = self.srl(self.registers.a);
                 self.registers.a = r;
             },
+
+            // RLD
+            0xED6F => {
+                let hl_contents = self.bus.read_byte(self.registers.get_hl());
+                let a_contents = self.registers.a;
+
+                let r = (self.registers.a & 0xF0) | ((((hl_contents & 0xF0) as i8) >> 4) as u8);
+                self.registers.a = r;
+                self.bus.write_byte(self.registers.get_hl(), (hl_contents << 4) | (a_contents & 0x0F));
+                self.registers.flags.s = (r as i8) < 0;
+                self.registers.flags.z = r == 0x00;
+                self.registers.flags.h = false;
+                self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
+                self.registers.flags.n = false;
+            }
 
             _ => {}
         }

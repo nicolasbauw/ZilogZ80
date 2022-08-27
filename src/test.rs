@@ -2211,3 +2211,16 @@ fn ld_d() {
         assert_eq!(c.registers.b, 0b01000111);
         assert_eq!(c.registers.flags.c, true);
     }
+
+    #[test]
+    fn rld() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0x6F);
+        c.bus.write_byte(0x5000, 0b00110001);
+        c.registers.set_hl(0x5000);
+        c.registers.a = 0b01111010;
+        assert_eq!(c.execute(), 18);
+        assert_eq!(c.registers.a, 0b01110011);
+        assert_eq!(c.bus.read_byte(0x5000), 0b00011010);
+    }
