@@ -405,7 +405,7 @@ impl CPU {
 
     // Rotate accumulator right
     fn rrc(&mut self, n: u8) -> u8 {
-        self.registers.flags.c = get_bit(self.registers.a, 0);
+        self.registers.flags.c = get_bit(n, 0);
         let r = if self.registers.flags.c {0x80 | (n >> 1) } else { n >> 1 };
         self.registers.flags.h = false;
         self.registers.flags.n = false;
@@ -455,41 +455,37 @@ impl CPU {
 
         match opcode & 0xFFFF00FF {
             0xDDCB0006 => {                                                           // RLC (IX+d)
-                if self.bus.read_byte(self.pc + 3) == 06 {
-                    let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
-                    if displacement < 0 {
-                        let m = self.ix - ( displacement as u16 );
-                        let d = self.bus.read_byte(m);
-                        let r = self.rlc(d);
-                        self.bus.write_byte(m, r);
-                    }
-                    else {
-                        let m =self.ix + ( displacement as u16 );
-                        let d = self.bus.read_byte(m);
-                        let r = self.rlc(d);
-                        self.bus.write_byte(m, r);
-                    }
-                    cycles = 23;
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let m = self.ix - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.rlc(d);
+                    self.bus.write_byte(m, r);
                 }
+                else {
+                    let m =self.ix + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.rlc(d);
+                    self.bus.write_byte(m, r);
+                }
+                cycles = 23;
             },
 
             0xFDCB0006 => {                                                           // RLC (IY+d)
-                if self.bus.read_byte(self.pc + 3) == 06 {
-                    let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
-                    if displacement < 0 {
-                        let m = self.iy - ( displacement as u16 );
-                        let d = self.bus.read_byte(m);
-                        let r = self.rlc(d);
-                        self.bus.write_byte(m, r);
-                    }
-                    else {
-                        let m =self.iy + ( displacement as u16 );
-                        let d = self.bus.read_byte(m);
-                        let r = self.rlc(d);
-                        self.bus.write_byte(m, r);
-                    }
-                    cycles = 23;
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let m = self.iy - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.rlc(d);
+                    self.bus.write_byte(m, r);
                 }
+                else {
+                    let m =self.iy + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.rlc(d);
+                    self.bus.write_byte(m, r);
+                }
+                cycles = 23;
             },
 
             0xDDCB0016 => {                                                           // RL (IX+d)
@@ -527,41 +523,37 @@ impl CPU {
             },
 
             0xDDCB000E => {                                                           // RRC (IX+d)
-                if self.bus.read_byte(self.pc + 3) == 06 {
-                    let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
-                    if displacement < 0 {
-                        let m = self.ix - ( displacement as u16 );
-                        let d = self.bus.read_byte(m);
-                        let r = self.rrc(d);
-                        self.bus.write_byte(m, r);
-                    }
-                    else {
-                        let m =self.ix + ( displacement as u16 );
-                        let d = self.bus.read_byte(m);
-                        let r = self.rrc(d);
-                        self.bus.write_byte(m, r);
-                    }
-                    cycles = 23;
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let m = self.ix - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.rrc(d);
+                    self.bus.write_byte(m, r);
                 }
+                else {
+                    let m =self.ix + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.rrc(d);
+                    self.bus.write_byte(m, r);
+                }
+                cycles = 23;
             },
 
             0xFDCB000E => {                                                           // RRC (IY+d)
-                if self.bus.read_byte(self.pc + 3) == 06 {
-                    let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
-                    if displacement < 0 {
-                        let m = self.iy - ( displacement as u16 );
-                        let d = self.bus.read_byte(m);
-                        let r = self.rrc(d);
-                        self.bus.write_byte(m, r);
-                    }
-                    else {
-                        let m =self.iy + ( displacement as u16 );
-                        let d = self.bus.read_byte(m);
-                        let r = self.rrc(d);
-                        self.bus.write_byte(m, r);
-                    }
-                    cycles = 23;
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let m = self.iy - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.rrc(d);
+                    self.bus.write_byte(m, r);
                 }
+                else {
+                    let m =self.iy + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.rrc(d);
+                    self.bus.write_byte(m, r);
+                }
+                cycles = 23;
             },
 
             _ => {}
