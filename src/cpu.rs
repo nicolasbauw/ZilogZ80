@@ -81,7 +81,7 @@ const CYCLES_ED: [u8; 256] = [
 const CYCLES_CB: [u8; 256] = [
     8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
     8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    8, 8, 8, 8, 8, 8, 15, 8, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1599,6 +1599,48 @@ impl CPU {
                 self.registers.a = r;
             },
 
+            // SLA r
+            0xCB20 => {                                                             // SLA B
+                let r = self.sla(self.registers.b);
+                self.registers.b = r;
+            },
+
+            0xCB21 => {                                                             // SLA C
+                let r = self.sla(self.registers.c);
+                self.registers.c = r;
+            },
+
+            0xCB22 => {                                                             // SLA D
+                let r = self.sla(self.registers.d);
+                self.registers.d = r;
+            },
+
+            0xCB23 => {                                                             // SLA E
+                let r = self.sla(self.registers.e);
+                self.registers.e = r;
+            },
+
+            0xCB24 => {                                                             // SLA H
+                let r = self.sla(self.registers.h);
+                self.registers.h = r;
+            },
+
+            0xCB25 => {                                                             // SLA L
+                let r = self.sla(self.registers.l);
+                self.registers.l = r;
+            },
+
+            0xCB26 => {                                                             // SLA (HL)
+                let addr = self.registers.get_hl();
+                let r = self.sla(self.bus.read_byte(addr));
+                self.bus.write_byte(addr, r);
+            },
+
+            0xCB27 => {                                                             // SLA A
+                let r = self.sla(self.registers.a);
+                self.registers.a = r;
+            },
+
             _ => {}
         }
 
@@ -1617,7 +1659,8 @@ impl CPU {
             0xCB14 | 0xCB15 | 0xCB16 | 0xCB17 | 0xCB08 | 0xCB09 |
             0xCB0A | 0xCB0B | 0xCB0C | 0xCB0D | 0xCB0E | 0xCB0F |
             0xCB18 | 0xCB19 | 0xCB1A | 0xCB1B | 0xCB1C | 0xCB1D |
-            0xCB1E | 0xCB1F=> self.pc += 2,
+            0xCB1E | 0xCB1F | 0xCB20 | 0xCB21 | 0xCB22 | 0xCB23 |
+            0xCB24 | 0xCB25 | 0xCB26 | 0xCB27 => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
