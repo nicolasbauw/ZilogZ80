@@ -438,6 +438,18 @@ impl CPU {
         r
     }
 
+    // Arithmetic shift left
+    fn sla(&mut self, n: u8) -> u8 {
+        let r = n << 1;
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.h = false;
+        self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
+        self.registers.flags.n = false;
+        self.registers.flags.c = get_bit(n, 7);
+        r
+    }
+
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 0 };
 
