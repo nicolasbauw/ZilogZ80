@@ -80,7 +80,7 @@ const CYCLES_ED: [u8; 256] = [
 
 const CYCLES_CB: [u8; 256] = [
     8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
-    8, 8, 8, 8, 8, 8, 15, 8, 0, 0, 0, 0, 0, 0, 0, 0,
+    8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1501,14 +1501,56 @@ impl CPU {
                 self.registers.l = r;
             },
 
-            0xCB0E => {                                                             // RRC (HL)
+            0xCB0E => {                                                             // RR (HL)
                 let addr = self.registers.get_hl();
                 let r = self.rrc(self.bus.read_byte(addr));
                 self.bus.write_byte(addr, r);
             },
 
-            0xCB0F => {                                                             // RRC A
+            0xCB0F => {                                                             // RR A
                 let r = self.rrc(self.registers.a);
+                self.registers.a = r;
+            },
+
+            // RR r
+            0xCB18 => {                                                             // RR B
+                let r = self.rr(self.registers.b);
+                self.registers.b = r;
+            },
+
+            0xCB19 => {                                                             // RR C
+                let r = self.rr(self.registers.c);
+                self.registers.c = r;
+            },
+
+            0xCB1A => {                                                             // RR D
+                let r = self.rr(self.registers.d);
+                self.registers.d = r;
+            },
+
+            0xCB1B => {                                                             // RR E
+                let r = self.rr(self.registers.e);
+                self.registers.e = r;
+            },
+
+            0xCB1C => {                                                             // RR H
+                let r = self.rr(self.registers.h);
+                self.registers.h = r;
+            },
+
+            0xCB1D => {                                                             // RR L
+                let r = self.rr(self.registers.l);
+                self.registers.l = r;
+            },
+
+            0xCB1E => {                                                             // RR (HL)
+                let addr = self.registers.get_hl();
+                let r = self.rr(self.bus.read_byte(addr));
+                self.bus.write_byte(addr, r);
+            },
+
+            0xCB1F => {                                                             // RR A
+                let r = self.rr(self.registers.a);
                 self.registers.a = r;
             },
 
@@ -1528,7 +1570,9 @@ impl CPU {
             0xCB00 | 0xCB01 | 0xCB02 | 0xCB03 | 0xCB04 | 0xCB05 |
             0xCB06 | 0xCB07 | 0xCB10 | 0xCB11 | 0xCB12 | 0xCB13 |
             0xCB14 | 0xCB15 | 0xCB16 | 0xCB17 | 0xCB08 | 0xCB09 |
-            0xCB0A | 0xCB0B | 0xCB0C | 0xCB0D | 0xCB0E | 0xCB0F => self.pc += 2,
+            0xCB0A | 0xCB0B | 0xCB0C | 0xCB0D | 0xCB0E | 0xCB0F |
+            0xCB18 | 0xCB19 | 0xCB1A | 0xCB1B | 0xCB1C | 0xCB1D |
+            0xCB1E | 0xCB1F=> self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |

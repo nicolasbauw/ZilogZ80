@@ -2094,3 +2094,16 @@ fn ld_d() {
         assert_eq!(c.bus.read_byte(0x1002), 0b10011000);
         assert_eq!(c.registers.flags.c, true);
     }
+
+    #[test]
+    fn rr_hl() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xCB);
+        c.bus.write_byte(0x0001, 0x1E);
+        c.bus.write_byte(0x4343, 0b11011101);
+        c.registers.set_hl(0x4343);
+        assert_eq!(c.execute(), 15);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.bus.read_byte(0x4343), 0b01101110);
+        assert_eq!(c.registers.flags.c, true);
+    }
