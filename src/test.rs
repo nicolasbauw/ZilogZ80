@@ -2199,3 +2199,15 @@ fn ld_d() {
         assert_eq!(c.bus.read_byte(0x1002), 0b11011100);
         assert_eq!(c.registers.flags.c, false);
     }
+
+    #[test]
+    fn srl_b() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xCB);
+        c.bus.write_byte(0x0001, 0x38);
+        c.registers.b = 0b10001111;
+        assert_eq!(c.execute(), 8);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.b, 0b01000111);
+        assert_eq!(c.registers.flags.c, true);
+    }

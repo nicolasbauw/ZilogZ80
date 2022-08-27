@@ -82,7 +82,7 @@ const CYCLES_CB: [u8; 256] = [
     8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
     8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
     8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 15, 8,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -464,6 +464,20 @@ impl CPU {
         r
     }
 
+    // Logical shift right
+    fn srl(&mut self, n: u8) -> u8 {
+        // https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators
+        // *** Arithmetic right shift on signed integer types, logical right shift on unsigned integer types.
+        let r = n >> 1;
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.h = false;
+        self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
+        self.registers.flags.n = false;
+        self.registers.flags.c = get_bit(n, 0);
+        r
+    }
+
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 0 };
 
@@ -678,6 +692,40 @@ impl CPU {
                     let m =self.iy + ( displacement as u16 );
                     let d = self.bus.read_byte(m);
                     let r = self.sra(d);
+                    self.bus.write_byte(m, r);
+                }
+                cycles = 23;
+            },
+
+            0xDDCB003E => {                                                           // SRL (IX+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let m = self.ix - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.srl(d);
+                    self.bus.write_byte(m, r);
+                }
+                else {
+                    let m =self.ix + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.srl(d);
+                    self.bus.write_byte(m, r);
+                }
+                cycles = 23;
+            },
+
+            0xFDCB003E => {                                                           // SRL (IY+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                if displacement < 0 {
+                    let m = self.iy - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.srl(d);
+                    self.bus.write_byte(m, r);
+                }
+                else {
+                    let m =self.iy + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.srl(d);
                     self.bus.write_byte(m, r);
                 }
                 cycles = 23;
@@ -1765,6 +1813,48 @@ impl CPU {
                 self.registers.a = r;
             },
 
+            // SRL r
+            0xCB38 => {                                                             // SRL B
+                let r = self.srl(self.registers.b);
+                self.registers.b = r;
+            },
+
+            0xCB39 => {                                                             // SRL C
+                let r = self.srl(self.registers.c);
+                self.registers.c = r;
+            },
+
+            0xCB3A => {                                                             // SRL D
+                let r = self.srl(self.registers.d);
+                self.registers.d = r;
+            },
+
+            0xCB3B => {                                                             // SRL E
+                let r = self.srl(self.registers.e);
+                self.registers.e = r;
+            },
+
+            0xCB3C => {                                                             // SRL H
+                let r = self.srl(self.registers.h);
+                self.registers.h = r;
+            },
+
+            0xCB3D => {                                                             // SRL L
+                let r = self.srl(self.registers.l);
+                self.registers.l = r;
+            },
+
+            0xCB3E => {                                                             // SRL (HL)
+                let addr = self.registers.get_hl();
+                let r = self.srl(self.bus.read_byte(addr));
+                self.bus.write_byte(addr, r);
+            },
+
+            0xCB3F => {                                                             // SRL A
+                let r = self.srl(self.registers.a);
+                self.registers.a = r;
+            },
+
             _ => {}
         }
 
@@ -1785,7 +1875,9 @@ impl CPU {
             0xCB18 | 0xCB19 | 0xCB1A | 0xCB1B | 0xCB1C | 0xCB1D |
             0xCB1E | 0xCB1F | 0xCB20 | 0xCB21 | 0xCB22 | 0xCB23 |
             0xCB24 | 0xCB25 | 0xCB26 | 0xCB27 | 0xCB28 | 0xCB29 | 
-            0xCB2A | 0xCB2B | 0xCB2C | 0xCB2D | 0xCB2E | 0xCB2F => self.pc += 2,
+            0xCB2A | 0xCB2B | 0xCB2C | 0xCB2D | 0xCB2E | 0xCB2F |
+            0xCB38 | 0xCB39 | 0xCB3A | 0xCB3B | 0xCB3C | 0xCB3D |
+            0xCB3E | 0xCB3F => self.pc += 2,
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |
