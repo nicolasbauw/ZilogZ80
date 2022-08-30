@@ -2239,3 +2239,16 @@ fn ld_d() {
         assert_eq!(c.registers.a, 0b10000000);
         assert_eq!(c.bus.read_byte(0x5000), 0b01000010);
     }
+
+    #[test]
+    fn bit_4_hl() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xCB);
+        c.bus.write_byte(0x0001, 0x66);
+        c.bus.write_byte(0x4444, 8);
+        c.registers.set_hl(0x4444);
+        assert_eq!(c.execute(), 12);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.flags.z, false);
+        assert_eq!(c.bus.read_byte(0x4444), 8);
+    }

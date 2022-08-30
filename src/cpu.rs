@@ -83,10 +83,10 @@ const CYCLES_CB: [u8; 256] = [
     8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
     8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
     0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 15, 8,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+    12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+    12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+    12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -476,6 +476,27 @@ impl CPU {
         self.registers.flags.n = false;
         self.registers.flags.c = get_bit(n, 0);
         r
+    }
+
+    // Bit test
+    fn bit(&mut self, operand: u8) {
+        let bit = ((operand & 0x38) >> 3) as usize;
+        let register = operand & 0x07;
+        let r = match register {
+            0 => get_bit(self.registers.b, bit),
+            1 => get_bit(self.registers.c, bit),
+            2 => get_bit(self.registers.d, bit),
+            3 => get_bit(self.registers.e, bit),
+            4 => get_bit(self.registers.h, bit),
+            5 => get_bit(self.registers.l, bit),
+            6 => get_bit(self.bus.read_byte(self.registers.get_hl()), bit),
+            7 => get_bit(self.registers.a, bit),
+            _ => false
+        };
+        // Z is set if specified bit is 0; otherwise, it is reset. The get_bit function returns the opposite : true is bit is set.
+        self.registers.flags.z = r == true;
+        self.registers.flags.h = true;
+        self.registers.flags.n = false;
     }
 
     pub fn execute(&mut self) -> u32 {
@@ -1884,6 +1905,10 @@ impl CPU {
                 self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
                 self.registers.flags.n = false;
             }
+
+            // Bit Set, Reset, and Test Group
+            // BIT b,r
+            0xCB40 ..= 0xCB7F => self.bit(self.bus.read_byte(self.pc + 1)),
 
             _ => {}
         }
