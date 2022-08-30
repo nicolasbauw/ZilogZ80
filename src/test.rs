@@ -2221,6 +2221,21 @@ fn ld_d() {
         c.registers.set_hl(0x5000);
         c.registers.a = 0b01111010;
         assert_eq!(c.execute(), 18);
+        assert_eq!(c.pc, 2);
         assert_eq!(c.registers.a, 0b01110011);
         assert_eq!(c.bus.read_byte(0x5000), 0b00011010);
+    }
+
+    #[test]
+    fn rrd() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xED);
+        c.bus.write_byte(0x0001, 0x67);
+        c.bus.write_byte(0x5000, 0b00100000);
+        c.registers.set_hl(0x5000);
+        c.registers.a = 0b10000100;
+        assert_eq!(c.execute(), 18);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.a, 0b10000000);
+        assert_eq!(c.bus.read_byte(0x5000), 0b01000010);
     }
