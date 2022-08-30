@@ -820,6 +820,48 @@ impl CPU {
                 cycles = 20;
             },
 
+            0xDDCB00C6 | 0xDDCB00CE | 0xDDCB00D6 |
+            0xDDCB00DE | 0xDDCB00E6 | 0xDDCB00EE |
+            0xDDCB00F6 | 0xDDCB00FE => {                                                           // SET b,(IX+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                let operand = self.bus.read_byte(self.pc + 3);
+                let bit = ((operand & 0x38) >> 3) as usize;
+                if displacement < 0 {
+                    let m = self.ix - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = set_bit(d, bit);
+                    self.bus.write_byte(m, r);
+                }
+                else {
+                    let m =self.ix + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = set_bit(d, bit);
+                    self.bus.write_byte(m, r);
+                }
+                cycles = 23;
+            },
+
+            0xFDCB00C6 | 0xFDCB00CE | 0xFDCB00D6 |
+            0xFDCB00DE | 0xFDCB00E6 | 0xFDCB00EE |
+            0xFDCB00F6 | 0xFDCB00FE => {                                                           // SET b,(IY+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                let operand = self.bus.read_byte(self.pc + 3);
+                let bit = ((operand & 0x38) >> 3) as usize;
+                if displacement < 0 {
+                    let m = self.iy - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = set_bit(d, bit);
+                    self.bus.write_byte(m, r);
+                }
+                else {
+                    let m =self.iy + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = set_bit(d, bit);
+                    self.bus.write_byte(m, r);
+                }
+                cycles = 23;
+            },
+
             _ => {}
         }
         self.pc += 4;
