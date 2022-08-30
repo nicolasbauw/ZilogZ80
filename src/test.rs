@@ -2282,3 +2282,24 @@ fn ld_d() {
         assert_eq!(c.bus.read_byte(0x2004), 0x40);
         assert_eq!(c.registers.flags.z, false);
     }
+
+    #[test]
+    fn set_4_a() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xCB);
+        c.bus.write_byte(0x0001, 0xE7);
+        assert_eq!(c.execute(), 8);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.a, 0x10);
+    }
+
+    #[test]
+    fn set_4_hl() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xCB);
+        c.bus.write_byte(0x0001, 0xE6);
+        c.registers.set_hl(0x4444);
+        assert_eq!(c.execute(), 8);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.bus.read_byte(0x4444), 0x10);
+    }
