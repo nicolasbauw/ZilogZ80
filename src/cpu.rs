@@ -493,8 +493,7 @@ impl CPU {
             7 => get_bit(self.registers.a, bit),
             _ => false
         };
-        // Z is set if specified bit is 0; otherwise, it is reset. The get_bit function returns the opposite : true is bit is set.
-        self.registers.flags.z = r == true;
+        self.registers.flags.z = r == false;
         self.registers.flags.h = true;
         self.registers.flags.n = false;
     }
@@ -750,6 +749,58 @@ impl CPU {
                     self.bus.write_byte(m, r);
                 }
                 cycles = 23;
+            },
+
+            0xDDCB0046 | 0xDDCB004E | 0xDDCB0056 |
+            0xDDCB005E | 0xDDCB0066 | 0xDDCB006E |
+            0xDDCB0076 | 0xDDCB007E => {                                                           // BIT b,(IX+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                let operand = self.bus.read_byte(self.pc + 3);
+                let bit = ((operand & 0x38) >> 3) as usize;
+                if displacement < 0 {
+                    let m = self.ix - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = get_bit(d, bit);
+                    self.registers.flags.z = r == false;
+                    self.registers.flags.h = true;
+                    self.registers.flags.n = false;
+                    
+                }
+                else {
+                    let m =self.ix + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = get_bit(d, bit);
+                    self.registers.flags.z = r == false;
+                    self.registers.flags.h = true;
+                    self.registers.flags.n = false;
+                }
+                cycles = 20;
+            },
+
+            0xFDCB0046 | 0xFDCB004E | 0xFDCB0056 |
+            0xFDCB005E | 0xFDCB0066 | 0xFDCB006E |
+            0xFDCB0076 | 0xFDCB007E => {                                                           // BIT b,(IY+d)
+                let displacement: i8 = self.bus.read_byte(self.pc + 2) as i8;
+                let operand = self.bus.read_byte(self.pc + 3);
+                let bit = ((operand & 0x38) >> 3) as usize;
+                if displacement < 0 {
+                    let m = self.iy - ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = get_bit(d, bit);
+                    self.registers.flags.z = r == false;
+                    self.registers.flags.h = true;
+                    self.registers.flags.n = false;
+                    
+                }
+                else {
+                    let m =self.iy + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = get_bit(d, bit);
+                    self.registers.flags.z = r == false;
+                    self.registers.flags.h = true;
+                    self.registers.flags.n = false;
+                }
+                cycles = 20;
             },
 
             _ => {}
