@@ -109,6 +109,11 @@ fn check_sub_overflow(n1: u8, n2: u8) -> bool {
     r.1
 }
 
+// Converts a signed byte to its absolute value
+pub fn signed_to_abs(n: u8) -> u8 {
+    !n +1
+}
+
 pub struct CPU {
     pub registers: Registers,
     pub alt_registers: Registers,
