@@ -2389,14 +2389,14 @@ fn ld_d() {
         assert_eq!(c.pc, 0x0485);
     }
 
-    /*#[test]
+    #[test]
     fn jr_neg() {
         let mut c = CPU::new();
         c.pc = 0x0480;
         c.bus.write_byte(0x0480, 0x18);
         c.bus.write_byte(0x0481, 0xFD);
         assert_eq!(c.execute(), 12);
-        assert_eq!(c.pc, 0x0482);
-    }*/
+        assert_eq!(c.pc, 0x047D);
+    }
 
     
