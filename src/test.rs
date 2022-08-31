@@ -2442,3 +2442,35 @@ fn ld_d() {
         assert_eq!(c.execute(), 12);
         assert_eq!(c.pc, 0x047C);
     }
+
+    #[test]
+    fn jp_hl() {
+        let mut c = CPU::new();
+        c.pc = 0x1000;
+        c.bus.write_byte(0x1000, 0xE9);
+        c.registers.set_hl(0x4800);
+        assert_eq!(c.execute(), 4);
+        assert_eq!(c.pc, 0x4800);
+    }
+
+    #[test]
+    fn jp_ix() {
+        let mut c = CPU::new();
+        c.pc = 0x1000;
+        c.bus.write_byte(0x1000, 0xDD);
+        c.bus.write_byte(0x1001, 0xE9);
+        c.ix = 0x4800;
+        assert_eq!(c.execute(), 8);
+        assert_eq!(c.pc, 0x4800);
+    }
+
+    #[test]
+    fn jp_iy() {
+        let mut c = CPU::new();
+        c.pc = 0x1000;
+        c.bus.write_byte(0x1000, 0xFD);
+        c.bus.write_byte(0x1001, 0xE9);
+        c.iy = 0x4800;
+        assert_eq!(c.execute(), 8);
+        assert_eq!(c.pc, 0x4800);
+    }
