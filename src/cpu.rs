@@ -2841,6 +2841,18 @@ impl CPU {
             // JP (HL)
             0xE9 => { self.pc = self.registers.get_hl(); },
 
+            // DJNZ, e
+            0x10 => {
+                self.registers.b = (self.registers.b).wrapping_sub(1);
+                if self.registers.b != 0 {
+                    let displacement= self.bus.read_byte(self.pc + 1);
+                    if bit::get(displacement, 7) { self.pc = self.pc - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.pc = self.pc + ( displacement as u16 ) }
+                    cycles += 5;
+                }
+                cycles += 8;
+            }
+
             _ => {},
         }
 
@@ -2849,7 +2861,7 @@ impl CPU {
             0xE2 | 0xE9 => {},
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
             0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE | 0xFE |
-            0x18 | 0x38 | 0x30 | 0x28 | 0x20 => self.pc += 2,
+            0x18 | 0x38 | 0x30 | 0x28 | 0x20 | 0x10 => self.pc += 2,
             0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 => self.pc += 3,
             _ => self.pc +=1,
         }
