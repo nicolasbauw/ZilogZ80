@@ -1,6 +1,6 @@
 use crate::registers::Registers;
 use crate::memory::AddressBus;
-use crate::bit::{ get_bit, set_bit };
+use crate::bit::{ get_bit, set_bit , reset_bit };
 
 const CYCLES: [u8; 256] = [
     0, 10, 0, 6, 4, 4, 7, 4, 4, 11, 7, 6, 4, 4, 7, 4,
@@ -83,18 +83,18 @@ const CYCLES_CB: [u8; 256] = [
     8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
     8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
     0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 15, 8,
-    12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-    12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-    12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-    12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 12, 8, 8, 8, 8, 8, 8, 8, 12, 8,
+    8, 8, 8, 8, 8, 8, 12, 8, 8, 8, 8, 8, 8, 8, 12, 8,
+    8, 8, 8, 8, 8, 8, 12, 8, 8, 8, 8, 8, 8, 8, 12, 8,
+    8, 8, 8, 8, 8, 8, 12, 8, 8, 8, 8, 8, 8, 8, 12, 8,
+    8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
+    8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
+    8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
+    8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8,
+    8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 8, 8,
 ];
 
 // Check addition overflow
@@ -511,6 +511,23 @@ impl CPU {
             5 => self.registers.l = set_bit(self.registers.l, bit),
             6 => self.bus.write_byte(self.registers.get_hl(), set_bit(self.bus.read_byte(self.registers.get_hl()), bit)),
             7 => self.registers.a = set_bit(self.registers.a, bit),
+            _ => {}
+        };
+    }
+
+    // Bit test
+    fn reset(&mut self, operand: u8) {
+        let bit = ((operand & 0x38) >> 3) as usize;
+        let register = operand & 0x07;
+        match register {
+            0 => self.registers.b = reset_bit(self.registers.b, bit),
+            1 => self.registers.c = reset_bit(self.registers.c, bit),
+            2 => self.registers.d = reset_bit(self.registers.d, bit),
+            3 => self.registers.e = reset_bit(self.registers.e, bit),
+            4 => self.registers.h = reset_bit(self.registers.h, bit),
+            5 => self.registers.l = reset_bit(self.registers.l, bit),
+            6 => self.bus.write_byte(self.registers.get_hl(), reset_bit(self.bus.read_byte(self.registers.get_hl()), bit)),
+            7 => self.registers.a = reset_bit(self.registers.a, bit),
             _ => {}
         };
     }
@@ -2022,6 +2039,9 @@ impl CPU {
 
             // SET b,r
             0xCBC0 ..= 0xCBFF => self.set(self.bus.read_byte(self.pc + 1)),
+
+            // RES b,r
+            0xCB80 ..= 0xCBBF => self.reset(self.bus.read_byte(self.pc + 1)),
 
             _ => {}
         }

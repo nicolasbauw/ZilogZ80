@@ -2299,7 +2299,7 @@ fn ld_d() {
         c.bus.write_byte(0x0000, 0xCB);
         c.bus.write_byte(0x0001, 0xE6);
         c.registers.set_hl(0x4444);
-        assert_eq!(c.execute(), 8);
+        assert_eq!(c.execute(), 15);
         assert_eq!(c.pc, 2);
         assert_eq!(c.bus.read_byte(0x4444), 0x10);
     }
@@ -2328,4 +2328,15 @@ fn ld_d() {
         assert_eq!(c.execute(), 23);
         assert_eq!(c.pc, 4);
         assert_eq!(c.bus.read_byte(0x2003), 0x01);
+    }
+
+    #[test]
+    fn res_6_d() {
+        let mut c = CPU::new();
+        c.bus.write_byte(0x0000, 0xCB);
+        c.bus.write_byte(0x0001, 0xB2);
+        c.registers.d = 0xFF;
+        assert_eq!(c.execute(), 8);
+        assert_eq!(c.pc, 2);
+        assert_eq!(c.registers.d, 0xBF);
     }
