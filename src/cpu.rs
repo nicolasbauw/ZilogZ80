@@ -2116,7 +2116,7 @@ impl CPU {
 
     fn execute_1byte(&mut self) -> u32 {
         let opcode = self.bus.read_byte(self.pc);
-        let cycles = CYCLES[opcode as usize].into();
+        let mut cycles = CYCLES[opcode as usize].into();
 
         match opcode {
             // 8-Bit Load Group
@@ -2783,7 +2783,51 @@ impl CPU {
             0x18 => {
                 let displacement= self.bus.read_byte(self.pc + 1);
                 if bit::get(displacement, 7) { self.pc = self.pc - ( signed_to_abs(displacement) as u16 ) }
-                else { self.pc = self.pc + ( displacement as u16 ) +2 }
+                else { self.pc = self.pc + ( displacement as u16 ) }
+            },
+
+            // JR C,e
+            0x38 => {
+                if self.registers.flags.c {
+                    let displacement= self.bus.read_byte(self.pc + 1);
+                    if bit::get(displacement, 7) { self.pc = self.pc - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.pc = self.pc + ( displacement as u16 ) }
+                    cycles += 5;
+                }
+                cycles += 7;
+            },
+
+            // JR NC,e
+            0x30 => {
+                if !self.registers.flags.c {
+                    let displacement= self.bus.read_byte(self.pc + 1);
+                    if bit::get(displacement, 7) { self.pc = self.pc - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.pc = self.pc + ( displacement as u16 ) }
+                    cycles += 5;
+                }
+                cycles += 7;
+            },
+
+            // JR Z,e
+            0x28 => {
+                if self.registers.flags.z {
+                    let displacement= self.bus.read_byte(self.pc + 1);
+                    if bit::get(displacement, 7) { self.pc = self.pc - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.pc = self.pc + ( displacement as u16 ) }
+                    cycles += 5;
+                }
+                cycles += 7;
+            },
+
+            // JR NZ,e
+            0x20 => {
+                if !self.registers.flags.z {
+                    let displacement= self.bus.read_byte(self.pc + 1);
+                    if bit::get(displacement, 7) { self.pc = self.pc - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.pc = self.pc + ( displacement as u16 ) }
+                    cycles += 5;
+                }
+                cycles += 7;
             },
 
             _ => {},
@@ -2791,9 +2835,10 @@ impl CPU {
 
         match opcode {
             0xC3 | 0xDA | 0xD2 | 0xCA | 0xC2 | 0xFA | 0xF2 | 0xEA |
-            0xE2 | 0x18 => {},
+            0xE2 => {},
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
-            0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE | 0xFE => self.pc += 2,
+            0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE | 0xFE |
+            0x18 | 0x38 | 0x30 | 0x28 | 0x20 => self.pc += 2,
             0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 => self.pc += 3,
             _ => self.pc +=1,
         }

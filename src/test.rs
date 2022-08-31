@@ -2394,9 +2394,51 @@ fn ld_d() {
         let mut c = CPU::new();
         c.pc = 0x0480;
         c.bus.write_byte(0x0480, 0x18);
-        c.bus.write_byte(0x0481, 0xFD);
+        c.bus.write_byte(0x0481, 0xFA);
         assert_eq!(c.execute(), 12);
-        assert_eq!(c.pc, 0x047D);
+        assert_eq!(c.pc, 0x047C);
     }
 
-    
+    #[test]
+    fn jr_c_e() {
+        let mut c = CPU::new();
+        c.pc = 0x0480;
+        c.bus.write_byte(0x0480, 0x38);
+        c.bus.write_byte(0x0481, 0xFA);
+        c.registers.flags.c = true;
+        assert_eq!(c.execute(), 12);
+        assert_eq!(c.pc, 0x047C);
+    }
+
+    #[test]
+    fn jr_nc_e() {
+        let mut c = CPU::new();
+        c.pc = 0x0480;
+        c.bus.write_byte(0x0480, 0x30);
+        c.bus.write_byte(0x0481, 0xFA);
+        c.registers.flags.c = false;
+        assert_eq!(c.execute(), 12);
+        assert_eq!(c.pc, 0x047C);
+    }
+
+    #[test]
+    fn jr_z_e() {
+        let mut c = CPU::new();
+        c.pc = 0x0300;
+        c.bus.write_byte(0x0300, 0x28);
+        c.bus.write_byte(0x0301, 0x03);
+        c.registers.flags.z = true;
+        assert_eq!(c.execute(), 12);
+        assert_eq!(c.pc, 0x0305);
+    }
+
+    #[test]
+    fn jr_nz_e() {
+        let mut c = CPU::new();
+        c.pc = 0x0480;
+        c.bus.write_byte(0x0480, 0x20);
+        c.bus.write_byte(0x0481, 0xFA);
+        c.registers.flags.z = false;
+        assert_eq!(c.execute(), 12);
+        assert_eq!(c.pc, 0x047C);
+    }
