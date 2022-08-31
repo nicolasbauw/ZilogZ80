@@ -4,7 +4,7 @@ use crate::bit::{ get_bit, set_bit , reset_bit };
 
 const CYCLES: [u8; 256] = [
     0, 10, 0, 6, 4, 4, 7, 4, 4, 11, 7, 6, 4, 4, 7, 4,
-    0, 10, 0, 6, 4, 4, 7, 4, 0, 11, 7, 6, 4, 4, 7, 4,
+    0, 10, 0, 6, 4, 4, 7, 4, 12, 11, 7, 6, 4, 4, 7, 4,
     0, 10, 16, 6, 4, 4, 7, 0, 0, 11, 16, 6, 4, 4, 7, 4,
     0, 10, 13, 6, 11, 11, 7, 4, 0, 11, 0, 6, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -15,7 +15,7 @@ const CYCLES: [u8; 256] = [
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-    0, 10, 0, 0, 0, 11, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
+    0, 10, 0, 10, 0, 11, 7, 0, 0, 0, 0, 0, 0, 0, 7, 0,
     0, 10, 0, 0, 0, 11, 7, 0, 0, 4, 0, 0, 0, 0, 7, 0,
     0, 10, 0, 19, 0, 11, 7, 0, 0, 0, 0, 4, 0, 0, 7, 0,
     0, 10, 0, 4, 0, 11, 7, 0, 0, 6, 0, 4, 0, 0, 7, 0,
@@ -2719,10 +2719,74 @@ impl CPU {
                 self.registers.a = r;
             },
 
+            // Jump group
+            // JP nn
+            0xC3 => {
+                let addr = self.bus.read_word(self.pc + 1);
+                self.pc = addr;
+            },
+
+            // JP C,nn
+            0xDA => {
+                let addr = self.bus.read_word(self.pc + 1);
+                if self.registers.flags.c { self.pc = addr; } else { self.pc += 3 }
+            },
+
+            // JP NC,nn
+            0xD2 => {
+                let addr = self.bus.read_word(self.pc + 1);
+                if !self.registers.flags.c { self.pc = addr; } else { self.pc += 3 }
+            },
+
+            // JP Z,nn
+            0xCA => {
+                let addr = self.bus.read_word(self.pc + 1);
+                if self.registers.flags.z { self.pc = addr; } else { self.pc += 3 }
+            },
+
+            // JP NZ,nn
+            0xC2 => {
+                let addr = self.bus.read_word(self.pc + 1);
+                if !self.registers.flags.z { self.pc = addr; } else { self.pc += 3 }
+            },
+
+            // JP M,nn
+            0xFA => {
+                let addr = self.bus.read_word(self.pc + 1);
+                if self.registers.flags.s { self.pc = addr; } else { self.pc += 3 }
+            },
+
+            // JP P,nn
+            0xF2 => {
+                let addr = self.bus.read_word(self.pc + 1);
+                if !self.registers.flags.s { self.pc = addr; } else { self.pc += 3 }
+            },
+
+            // JP PE,nn
+            0xEA => {
+                let addr = self.bus.read_word(self.pc + 1);
+                if self.registers.flags.p { self.pc = addr; } else { self.pc += 3 }
+            },
+
+            // JP PO,nn
+            0xE2 => {
+                let addr = self.bus.read_word(self.pc + 1);
+                if !self.registers.flags.p { self.pc = addr; } else { self.pc += 3 }
+            },
+
+            // JR e
+            0x18 => {
+                let displacement: i8 = self.bus.read_byte(self.pc + 1) as i8;
+                if displacement < 0 { self.pc = self.pc - ( displacement as u16 ) }
+                else { self.pc = self.pc + ( displacement as u16 ) +2 }
+            },
+
             _ => {},
         }
 
         match opcode {
+            0xC3 | 0xDA | 0xD2 | 0xCA | 0xC2 | 0xFA | 0xF2 | 0xEA |
+            0xE2 | 0x18 => {},
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
             0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE | 0xFE => self.pc += 2,
             0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 => self.pc += 3,
