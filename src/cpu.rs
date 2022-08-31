@@ -1,6 +1,6 @@
 use crate::registers::Registers;
 use crate::memory::AddressBus;
-use crate::bit::{ get_bit, set_bit , reset_bit };
+use crate::bit;
 
 const CYCLES: [u8; 256] = [
     0, 10, 0, 6, 4, 4, 7, 4, 4, 11, 7, 6, 4, 4, 7, 4,
@@ -396,7 +396,7 @@ impl CPU {
 
     // Rotate left
     fn rlc(&mut self, n: u8) -> u8 {
-        self.registers.flags.c = get_bit(n, 7);
+        self.registers.flags.c = bit::get(n, 7);
         let r = (n << 1) | u8::from(self.registers.flags.c);
         self.registers.flags.h = false;
         self.registers.flags.n = false;
@@ -405,7 +405,7 @@ impl CPU {
 
     // Rotate right
     fn rrc(&mut self, n: u8) -> u8 {
-        self.registers.flags.c = get_bit(n, 0);
+        self.registers.flags.c = bit::get(n, 0);
         let r = if self.registers.flags.c {0x80 | (n >> 1) } else { n >> 1 };
         self.registers.flags.h = false;
         self.registers.flags.n = false;
@@ -415,7 +415,7 @@ impl CPU {
     // Rotate left through carry
     fn rl(&mut self, n: u8) -> u8 {
         let c = self.registers.flags.c;
-        self.registers.flags.c = get_bit(n, 7);
+        self.registers.flags.c = bit::get(n, 7);
         self.registers.flags.h = false;
         self.registers.flags.n = false;
         let r = match c {
@@ -428,7 +428,7 @@ impl CPU {
     // Rotate right through carry
     fn rr(&mut self, n: u8) -> u8 {
         let c = self.registers.flags.c;
-        self.registers.flags.c = get_bit(n, 0);
+        self.registers.flags.c = bit::get(n, 0);
         self.registers.flags.h = false;
         self.registers.flags.n = false;
         let r = match c {
@@ -446,7 +446,7 @@ impl CPU {
         self.registers.flags.h = false;
         self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
         self.registers.flags.n = false;
-        self.registers.flags.c = get_bit(n, 7);
+        self.registers.flags.c = bit::get(n, 7);
         r
     }
 
@@ -460,7 +460,7 @@ impl CPU {
         self.registers.flags.h = false;
         self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
         self.registers.flags.n = false;
-        self.registers.flags.c = get_bit(n, 0);
+        self.registers.flags.c = bit::get(n, 0);
         r
     }
 
@@ -474,7 +474,7 @@ impl CPU {
         self.registers.flags.h = false;
         self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
         self.registers.flags.n = false;
-        self.registers.flags.c = get_bit(n, 0);
+        self.registers.flags.c = bit::get(n, 0);
         r
     }
 
@@ -483,14 +483,14 @@ impl CPU {
         let bit = ((operand & 0x38) >> 3) as usize;
         let register = operand & 0x07;
         let r = match register {
-            0 => get_bit(self.registers.b, bit),
-            1 => get_bit(self.registers.c, bit),
-            2 => get_bit(self.registers.d, bit),
-            3 => get_bit(self.registers.e, bit),
-            4 => get_bit(self.registers.h, bit),
-            5 => get_bit(self.registers.l, bit),
-            6 => get_bit(self.bus.read_byte(self.registers.get_hl()), bit),
-            7 => get_bit(self.registers.a, bit),
+            0 => bit::get(self.registers.b, bit),
+            1 => bit::get(self.registers.c, bit),
+            2 => bit::get(self.registers.d, bit),
+            3 => bit::get(self.registers.e, bit),
+            4 => bit::get(self.registers.h, bit),
+            5 => bit::get(self.registers.l, bit),
+            6 => bit::get(self.bus.read_byte(self.registers.get_hl()), bit),
+            7 => bit::get(self.registers.a, bit),
             _ => false
         };
         self.registers.flags.z = r == false;
@@ -503,14 +503,14 @@ impl CPU {
         let bit = ((operand & 0x38) >> 3) as usize;
         let register = operand & 0x07;
         match register {
-            0 => self.registers.b = set_bit(self.registers.b, bit),
-            1 => self.registers.c = set_bit(self.registers.c, bit),
-            2 => self.registers.d = set_bit(self.registers.d, bit),
-            3 => self.registers.e = set_bit(self.registers.e, bit),
-            4 => self.registers.h = set_bit(self.registers.h, bit),
-            5 => self.registers.l = set_bit(self.registers.l, bit),
-            6 => self.bus.write_byte(self.registers.get_hl(), set_bit(self.bus.read_byte(self.registers.get_hl()), bit)),
-            7 => self.registers.a = set_bit(self.registers.a, bit),
+            0 => self.registers.b = bit::set(self.registers.b, bit),
+            1 => self.registers.c = bit::set(self.registers.c, bit),
+            2 => self.registers.d = bit::set(self.registers.d, bit),
+            3 => self.registers.e = bit::set(self.registers.e, bit),
+            4 => self.registers.h = bit::set(self.registers.h, bit),
+            5 => self.registers.l = bit::set(self.registers.l, bit),
+            6 => self.bus.write_byte(self.registers.get_hl(), bit::set(self.bus.read_byte(self.registers.get_hl()), bit)),
+            7 => self.registers.a = bit::set(self.registers.a, bit),
             _ => {}
         };
     }
@@ -520,14 +520,14 @@ impl CPU {
         let bit = ((operand & 0x38) >> 3) as usize;
         let register = operand & 0x07;
         match register {
-            0 => self.registers.b = reset_bit(self.registers.b, bit),
-            1 => self.registers.c = reset_bit(self.registers.c, bit),
-            2 => self.registers.d = reset_bit(self.registers.d, bit),
-            3 => self.registers.e = reset_bit(self.registers.e, bit),
-            4 => self.registers.h = reset_bit(self.registers.h, bit),
-            5 => self.registers.l = reset_bit(self.registers.l, bit),
-            6 => self.bus.write_byte(self.registers.get_hl(), reset_bit(self.bus.read_byte(self.registers.get_hl()), bit)),
-            7 => self.registers.a = reset_bit(self.registers.a, bit),
+            0 => self.registers.b = bit::reset(self.registers.b, bit),
+            1 => self.registers.c = bit::reset(self.registers.c, bit),
+            2 => self.registers.d = bit::reset(self.registers.d, bit),
+            3 => self.registers.e = bit::reset(self.registers.e, bit),
+            4 => self.registers.h = bit::reset(self.registers.h, bit),
+            5 => self.registers.l = bit::reset(self.registers.l, bit),
+            6 => self.bus.write_byte(self.registers.get_hl(), bit::reset(self.bus.read_byte(self.registers.get_hl()), bit)),
+            7 => self.registers.a = bit::reset(self.registers.a, bit),
             _ => {}
         };
     }
@@ -794,7 +794,7 @@ impl CPU {
                 if displacement < 0 {
                     let m = self.ix - ( displacement as u16 );
                     let d = self.bus.read_byte(m);
-                    let r = get_bit(d, bit);
+                    let r = bit::get(d, bit);
                     self.registers.flags.z = r == false;
                     self.registers.flags.h = true;
                     self.registers.flags.n = false;
@@ -803,7 +803,7 @@ impl CPU {
                 else {
                     let m =self.ix + ( displacement as u16 );
                     let d = self.bus.read_byte(m);
-                    let r = get_bit(d, bit);
+                    let r = bit::get(d, bit);
                     self.registers.flags.z = r == false;
                     self.registers.flags.h = true;
                     self.registers.flags.n = false;
@@ -820,7 +820,7 @@ impl CPU {
                 if displacement < 0 {
                     let m = self.iy - ( displacement as u16 );
                     let d = self.bus.read_byte(m);
-                    let r = get_bit(d, bit);
+                    let r = bit::get(d, bit);
                     self.registers.flags.z = r == false;
                     self.registers.flags.h = true;
                     self.registers.flags.n = false;
@@ -829,7 +829,7 @@ impl CPU {
                 else {
                     let m =self.iy + ( displacement as u16 );
                     let d = self.bus.read_byte(m);
-                    let r = get_bit(d, bit);
+                    let r = bit::get(d, bit);
                     self.registers.flags.z = r == false;
                     self.registers.flags.h = true;
                     self.registers.flags.n = false;
@@ -846,13 +846,13 @@ impl CPU {
                 if displacement < 0 {
                     let m = self.ix - ( displacement as u16 );
                     let d = self.bus.read_byte(m);
-                    let r = set_bit(d, bit);
+                    let r = bit::set(d, bit);
                     self.bus.write_byte(m, r);
                 }
                 else {
                     let m =self.ix + ( displacement as u16 );
                     let d = self.bus.read_byte(m);
-                    let r = set_bit(d, bit);
+                    let r = bit::set(d, bit);
                     self.bus.write_byte(m, r);
                 }
                 cycles = 23;
@@ -867,13 +867,13 @@ impl CPU {
                 if displacement < 0 {
                     let m = self.iy - ( displacement as u16 );
                     let d = self.bus.read_byte(m);
-                    let r = set_bit(d, bit);
+                    let r = bit::set(d, bit);
                     self.bus.write_byte(m, r);
                 }
                 else {
                     let m =self.iy + ( displacement as u16 );
                     let d = self.bus.read_byte(m);
-                    let r = set_bit(d, bit);
+                    let r = bit::set(d, bit);
                     self.bus.write_byte(m, r);
                 }
                 cycles = 23;
@@ -888,13 +888,13 @@ impl CPU {
                 if displacement < 0 {
                     let m = self.ix - ( displacement as u16 );
                     let d = self.bus.read_byte(m);
-                    let r = reset_bit(d, bit);
+                    let r = bit::reset(d, bit);
                     self.bus.write_byte(m, r);
                 }
                 else {
                     let m =self.ix + ( displacement as u16 );
                     let d = self.bus.read_byte(m);
-                    let r = reset_bit(d, bit);
+                    let r = bit::reset(d, bit);
                     self.bus.write_byte(m, r);
                 }
                 cycles = 23;
@@ -909,13 +909,13 @@ impl CPU {
                 if displacement < 0 {
                     let m = self.iy - ( displacement as u16 );
                     let d = self.bus.read_byte(m);
-                    let r = reset_bit(d, bit);
+                    let r = bit::reset(d, bit);
                     self.bus.write_byte(m, r);
                 }
                 else {
                     let m =self.iy + ( displacement as u16 );
                     let d = self.bus.read_byte(m);
-                    let r = reset_bit(d, bit);
+                    let r = bit::reset(d, bit);
                     self.bus.write_byte(m, r);
                 }
                 cycles = 23;
