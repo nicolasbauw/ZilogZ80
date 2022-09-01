@@ -15,10 +15,10 @@ const CYCLES: [u8; 256] = [
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-    5, 10, 0, 10, 10, 11, 7, 0, 5, 10, 0, 0, 10, 17, 7, 0,
-    5, 10, 0, 0, 10, 11, 7, 0, 5, 4, 0, 0, 10, 0, 7, 0,
-    5, 10, 0, 19, 10, 11, 7, 0, 5, 4, 0, 4, 10, 0, 7, 0,
-    5, 10, 0, 4, 10, 11, 7, 0, 5, 6, 0, 4, 10, 0, 7, 0,
+    5, 10, 0, 10, 10, 11, 7, 11, 5, 10, 0, 0, 10, 17, 7, 11,
+    5, 10, 0, 0, 10, 11, 7, 11, 5, 4, 0, 0, 10, 0, 7, 11,
+    5, 10, 0, 19, 10, 11, 7, 11, 5, 4, 0, 4, 10, 0, 7, 11,
+    5, 10, 0, 4, 10, 11, 7, 11, 5, 6, 0, 4, 10, 0, 7, 11,
 ];
 
 const CYCLES_DD: [u8; 256] = [
@@ -547,6 +547,12 @@ impl CPU {
     fn call_stack_pop(&mut self) {
         self.pc = self.bus.read_word(self.sp);
         self.sp = self.sp.wrapping_add(2);
+    }
+
+    // interrupt stack push
+    fn interrupt_stack_push(&mut self) {
+        self.sp = self.sp.wrapping_sub(2);
+        self.bus.write_word(self.sp , self.pc);
     }
 
     pub fn execute(&mut self) -> u32 {
@@ -2140,6 +2146,9 @@ impl CPU {
         let opcode = self.bus.read_byte(self.pc);
         let mut cycles = CYCLES[opcode as usize].into();
 
+        // For the moment, we do not handle interrupts, so a RST can come only from software.
+        let direct_rst = true;
+
         match opcode {
             // 8-Bit Load Group
             // LD r,r'      LD r,(HL)
@@ -2981,6 +2990,78 @@ impl CPU {
             // RET PO
             0xE0 => if !self.registers.flags.p { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
 
+            // RST 0
+            0xC7 => {
+                match direct_rst {
+                    false => self.interrupt_stack_push(),
+                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                }
+                self.pc = 0x0000;
+            },
+
+            // RST 08
+            0xCF => {
+                match direct_rst {
+                    false => self.interrupt_stack_push(),
+                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                }
+                self.pc = 0x0008;
+            },
+
+            // RST 10
+            0xD7 => {
+                match direct_rst {
+                    false => self.interrupt_stack_push(),
+                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                }
+                self.pc = 0x0010;
+            },
+
+            // RST 18
+            0xDF => {
+                match direct_rst {
+                    false => self.interrupt_stack_push(),
+                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                }
+                self.pc = 0x0018;
+            },
+
+            // RST 20
+            0xE7 => {
+                match direct_rst {
+                    false => self.interrupt_stack_push(),
+                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                }
+                self.pc = 0x0020;
+            },
+
+            // RST 28
+            0xEF => {
+                match direct_rst {
+                    false => self.interrupt_stack_push(),
+                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                }
+                self.pc = 0x0028;
+            },
+
+            // RST 30
+            0xF7 => {
+                match direct_rst {
+                    false => self.interrupt_stack_push(),
+                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                }
+                self.pc = 0x0030;
+            },
+
+            // RST 38
+            0xFF => {
+                match direct_rst {
+                    false => self.interrupt_stack_push(),
+                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                }
+                self.pc = 0x0038;
+            },
+
             _ => {},
 
         }
@@ -2989,7 +3070,8 @@ impl CPU {
             0xC3 | 0xDA | 0xD2 | 0xCA | 0xC2 | 0xFA | 0xF2 | 0xEA |
             0xE2 | 0xE9 | 0xCD | 0xDC | 0xD4 | 0xCC | 0xC4 | 0xFC |
             0xF4 | 0xEC | 0xE4 | 0xC9 | 0xD8 | 0xD0 | 0xC8 | 0xC0 |
-            0xF8 | 0xF0 | 0xE8 | 0xE0=> {},
+            0xF8 | 0xF0 | 0xE8 | 0xE0 | 0xC7 | 0xCF | 0xD7 | 0xDF |
+            0xE7 | 0xEF | 0xF7 | 0xFF => {},
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
             0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE | 0xFE |
             0x18 | 0x38 | 0x30 | 0x28 | 0x20 | 0x10 => self.pc += 2,

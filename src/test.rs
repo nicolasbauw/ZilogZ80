@@ -2532,3 +2532,12 @@ fn ld_d() {
         assert_eq!(c.sp, 0x2002);
         assert_eq!(c.pc, 0x18B5);
     }
+
+    #[test]
+    fn rst() {
+        let mut c = CPU::new();
+        c.pc = 0x15B3;
+        c.bus.write_byte(0x15B3, 0xDF);
+        assert_eq!(c.execute(), 11);
+        assert_eq!(c.pc, 0x0018);
+    }
