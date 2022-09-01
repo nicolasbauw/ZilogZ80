@@ -15,10 +15,10 @@ const CYCLES: [u8; 256] = [
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-    0, 10, 0, 10, 10, 11, 7, 0, 0, 10, 0, 0, 10, 17, 7, 0,
-    0, 10, 0, 0, 10, 11, 7, 0, 0, 4, 0, 0, 10, 0, 7, 0,
-    0, 10, 0, 19, 10, 11, 7, 0, 0, 4, 0, 4, 10, 0, 7, 0,
-    0, 10, 0, 4, 10, 11, 7, 0, 0, 6, 0, 4, 10, 0, 7, 0,
+    5, 10, 0, 10, 10, 11, 7, 0, 5, 10, 0, 0, 10, 17, 7, 0,
+    5, 10, 0, 0, 10, 11, 7, 0, 5, 4, 0, 0, 10, 0, 7, 0,
+    5, 10, 0, 19, 10, 11, 7, 0, 5, 4, 0, 4, 10, 0, 7, 0,
+    5, 10, 0, 4, 10, 11, 7, 0, 5, 6, 0, 4, 10, 0, 7, 0,
 ];
 
 const CYCLES_DD: [u8; 256] = [
@@ -2957,6 +2957,30 @@ impl CPU {
             // RET
             0xC9 => self.call_stack_pop(),
 
+            // RET C
+            0xD8 => if self.registers.flags.c { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+
+            // RET NC
+            0xD0 => if !self.registers.flags.c { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+
+            // RET Z
+            0xC8 => if self.registers.flags.z { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+
+            // RET NZ
+            0xC0 => if !self.registers.flags.z { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+
+            // RET M
+            0xF8 => if self.registers.flags.s { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+
+            // RET P
+            0xF0 => if !self.registers.flags.s { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+
+            // RET PE
+            0xE8 => if self.registers.flags.p { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+
+            // RET PO
+            0xE0 => if !self.registers.flags.p { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+
             _ => {},
 
         }
@@ -2964,7 +2988,8 @@ impl CPU {
         match opcode {
             0xC3 | 0xDA | 0xD2 | 0xCA | 0xC2 | 0xFA | 0xF2 | 0xEA |
             0xE2 | 0xE9 | 0xCD | 0xDC | 0xD4 | 0xCC | 0xC4 | 0xFC |
-            0xF4 | 0xEC | 0xE4 | 0xC9 => {},
+            0xF4 | 0xEC | 0xE4 | 0xC9 | 0xD8 | 0xD0 | 0xC8 | 0xC0 |
+            0xF8 | 0xF0 | 0xE8 | 0xE0=> {},
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
             0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE | 0xFE |
             0x18 | 0x38 | 0x30 | 0x28 | 0x20 | 0x10 => self.pc += 2,
