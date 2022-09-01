@@ -1,3 +1,5 @@
+use std::{fs::File, io::prelude::*,};
+
 pub struct AddressBus {
     address_space: Vec<u8>,
     pub rom_space: Option<ROMSpace>,
@@ -53,5 +55,14 @@ impl AddressBus {
         if self.rom_space.is_some() && address >= self.rom_space.as_ref().unwrap().start && address <= self.rom_space.as_ref().unwrap().end { return };
         self.address_space[usize::from(address)] = (data & 0xFF) as u8;
         self.address_space[usize::from(address + 1)] = (data >> 8) as u8;
+    }
+
+    /// Loads binary data from disk into memory at $0000 + offset
+    pub fn load_bin(&mut self, file: &str, org: u16) -> Result<(), std::io::Error> {
+        let mut f = File::open(file)?;
+        let mut buf = Vec::new();
+        f.read_to_end(&mut buf)?;
+        self.address_space[org as usize..(buf.len() + org as usize)].clone_from_slice(&buf[..]);
+        Ok(())
     }
 }
