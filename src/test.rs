@@ -2474,3 +2474,47 @@ fn ld_d() {
         assert_eq!(c.execute(), 8);
         assert_eq!(c.pc, 0x4800);
     }
+
+    #[test]
+    fn call_nn() {
+        let mut c = CPU::new();
+        c.pc = 0x1A47;
+        c.sp = 0x3002;
+        c.bus.write_byte(0x1A47, 0xCD);
+        c.bus.write_byte(0x1A48, 0x35);
+        c.bus.write_byte(0x1A49, 0x21);
+        assert_eq!(c.execute(), 17);
+        assert_eq!(c.bus.read_byte(0x3001), 0x1A);
+        assert_eq!(c.bus.read_byte(0x3000), 0x4A);
+        assert_eq!(c.sp, 0x3000);
+        assert_eq!(c.pc, 0x2135);
+    }
+
+    #[test]
+    fn call_cc_nn() {
+        let mut c = CPU::new();
+        c.registers.flags.c = false;
+        c.pc = 0x1A47;
+        c.sp = 0x3002;
+        c.bus.write_byte(0x1A47, 0xD4);
+        c.bus.write_byte(0x1A48, 0x35);
+        c.bus.write_byte(0x1A49, 0x21);
+        assert_eq!(c.execute(), 17);
+        assert_eq!(c.bus.read_byte(0x3001), 0x1A);
+        assert_eq!(c.bus.read_byte(0x3000), 0x4A);
+        assert_eq!(c.sp, 0x3000);
+        assert_eq!(c.pc, 0x2135);
+    }
+
+    #[test]
+    fn ret() {
+        let mut c = CPU::new();
+        c.pc = 0x3535;
+        c.sp = 0x2000;
+        c.bus.write_byte(0x3535, 0xC9);
+        c.bus.write_byte(0x2000, 0xB5);
+        c.bus.write_byte(0x2001, 0x18);
+        assert_eq!(c.execute(), 10);
+        assert_eq!(c.sp, 0x2002);
+        assert_eq!(c.pc, 0x18B5);
+    }
