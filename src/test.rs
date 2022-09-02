@@ -1,5 +1,32 @@
 use crate::cpu::CPU;
 
+// carry flag
+const CF: u8 = 1 << 0;
+
+// add/subtract flag
+const NF: u8 = 1 << 1;
+
+// overflow flag (same as parity)
+const VF: u8 = 1 << 2;
+
+// parity flag (same as overflow)
+const PF: u8 = 1 << 2;
+
+// undocumented 'X' flag
+const XF: u8 = 1 << 3;
+
+// half carry flag
+const HF: u8 = 1 << 4;
+
+// undocumented 'Y' flag
+const YF: u8 = 1 << 5;
+
+// zero flag
+const ZF: u8 = 1 << 6;
+
+// sign flag
+const SF: u8 = 1 << 7;
+
 #[test]
 fn ld_b() {
     let mut c = CPU::new();
@@ -1648,7 +1675,7 @@ fn ld_d() {
     }
 
     #[test]
-    fn neg() {
+    fn neg_doc() {
         let mut c = CPU::new();
         c.bus.write_byte(0x0000, 0xED);
         c.bus.write_byte(0x0001, 0x44);
@@ -1656,6 +1683,20 @@ fn ld_d() {
         assert_eq!(c.execute(), 8);
         assert_eq!(c.pc, 2);
         assert_eq!(0b01101000, c.registers.a);
+    }
+
+    #[test]
+    fn neg_asm() {
+        let mut c = CPU::new();
+        c.bus.load_bin("bin/neg.bin", 0).unwrap();
+        assert_eq!(c.execute(), 7); assert_eq!(c.registers.a, 0x01);                                                        // LD A,0x01
+        assert_eq!(c.execute(), 8); assert_eq!(c.registers.a, 0xFF); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // NEG
+        assert_eq!(c.execute(), 7); assert_eq!(c.registers.a, 0x00); assert_eq!(c.registers.flags.to_byte(), ZF|HF|CF);     // ADD A,0x01
+        assert_eq!(c.execute(), 8); assert_eq!(c.registers.a, 0x00); assert_eq!(c.registers.flags.to_byte(), ZF|NF);        // NEG
+        assert_eq!(c.execute(), 7); assert_eq!(c.registers.a, 0x80); assert_eq!(c.registers.flags.to_byte(), SF|PF|NF|CF);  // SUB A,0x80
+        assert_eq!(c.execute(), 8); assert_eq!(c.registers.a, 0x80); assert_eq!(c.registers.flags.to_byte(), SF|PF|NF|CF);  // NEG
+        assert_eq!(c.execute(), 7); assert_eq!(c.registers.a, 0xC0); assert_eq!(c.registers.flags.to_byte(), SF);           // ADD A,0x40
+        assert_eq!(c.execute(), 8); assert_eq!(c.registers.a, 0x40); assert_eq!(c.registers.flags.to_byte(), NF|CF);        // NEG
     }
 
     #[test]
