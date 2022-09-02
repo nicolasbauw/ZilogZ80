@@ -28,6 +28,42 @@ const ZF: u8 = 1 << 6;
 const SF: u8 = 1 << 7;
 
 #[test]
+fn ld_r_r_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/ldrr.bin", 0).unwrap();
+    c.registers.a = 0x12;
+    assert_eq!(c.execute(),4); assert_eq!(c.registers.b, 0x12);     // LD B,A
+    assert_eq!(c.execute(),4); assert_eq!(c.registers.c, 0x12);     // LD C,A
+    assert_eq!(c.execute(),4); assert_eq!(c.registers.d, 0x12);     // LD D,A
+    assert_eq!(c.execute(),4); assert_eq!(c.registers.e, 0x12);     // LD E,A
+    assert_eq!(c.execute(),4); assert_eq!(c.registers.h, 0x12);     // LD H,A
+    assert_eq!(c.execute(),4); assert_eq!(c.registers.l, 0x12);     // LD L,A
+    assert_eq!(c.execute(),4); assert_eq!(c.registers.a, 0x12);     // LD A,A
+    c.registers.b = 0x13;
+    assert_eq!(c.execute(),4); assert_eq!(c.registers.c, 0x13);     // LD C,B
+    assert_eq!(c.execute(),4); assert_eq!(c.registers.d, 0x13);     // LD D,C
+    assert_eq!(c.execute(),4); assert_eq!(c.registers.e, 0x13);     // LD E,D 
+    assert_eq!(c.execute(),4); assert_eq!(c.registers.h, 0x13);     // LD H,E
+    assert_eq!(c.execute(),4); assert_eq!(c.registers.l, 0x13);     // LD L,H
+    assert_eq!(c.execute(),4); assert_eq!(c.registers.a, 0x13);     // LD A,L
+}
+
+#[test]
+fn ld_hl_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/ldhl.bin", 0x0100).unwrap();
+    c.registers.a = 0x33;
+    c.registers.set_hl(0x1000);
+    c.pc = 0x0100;
+    assert_eq!(c.execute(), 7); assert_eq!(c.bus.read_byte(0x1000), 0x33);      // LD (HL),A
+    assert_eq!(c.execute(), 7); assert_eq!(c.registers.b, 0x33);                // LD B,(HL)
+    assert_eq!(c.execute(), 7); assert_eq!(c.registers.c, 0x33);                // LD C,(HL)
+    assert_eq!(c.execute(), 7); assert_eq!(c.registers.d, 0x33);                // LD D,(HL)
+    assert_eq!(c.execute(), 7); assert_eq!(c.registers.e, 0x33);                // LD E,(HL)
+    assert_eq!(c.execute(), 7); assert_eq!(c.registers.h, 0x33);                // LD H,(HL)
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
