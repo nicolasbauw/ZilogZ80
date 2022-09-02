@@ -64,6 +64,16 @@ fn ld_hl_asm() {
 }
 
 #[test]
+fn ld_hl_n_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/ldhln.bin", 0).unwrap();
+    assert_eq!(c.execute(), 10); assert_eq!(c.registers.get_hl(), 0x2000);      // LD HL,0x2000
+    assert_eq!(c.execute(), 10); assert_eq!(c.bus.read_byte(0x2000), 0x33);     // LD (HL),0x33
+    assert_eq!(c.execute(), 10); assert_eq!(c.registers.get_hl(), 0x1000);      // LD HL,0x1000
+    assert_eq!(c.execute(), 10); assert_eq!(c.bus.read_byte(0x1000), 0x65);     // LD (HL),0x65
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
