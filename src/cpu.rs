@@ -226,7 +226,7 @@ impl CPU {
         self.registers.flags.z = r == 0x00;
         self.registers.flags.s = (r as i8) < 0;
         self.registers.flags.p = check_sub_overflow(self.registers.a, n);
-        self.registers.flags.h = (a as i8 & 0x0f) - (n as i8 & 0x0f) >= 0x00;
+        self.registers.flags.h = (a as i8 & 0x0f) < (n as i8 & 0x0f);
         self.registers.flags.c = u16::from(a) < u16::from(n);
         self.registers.flags.n = true;
         self.registers.a = r;
@@ -345,7 +345,7 @@ impl CPU {
         self.registers.flags.c = self.registers.a != 0;
         self.registers.flags.z = r == 0x00;
         self.registers.flags.s = (r as i8) < 0;
-        self.registers.flags.h = (r & 0x0f) != 0x0f;
+        self.registers.flags.h = 0 < (self.registers.a & 0x0F);
         self.registers.flags.n = true;
         self.registers.a = r;
     }
