@@ -30,7 +30,7 @@ const SF: u8 = 1 << 7;
 #[test]
 fn ld_r_r_asm() {
     let mut c = CPU::new();
-    c.bus.load_bin("bin/ldrr.bin", 0).unwrap();
+    c.bus.load_bin("bin/ld_r_r.bin", 0).unwrap();
     c.registers.a = 0x12;
     assert_eq!(c.execute(),4); assert_eq!(c.registers.b, 0x12);     // LD B,A
     assert_eq!(c.execute(),4); assert_eq!(c.registers.c, 0x12);     // LD C,A
@@ -51,7 +51,7 @@ fn ld_r_r_asm() {
 #[test]
 fn ld_hl_asm() {
     let mut c = CPU::new();
-    c.bus.load_bin("bin/ldhl.bin", 0x0100).unwrap();
+    c.bus.load_bin("bin/ld_hl.bin", 0x0100).unwrap();
     c.registers.a = 0x33;
     c.registers.set_hl(0x1000);
     c.pc = 0x0100;
@@ -66,7 +66,7 @@ fn ld_hl_asm() {
 #[test]
 fn ld_hl_n_asm() {
     let mut c = CPU::new();
-    c.bus.load_bin("bin/ldhln.bin", 0).unwrap();
+    c.bus.load_bin("bin/ld_hl_n.bin", 0).unwrap();
     assert_eq!(c.execute(), 10); assert_eq!(c.registers.get_hl(), 0x2000);      // LD HL,0x2000
     assert_eq!(c.execute(), 10); assert_eq!(c.bus.read_byte(0x2000), 0x33);     // LD (HL),0x33
     assert_eq!(c.execute(), 10); assert_eq!(c.registers.get_hl(), 0x1000);      // LD HL,0x1000
@@ -74,9 +74,9 @@ fn ld_hl_n_asm() {
 }
 
 #[test]
-fn ld_ixiy_n_asm() {
+fn ld_ix_iy_n_asm() {
     let mut c = CPU::new();
-    c.bus.load_bin("bin/ldixiyn.bin", 0).unwrap();
+    c.bus.load_bin("bin/ld_ix_iy_n.bin", 0).unwrap();
     assert_eq!(c.execute(), 14); assert_eq!(c.ix, 0x2000);                      // LD IX,0x2000
     assert_eq!(c.execute(), 19); assert_eq!(0x33, c.bus.read_byte(0x2002));     // LD (IX+2),0x33
     assert_eq!(c.execute(), 19); assert_eq!(0x11, c.bus.read_byte(0x1FFE));     // LD (IX-2),0x11
@@ -86,7 +86,7 @@ fn ld_ixiy_n_asm() {
 }
 
 #[test]
-fn ld_hlddixiy_inn_asm() {
+fn ld_hl_dd_ix_iy_inn_asm() {
     let mut c = CPU::new();
     c.bus.write_byte(0x1000, 0x01);
     c.bus.write_byte(0x1001, 0x02);
@@ -96,7 +96,7 @@ fn ld_hlddixiy_inn_asm() {
     c.bus.write_byte(0x1005, 0x06);
     c.bus.write_byte(0x1006, 0x07);
     c.bus.write_byte(0x1007, 0x08);
-    c.bus.load_bin("bin/ldhlddixiyinn.bin", 0).unwrap();
+    c.bus.load_bin("bin/ld_hl_dd_ix_iy_inn.bin", 0).unwrap();
     assert_eq!(c.execute(), 16); assert_eq!(0x0201, c.registers.get_hl());      // LD HL,(0x1000)
     assert_eq!(c.execute(), 20); assert_eq!(0x0302, c.registers.get_bc());      // LD BC,(0x1001)
     assert_eq!(c.execute(), 20); assert_eq!(0x0403, c.registers.get_de());      // LD DE,(0x1002)
@@ -107,9 +107,9 @@ fn ld_hlddixiy_inn_asm() {
 }
 
 #[test]
-fn ld_ixiy_nn_asm() {
+fn ld_ix_iy_nn_asm() {
     let mut c = CPU::new();
-    c.bus.load_bin("bin/ldixiynn.bin", 0).unwrap();
+    c.bus.load_bin("bin/ld_ix_iy_nn.bin", 0).unwrap();
     assert_eq!(c.execute(), 10); assert_eq!(0x1234, c.registers.get_bc());      // LD BC,0x1234
     assert_eq!(c.execute(), 10); assert_eq!(0x5678, c.registers.get_de());      // LD DE,0x5678
     assert_eq!(c.execute(), 10); assert_eq!(0x9ABC, c.registers.get_hl());      // LD HL,0x9ABC
