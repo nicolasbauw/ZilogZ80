@@ -119,6 +119,48 @@ fn ld_ix_iy_nn_asm() {
 }
 
 #[test]
+fn ld_sp_hl_ix_iy_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/ld_sp_hl_ix_iy.bin", 0).unwrap();
+    assert_eq!(c.execute(), 10); assert_eq!(0x1234, c.registers.get_hl());      // LD HL,0x1234
+    assert_eq!(c.execute(), 14); assert_eq!(0x5678, c.ix);                      // LD IX,0x5678
+    assert_eq!(c.execute(), 14); assert_eq!(0x9ABC, c.iy);                      // LD IY,0x9ABC
+    assert_eq!(c.execute(), 6); assert_eq!(0x1234, c.sp);                       // LD SP,HL
+    assert_eq!(c.execute(), 10); assert_eq!(0x5678, c.sp);                      // LD SP,IX
+    assert_eq!(c.execute(), 10); assert_eq!(0x9ABC, c.sp);                      // LD SP,IY
+}
+
+#[test]
+fn ld_r_ix_iy_asm() {
+    let mut c = CPU::new();
+    c.bus.write_byte(0x1000, 0x01);
+    c.bus.write_byte(0x1001, 0x02);
+    c.bus.write_byte(0x1002, 0x03);
+    c.bus.write_byte(0x1003, 0x04);
+    c.bus.write_byte(0x1004, 0x05);
+    c.bus.write_byte(0x1005, 0x06);
+    c.bus.write_byte(0x1006, 0x07);
+    c.bus.write_byte(0x1007, 0x08);
+    c.bus.load_bin("bin/ld_r_ix_iy.bin", 0).unwrap();                           
+    assert_eq!(c.execute(), 14); assert_eq!(0x1003, c.ix);                      // LD  IX,0x1003
+    assert_eq!(c.execute(), 19); assert_eq!(4, c.registers.a);                  // LD  A,(IX+0)
+    assert_eq!(c.execute(), 19); assert_eq!(5, c.registers.b);                  // LD  B,(IX+1)
+    assert_eq!(c.execute(), 19); assert_eq!(6, c.registers.c);                  // LD  C,(IX+2)
+    assert_eq!(c.execute(), 19); assert_eq!(3, c.registers.d);                  // LD  D,(IX-1)
+    assert_eq!(c.execute(), 19); assert_eq!(2, c.registers.e);                  // LD  E,(IX-2)
+    assert_eq!(c.execute(), 19); assert_eq!(7, c.registers.h);                  // LD  H,(IX+3)
+    assert_eq!(c.execute(), 19); assert_eq!(1, c.registers.l);                  // LD  L,(IX-3)
+    assert_eq!(c.execute(), 14); assert_eq!(0x1004, c.iy);                      // LD  IY,0x1004
+    assert_eq!(c.execute(), 19); assert_eq!(5, c.registers.a);                  // LD  A,(IY+0)
+    assert_eq!(c.execute(), 19); assert_eq!(6, c.registers.b);                  // LD  B,(IY+1)
+    assert_eq!(c.execute(), 19); assert_eq!(7, c.registers.c);                  // LD  C,(IY+2)
+    assert_eq!(c.execute(), 19); assert_eq!(4, c.registers.d);                  // LD  D,(IY-1)
+    assert_eq!(c.execute(), 19); assert_eq!(3, c.registers.e);                  // LD  E,(IY-2)
+    assert_eq!(c.execute(), 19); assert_eq!(8, c.registers.h);                  // LD  H,(IY+3)
+    assert_eq!(c.execute(), 19); assert_eq!(2, c.registers.l);                  // LD  L,(IY-3)
+}   
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
