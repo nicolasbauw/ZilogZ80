@@ -486,6 +486,21 @@ fn and_r_asm() {
 }
 
 #[test]
+fn and_i_hl_ix_iy_asm() {
+    let mut c = CPU::new();
+    c.bus.write_byte(0x1000, 0xFE);
+    c.bus.write_byte(0x1001, 0xAA);
+    c.bus.write_byte(0x1002, 0x99);
+    c.bus.load_bin("bin/and_i_hl_ix_iy.bin", 0).unwrap();
+    for _ in 0..4 {
+        c.execute();
+    }
+    assert_eq!(c.execute(), 7);  assert_eq!(0xFE, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF);       // AND (HL)
+    assert_eq!(c.execute(), 19); assert_eq!(0xAA, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|PF);    // AND (IX+1)
+    assert_eq!(c.execute(), 19); assert_eq!(0x88, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|PF);    // AND (IY-1)
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
