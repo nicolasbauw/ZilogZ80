@@ -426,6 +426,24 @@ fn or_r_asm() {
 }
 
 #[test]
+fn xor_r_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/xor_r.bin", 0).unwrap();
+    for _ in 0..7 {
+        c.execute();
+    }
+    assert_eq!(c.execute(), 4); assert_eq!(0x00, c.registers.a); assert_eq!(c.registers.flags.to_byte(), ZF|PF);    // XOR A
+    assert_eq!(c.execute(), 4); assert_eq!(0x01, c.registers.a); assert_eq!(c.registers.flags.to_byte(), 0);        // XOR B
+    assert_eq!(c.execute(), 4); assert_eq!(0x02, c.registers.a); assert_eq!(c.registers.flags.to_byte(), 0);        // XOR C
+    assert_eq!(c.execute(), 4); assert_eq!(0x05, c.registers.a); assert_eq!(c.registers.flags.to_byte(), PF);       // XOR D
+    assert_eq!(c.execute(), 4); assert_eq!(0x0A, c.registers.a); assert_eq!(c.registers.flags.to_byte(), PF);       // XOR E
+    assert_eq!(c.execute(), 4); assert_eq!(0x15, c.registers.a); assert_eq!(c.registers.flags.to_byte(), 0);        // XOR H
+    assert_eq!(c.execute(), 4); assert_eq!(0x2A, c.registers.a); assert_eq!(c.registers.flags.to_byte(), 0);        // XOR L
+    assert_eq!(c.execute(), 7); assert_eq!(0x55, c.registers.a); assert_eq!(c.registers.flags.to_byte(), PF);       // XOR 0x7F
+    assert_eq!(c.execute(), 7); assert_eq!(0xAA, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|PF);    // XOR 0xFF
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
