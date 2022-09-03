@@ -1,0 +1,19 @@
+.target "z80"
+.format "bin"
+
+    SUB A
+    LD  B,0x01
+    LD  C,0x02
+    LD  D,0x04
+    LD  E,0x08
+    LD  H,0x10
+    LD  L,0x20
+    OR  A
+    OR  B
+    OR  C
+    OR  D
+    OR  E
+    OR  H
+    OR  L
+    OR  0x40
+    OR  0x80
