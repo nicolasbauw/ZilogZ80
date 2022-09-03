@@ -564,6 +564,21 @@ fn inc_dec_ss_ix_iy_asm() {
 }
 
 #[test]
+fn djnz_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/djnz.bin", 0x0204).unwrap();
+    c.pc = 0x0204;
+    assert_eq!(c.execute(), 7);  assert_eq!(0x03, c.registers.b);
+    assert_eq!(c.execute(), 4);  assert_eq!(0x00, c.registers.a);
+    assert_eq!(c.execute(), 4);  assert_eq!(0x01, c.registers.a);
+    assert_eq!(c.execute(), 13); assert_eq!(0x02, c.registers.b); assert_eq!(0x0207, c.pc);
+    assert_eq!(c.execute(), 4);  assert_eq!(0x02, c.registers.a);
+    assert_eq!(c.execute(), 13); assert_eq!(0x01, c.registers.b); assert_eq!(0x0207, c.pc);
+    assert_eq!(c.execute(), 4);  assert_eq!(0x03, c.registers.a);
+    assert_eq!(c.execute(), 8);  assert_eq!(0x00, c.registers.b); assert_eq!(0x020A, c.pc);
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
