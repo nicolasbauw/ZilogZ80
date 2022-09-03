@@ -158,7 +158,43 @@ fn ld_r_ix_iy_asm() {
     assert_eq!(c.execute(), 19); assert_eq!(3, c.registers.e);                  // LD  E,(IY-2)
     assert_eq!(c.execute(), 19); assert_eq!(8, c.registers.h);                  // LD  H,(IY+3)
     assert_eq!(c.execute(), 19); assert_eq!(2, c.registers.l);                  // LD  L,(IY-3)
-}   
+}
+
+#[test]
+fn ld_ix_iy_r_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/ld_ix_iy_r.bin", 0).unwrap();
+    assert_eq!(c.execute(), 14);    assert_eq!(0x1003, c.ix);
+    assert_eq!(c.execute(), 7);     assert_eq!(0x12, c.registers.a);         
+    assert_eq!(c.execute(), 19);    assert_eq!(0x12, c.bus.read_byte(0x1003));  
+    assert_eq!(c.execute(), 7);     assert_eq!(0x13, c.registers.b);         
+    assert_eq!(c.execute(), 19);    assert_eq!(0x13, c.bus.read_byte(0x1004));  
+    assert_eq!(c.execute(), 7);     assert_eq!(0x14, c.registers.c);         
+    assert_eq!(c.execute(), 19);    assert_eq!(0x14, c.bus.read_byte(0x1005));  
+    assert_eq!(c.execute(), 7);     assert_eq!(0x15, c.registers.d);         
+    assert_eq!(c.execute(), 19);    assert_eq!(0x15, c.bus.read_byte(0x1002));  
+    assert_eq!(c.execute(), 7);     assert_eq!(0x16, c.registers.e);         
+    assert_eq!(c.execute(), 19);    assert_eq!(0x16, c.bus.read_byte(0x1001));  
+    assert_eq!(c.execute(), 7);     assert_eq!(0x17, c.registers.h);         
+    assert_eq!(c.execute(), 19);    assert_eq!(0x17, c.bus.read_byte(0x1006));  
+    assert_eq!(c.execute(), 7);     assert_eq!(0x18, c.registers.l);         
+    assert_eq!(c.execute(), 19);    assert_eq!(0x18, c.bus.read_byte(0x1000));  
+    assert_eq!(c.execute(), 14);    assert_eq!(0x1003, c.iy);
+    assert_eq!(c.execute(), 7);     assert_eq!(0x12, c.registers.a);        
+    assert_eq!(c.execute(), 19);    assert_eq!(0x12, c.bus.read_byte(0x1003)); 
+    assert_eq!(c.execute(), 7);     assert_eq!(0x13, c.registers.b);        
+    assert_eq!(c.execute(), 19);    assert_eq!(0x13, c.bus.read_byte(0x1004)); 
+    assert_eq!(c.execute(), 7);     assert_eq!(0x14, c.registers.c);        
+    assert_eq!(c.execute(), 19);    assert_eq!(0x14, c.bus.read_byte(0x1005)); 
+    assert_eq!(c.execute(), 7);     assert_eq!(0x15, c.registers.d);        
+    assert_eq!(c.execute(), 19);    assert_eq!(0x15, c.bus.read_byte(0x1002)); 
+    assert_eq!(c.execute(), 7);     assert_eq!(0x16, c.registers.e);        
+    assert_eq!(c.execute(), 19);    assert_eq!(0x16, c.bus.read_byte(0x1001)); 
+    assert_eq!(c.execute(), 7);     assert_eq!(0x17, c.registers.h);        
+    assert_eq!(c.execute(), 19);    assert_eq!(0x17, c.bus.read_byte(0x1006)); 
+    assert_eq!(c.execute(), 7);     assert_eq!(0x18, c.registers.l);        
+    assert_eq!(c.execute(), 19);    assert_eq!(0x18, c.bus.read_byte(0x1000)); 
+}
 
 #[test]
 fn ld_b() {
