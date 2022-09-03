@@ -2447,7 +2447,7 @@ impl CPU {
             0x83 => self.add(self.registers.e),                                   // ADD E
             0x84 => self.add(self.registers.h),                                   // ADD H
             0x85 => self.add(self.registers.l),                                   // ADD L
-            0x86 => {                                                              // ADD (HL)
+            0x86 => {                                                             // ADD (HL)
                 let addr = self.registers.get_hl();
                 let n = self.bus.read_byte(addr);
                 self.add(n)
