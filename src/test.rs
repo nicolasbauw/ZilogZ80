@@ -559,8 +559,8 @@ fn inc_dec_ss_ix_iy_asm() {
     assert_eq!(c.execute(), 6);  assert_eq!(0x1111, c.sp);                      // DEC SP
     assert_eq!(c.execute(), 10); assert_eq!(0x1000, c.ix);                      // INC IX
     assert_eq!(c.execute(), 10); assert_eq!(0x0FFF, c.ix);                      // DEC IX
-    assert_eq!(c.execute(), 10); assert_eq!(0x1235, c.iy);                      // INC IX
-    assert_eq!(c.execute(), 10); assert_eq!(0x1234, c.iy);                      // DEC IX
+    assert_eq!(c.execute(), 10); assert_eq!(0x1235, c.iy);                      // INC IY
+    assert_eq!(c.execute(), 10); assert_eq!(0x1234, c.iy);                      // DEC IY
 }
 
 #[test]
