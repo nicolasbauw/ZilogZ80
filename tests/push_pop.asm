@@ -1,0 +1,22 @@
+.target "z80"
+.format "bin"
+
+    LD      BC,0x1234
+    LD      DE,0x5678
+    LD      HL,0x9ABC
+    LD      A,0xEF
+    LD      IX,0x2345
+    LD      IY,0x6789
+    LD      SP,0x0100
+    PUSH    AF
+    PUSH    BC
+    PUSH    DE
+    PUSH    HL
+    PUSH    IX
+    PUSH    IY
+    POP     AF
+    POP     BC
+    POP     DE
+    POP     HL
+    POP     IX
+    POP     IY
