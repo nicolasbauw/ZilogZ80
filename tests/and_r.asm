@@ -1,0 +1,25 @@
+.target "z80"
+.format "bin"
+
+    LD  A,0xFF
+    LD  B,0x01
+    LD  C,0x03
+    LD  D,0x04
+    LD  E,0x08
+    LD  H,0x10
+    LD  L,0x20
+    AND B
+    OR  0xFF
+    AND C
+    OR  0xFF
+    AND D
+    OR  0xFF
+    AND E
+    OR  0xFF
+    AND H
+    OR  0xFF
+    AND L
+    OR  0xFF
+    AND 0x40
+    OR  0xFF
+    AND 0xAA
