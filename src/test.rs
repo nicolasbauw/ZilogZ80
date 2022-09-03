@@ -444,6 +444,24 @@ fn xor_r_asm() {
 }
 
 #[test]
+fn or_xor_i_hl_ix_iy_asm() {
+    let mut c = CPU::new();
+    c.bus.write_byte(0x1000, 0x41);
+    c.bus.write_byte(0x1001, 0x62);
+    c.bus.write_byte(0x1002, 0x84);
+    c.bus.load_bin("bin/or_xor_i_hl_ix_iy.bin", 0).unwrap();
+    for _ in 0..3 {
+        c.execute();
+    }
+    assert_eq!(c.execute(), 7);  assert_eq!(0x41, c.registers.a); assert_eq!(c.registers.flags.to_byte(), PF);      // OR (HL)
+    assert_eq!(c.execute(), 19); assert_eq!(0x63, c.registers.a); assert_eq!(c.registers.flags.to_byte(), PF);      // OR (IX+1)
+    assert_eq!(c.execute(), 19); assert_eq!(0xE7, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|PF);   // OR (IY-1)
+    assert_eq!(c.execute(), 7);  assert_eq!(0xA6, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|PF);   // XOR (HL)
+    assert_eq!(c.execute(), 19); assert_eq!(0xC4, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF);      // XOR (IX+1)
+    assert_eq!(c.execute(), 19); assert_eq!(0x40, c.registers.a); assert_eq!(c.registers.flags.to_byte(), 0);       // XOR (IY-1)
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
