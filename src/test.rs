@@ -579,6 +579,22 @@ fn djnz_asm() {
 }
 
 #[test]
+fn jr_cc_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/jr_cc.bin", 0x0204).unwrap();
+    c.pc = 0x0204;
+    assert_eq!(c.execute(), 4);  assert_eq!(0x00,   c.registers.a);
+    assert_eq!(c.execute(), 7);  assert_eq!(0x0207, c.pc);
+    assert_eq!(c.execute(), 12); assert_eq!(0x020A, c.pc);
+    assert_eq!(c.execute(), 7);  assert_eq!(0x01,   c.registers.a);
+    assert_eq!(c.execute(), 7);  assert_eq!(0x020E, c.pc);
+    assert_eq!(c.execute(), 12); assert_eq!(0x0211, c.pc);
+    assert_eq!(c.execute(), 7);  assert_eq!(0xFE,   c.registers.a);
+    assert_eq!(c.execute(), 7);  assert_eq!(0x0215, c.pc);
+    assert_eq!(c.execute(), 12); assert_eq!(0x0218, c.pc);
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
