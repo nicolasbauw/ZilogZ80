@@ -1258,7 +1258,7 @@ impl CPU {
             // PUSH IY
             0xFDE5 => {
                 self.sp = self.sp.wrapping_sub(2);
-                self.bus.write_word(self.sp, self.ix);
+                self.bus.write_word(self.sp, self.iy);
             },
 
             // POP IX
@@ -1267,7 +1267,7 @@ impl CPU {
                 self.sp = self.sp.wrapping_add(2);
             },
 
-            // POP IX
+            // POP IY
             0xFDE1 => {
                 self.iy = self.bus.read_word(self.sp);
                 self.sp = self.sp.wrapping_add(2);
