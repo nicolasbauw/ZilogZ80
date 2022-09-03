@@ -392,6 +392,22 @@ fn sbc_r_asm() {
 }
 
 #[test]
+fn sbc_i_hl_ix_iy_asm() {
+    let mut c = CPU::new();
+    c.bus.write_byte(0x1000, 0x41);
+    c.bus.write_byte(0x1001, 0x61);
+    c.bus.write_byte(0x1002, 0x81);
+    c.bus.load_bin("bin/sbc_i_hl_ix_iy.bin", 0).unwrap();
+    assert_eq!(c.execute(), 10); assert_eq!(0x1000, c.registers.get_hl());
+    assert_eq!(c.execute(), 14); assert_eq!(0x1000, c.ix);
+    assert_eq!(c.execute(), 14); assert_eq!(0x1003, c.iy);
+    assert_eq!(c.execute(), 7);  assert_eq!(0x00, c.registers.a);
+    assert_eq!(c.execute(), 7);  assert_eq!(0xBF, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);
+    assert_eq!(c.execute(), 19); assert_eq!(0x5D, c.registers.a); assert_eq!(c.registers.flags.to_byte(), VF|NF);
+    assert_eq!(c.execute(), 19); assert_eq!(0xFC, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|NF|CF);
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
