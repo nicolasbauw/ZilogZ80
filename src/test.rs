@@ -543,6 +543,27 @@ fn inc_dec_i_hl_ix_iy_asm() {
 }
 
 #[test]
+fn inc_dec_ss_ix_iy_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/inc_dec_ss_ix_iy.bin", 0).unwrap();
+    for _ in 0..6 {
+        c.execute();
+    }
+    assert_eq!(c.execute(), 6);  assert_eq!(0xFFFF, c.registers.get_bc());      // DEC BC
+    assert_eq!(c.execute(), 6);  assert_eq!(0x0000, c.registers.get_bc());      // INC BC
+    assert_eq!(c.execute(), 6);  assert_eq!(0x0000, c.registers.get_de());      // INC DE
+    assert_eq!(c.execute(), 6);  assert_eq!(0xFFFF, c.registers.get_de());      // DEC DE
+    assert_eq!(c.execute(), 6);  assert_eq!(0x0100, c.registers.get_hl());      // INC HL
+    assert_eq!(c.execute(), 6);  assert_eq!(0x00FF, c.registers.get_hl());      // DEC HL
+    assert_eq!(c.execute(), 6);  assert_eq!(0x1112, c.sp);                      // INC SP
+    assert_eq!(c.execute(), 6);  assert_eq!(0x1111, c.sp);                      // DEC SP
+    assert_eq!(c.execute(), 10); assert_eq!(0x1000, c.ix);                      // INC IX
+    assert_eq!(c.execute(), 10); assert_eq!(0x0FFF, c.ix);                      // DEC IX
+    assert_eq!(c.execute(), 10); assert_eq!(0x1235, c.iy);                      // INC IX
+    assert_eq!(c.execute(), 10); assert_eq!(0x1234, c.iy);                      // DEC IX
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
