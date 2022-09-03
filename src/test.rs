@@ -222,6 +222,28 @@ fn push_pop_asm() {
 }
 
 #[test]
+fn add_r_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/add_r.bin", 0).unwrap();
+    assert_eq!(c.execute(), 7); assert_eq!(0x0F, c.registers.a); assert_eq!(c.registers.flags.to_byte(), 0);        // LD A,0x0F
+    assert_eq!(c.execute(), 4); assert_eq!(0x1E, c.registers.a); assert_eq!(c.registers.flags.to_byte(), HF);       // ADD A,A
+    assert_eq!(c.execute(), 7); assert_eq!(0xE0, c.registers.b);                                                    // LD B,0xE0
+    assert_eq!(c.execute(), 4); assert_eq!(0xFE, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF);       // ADD A,B
+    assert_eq!(c.execute(), 7); assert_eq!(0x81, c.registers.a);                                                    // LD A,0x81
+    assert_eq!(c.execute(), 7); assert_eq!(0x80, c.registers.c);                                                    // LD C,0x80
+    assert_eq!(c.execute(), 4); assert_eq!(0x01, c.registers.a); assert_eq!(c.registers.flags.to_byte(), VF|CF);    // ADD A,C
+    assert_eq!(c.execute(), 7); assert_eq!(0xFF, c.registers.d);                                                    // LD D,0xFF
+    assert_eq!(c.execute(), 4); assert_eq!(0x00, c.registers.a); assert_eq!(c.registers.flags.to_byte(), ZF|HF|CF); // ADD A,D
+    assert_eq!(c.execute(), 7); assert_eq!(0x40, c.registers.e);                                                    // LD E,0x40
+    assert_eq!(c.execute(), 4); assert_eq!(0x40, c.registers.a); assert_eq!(c.registers.flags.to_byte() , 0);       // ADD A,E
+    assert_eq!(c.execute(), 7); assert_eq!(0x80, c.registers.h);                                                    // LD H,0x80
+    assert_eq!(c.execute(), 4); assert_eq!(0xC0, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF);       // ADD A,H
+    assert_eq!(c.execute(), 7); assert_eq!(0x33, c.registers.l);                                                    // LD L,0x33
+    assert_eq!(c.execute(), 4); assert_eq!(0xF3, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF);       // ADD A,L
+    assert_eq!(c.execute(), 7); assert_eq!(0x37, c.registers.a); assert_eq!(c.registers.flags.to_byte(), CF);       // ADD A,0x44  
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
