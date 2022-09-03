@@ -525,6 +525,24 @@ fn inc_dec_r_asm() {
 }
 
 #[test]
+fn inc_dec_i_hl_ix_iy_asm() {
+    let mut c = CPU::new();
+    c.bus.write_byte(0x1000, 0x00);
+    c.bus.write_byte(0x1001, 0x3F);
+    c.bus.write_byte(0x1002, 0x7F);
+    c.bus.load_bin("bin/inc_dec_i_hl_ix_iy.bin", 0).unwrap();
+    for _ in 0..3 {
+        c.execute();
+    }
+    assert_eq!(c.execute(), 11); assert_eq!(0xFF, c.bus.read_byte(0x1000)); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF);  // DEC (HL)
+    assert_eq!(c.execute(), 11); assert_eq!(0x00, c.bus.read_byte(0x1000)); assert_eq!(c.registers.flags.to_byte(), ZF|HF);     // INC (HL)
+    assert_eq!(c.execute(), 23); assert_eq!(0x40, c.bus.read_byte(0x1001)); assert_eq!(c.registers.flags.to_byte(), HF);        // INC (IX+1)
+    assert_eq!(c.execute(), 23); assert_eq!(0x3F, c.bus.read_byte(0x1001)); assert_eq!(c.registers.flags.to_byte(), HF|NF);     // DEC (IX+1)
+    assert_eq!(c.execute(), 23); assert_eq!(0x80, c.bus.read_byte(0x1002)); assert_eq!(c.registers.flags.to_byte(), SF|HF|VF);  // INC (IY-1)
+    assert_eq!(c.execute(), 23); assert_eq!(0x7F, c.bus.read_byte(0x1002)); assert_eq!(c.registers.flags.to_byte(), HF|PF|NF);  // DEC (IY-1)
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
