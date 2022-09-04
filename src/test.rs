@@ -778,6 +778,38 @@ fn halt_asm() {
 }
 
 #[test]
+fn ex_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/ex.bin", 0).unwrap();
+    assert_eq!(c.execute(), 10); assert_eq!(0x1234, c.registers.get_hl());
+    assert_eq!(c.execute(), 10); assert_eq!(0x5678, c.registers.get_de());
+    assert_eq!(c.execute(), 4);  assert_eq!(0x1234, c.registers.get_de()); assert_eq!(0x5678, c.registers.get_hl()); 
+    assert_eq!(c.execute(), 7);  assert_eq!(0x1100, c.registers.get_af()); assert_eq!(0x0000, c.alt_registers.get_af());
+    assert_eq!(c.execute(), 4);  assert_eq!(0x0000, c.registers.get_af()); assert_eq!(0x1100, c.alt_registers.get_af());
+    assert_eq!(c.execute(), 7);  assert_eq!(0x2200, c.registers.get_af()); assert_eq!(0x1100, c.alt_registers.get_af());
+    assert_eq!(c.execute(), 4);  assert_eq!(0x1100, c.registers.get_af()); assert_eq!(0x2200, c.alt_registers.get_af());
+    assert_eq!(c.execute(), 10); assert_eq!(0x9ABC, c.registers.get_bc());
+    assert_eq!(c.execute(), 4);
+    assert_eq!(0x0000, c.registers.get_hl()); assert_eq!(0x5678, c.alt_registers.get_hl());
+    assert_eq!(0x0000, c.registers.get_de()); assert_eq!(0x1234, c.alt_registers.get_de());
+    assert_eq!(0x0000, c.registers.get_bc()); assert_eq!(0x9ABC, c.alt_registers.get_bc());
+    assert_eq!(c.execute(), 10); assert_eq!(0x1111, c.registers.get_hl());
+    assert_eq!(c.execute(), 10); assert_eq!(0x2222, c.registers.get_de());
+    assert_eq!(c.execute(), 10); assert_eq!(0x3333, c.registers.get_bc());
+    assert_eq!(c.execute(), 4);
+    assert_eq!(0x5678, c.registers.get_hl()); assert_eq!(0x1111, c.alt_registers.get_hl());
+    assert_eq!(0x1234, c.registers.get_de()); assert_eq!(0x2222, c.alt_registers.get_de());
+    assert_eq!(0x9ABC, c.registers.get_bc()); assert_eq!(0x3333, c.alt_registers.get_bc());
+    assert_eq!(c.execute(), 10); assert_eq!(0x0100, c.sp);
+    assert_eq!(c.execute(), 11); assert_eq!(0x1234, c.bus.read_word(0x00FE));
+    assert_eq!(c.execute(), 19); assert_eq!(0x1234, c.registers.get_hl()); assert_eq!(0x5678, c.bus.read_word(0x00FE));
+    assert_eq!(c.execute(), 14); assert_eq!(0x8899, c.ix);
+    assert_eq!(c.execute(), 23); assert_eq!(0x5678, c.ix); assert_eq!(0x8899, c.bus.read_word(0x00FE));
+    assert_eq!(c.execute(), 14); assert_eq!(0x6677, c.iy);
+    assert_eq!(c.execute(), 23); assert_eq!(0x8899, c.iy); assert_eq!(0x6677, c.bus.read_word(0x00FE));
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
@@ -1602,7 +1634,7 @@ fn ld_d() {
         let mut c = CPU::new();
         c.bus.write_byte(0x0000, 0xFD);
         c.bus.write_byte(0x0001, 0xE3);
-        c.ix = 0x3988;
+        c.iy = 0x3988;
         c.sp = 0x0100;
         c.bus.write_byte(0x0100, 0x90);
         c.bus.write_byte(0x0101, 0x48);
