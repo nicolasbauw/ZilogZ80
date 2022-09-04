@@ -737,6 +737,38 @@ fn call_ret_asm() {
 }
 
 #[test]
+fn call_cc_ret_cc_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/call_cc_ret_cc.bin", 0x0204).unwrap();
+    c.pc = 0x0204;
+    c.sp = 0x0100;
+    assert_eq!(c.execute(), 4);  assert_eq!(0x00, c.registers.a);
+    assert_eq!(c.execute(), 10); assert_eq!(0x0208, c.pc);
+    assert_eq!(c.execute(), 17); assert_eq!(0x0229, c.pc);
+    assert_eq!(c.execute(), 5);  assert_eq!(0x022A, c.pc);
+    assert_eq!(c.execute(), 11); assert_eq!(0x020B, c.pc);
+    assert_eq!(c.execute(), 7);  assert_eq!(0x01, c.registers.a);
+    assert_eq!(c.execute(), 10); assert_eq!(0x0210, c.pc);
+    assert_eq!(c.execute(), 17); assert_eq!(0x022B, c.pc);
+    assert_eq!(c.execute(), 5);  assert_eq!(0x022C, c.pc);
+    assert_eq!(c.execute(), 11); assert_eq!(0x0213, c.pc);
+    assert_eq!(c.execute(), 4);  assert_eq!(0x02, c.registers.a);
+    assert_eq!(c.execute(), 10); assert_eq!(0x0217, c.pc);
+    assert_eq!(c.execute(), 17); assert_eq!(0x022D, c.pc);
+    assert_eq!(c.execute(), 5);  assert_eq!(0x022E, c.pc);
+    assert_eq!(c.execute(), 11); assert_eq!(0x021A, c.pc);
+    assert_eq!(c.execute(), 7);  assert_eq!(0xFF, c.registers.a);
+    assert_eq!(c.execute(), 10); assert_eq!(0x021F, c.pc);
+    assert_eq!(c.execute(), 17); assert_eq!(0x022F, c.pc);
+    assert_eq!(c.execute(), 5);  assert_eq!(0x0230, c.pc);
+    assert_eq!(c.execute(), 11); assert_eq!(0x0222, c.pc);
+    assert_eq!(c.execute(), 10); assert_eq!(0x0225, c.pc);
+    assert_eq!(c.execute(), 17); assert_eq!(0x0231, c.pc);
+    assert_eq!(c.execute(), 5);  assert_eq!(0x0232, c.pc);
+    assert_eq!(c.execute(), 11); assert_eq!(0x0228, c.pc);
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
