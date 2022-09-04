@@ -946,6 +946,37 @@ fn lddr_asm() {
 }
 
 #[test]
+fn cpi_asm() {
+    let mut c = CPU::new();
+    c.bus.write_byte(0x1000, 0x01);
+    c.bus.write_byte(0x1001, 0x02);
+    c.bus.write_byte(0x1002, 0x03);
+    c.bus.write_byte(0x1003, 0x04);
+    c.bus.load_bin("bin/cpi.bin", 0).unwrap();
+    for _ in 0..3 {
+        c.execute();
+    }
+    assert_eq!(c.execute(), 16);
+    assert_eq!(0x1001, c.registers.get_hl());
+    assert_eq!(0x0003, c.registers.get_bc());
+    assert_eq!(c.registers.flags.to_byte(), PF|NF);
+    let f = c.registers.flags.to_byte() | CF;
+    c.registers.flags.from_byte(f);
+    assert_eq!(c.execute(), 16);
+    assert_eq!(0x1002, c.registers.get_hl());
+    assert_eq!(0x0002, c.registers.get_bc());
+    assert_eq!(c.registers.flags.to_byte(), PF|NF|CF);
+    assert_eq!(c.execute(), 16);
+    assert_eq!(0x1003, c.registers.get_hl());
+    assert_eq!(0x0001, c.registers.get_bc());
+    assert_eq!(c.registers.flags.to_byte(), ZF|PF|NF|CF);
+    assert_eq!(c.execute(), 16);
+    assert_eq!(0x1004, c.registers.get_hl());
+    assert_eq!(0x0000, c.registers.get_bc());
+    assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
