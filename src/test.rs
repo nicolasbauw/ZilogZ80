@@ -704,6 +704,18 @@ fn cpl_asm() {
 }
 
 #[test]
+fn ccf_scf_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/ccf_scf.bin", 0).unwrap();
+    assert_eq!(c.execute(), 4); assert_eq!(0x00, c.registers.a); assert_eq!(c.registers.flags.to_byte(), ZF|NF);        // SUB A
+    assert_eq!(c.execute(), 4); assert_eq!(0x00, c.registers.a); assert_eq!(c.registers.flags.to_byte(), ZF|CF);        // SCF
+    assert_eq!(c.execute(), 4); assert_eq!(0x00, c.registers.a); assert_eq!(c.registers.flags.to_byte(), ZF|HF);        // CCF
+    assert_eq!(c.execute(), 7); assert_eq!(0x34, c.registers.a); assert_eq!(c.registers.flags.to_byte(), HF|NF|CF);     // SUB 0xCC
+    assert_eq!(c.execute(), 4); assert_eq!(0x34, c.registers.a); assert_eq!(c.registers.flags.to_byte(), HF);           // CCF
+    assert_eq!(c.execute(), 4); assert_eq!(0x34, c.registers.a); assert_eq!(c.registers.flags.to_byte(), CF);           // SCF
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
