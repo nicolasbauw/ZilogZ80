@@ -170,13 +170,20 @@ impl CPU {
     }
 
     // Returns A - (HL)
-    fn cpi(&mut self) -> u8 {
+    fn cpi(&mut self) {
         let bc = self.registers.get_bc();
         let hl = self.registers.get_hl();
-        let r = self.registers.a.wrapping_sub(self.bus.read_byte(hl));
+        let h = self.bus.read_byte(hl);
+        let r = self.registers.a.wrapping_sub(h);
+        
         self.registers.set_hl(hl.wrapping_add(1));
         self.registers.set_bc(bc.wrapping_sub(1));
-        r
+        
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.z = self.registers.a == h;
+        self.registers.flags.h = self.registers.a < h;
+        self.registers.flags.p = self.registers.get_bc() != 0;
+        self.registers.flags.n = true;
     }
 
     // Returns A - (HL)
@@ -1333,25 +1340,13 @@ impl CPU {
             },
 
             // CPI
-            0xEDA1 => {
-                let r = self.cpi();
-                self.registers.flags.s = (r as i8) < 0;
-                self.registers.flags.z = (r as i8) == 0;
-                self.registers.flags.h = (r & 0x0f) != 0x0f;
-                self.registers.flags.p = self.registers.get_bc() != 0;
-                self.registers.flags.n = true;
-            },
+            0xEDA1 => self.cpi(),
 
             // CPIR
             0xEDB1 => {
                 // TODO : When the BC is set to 0 prior to instruction execution, the instruction loops through 64 KB.
                 while self.registers.get_bc() !=0 {
-                    let r = self.cpi();
-                    self.registers.flags.s = (r as i8) < 0;
-                    self.registers.flags.z = (r as i8) == 0;
-                    self.registers.flags.h = (r & 0x0f) != 0x0f;
-                    self.registers.flags.p = self.registers.get_bc() != 0;
-                    self.registers.flags.n = true;
+                    self.cpi();
                     if self.registers.flags.z { break }
                     // TODO : return cycles * number of executions
                 }
