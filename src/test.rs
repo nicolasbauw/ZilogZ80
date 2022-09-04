@@ -897,6 +897,36 @@ fn ldir_asm() {
 }
 
 #[test]
+fn ldd_asm() {
+    let mut c = CPU::new();
+    c.bus.write_byte(0x1000, 0x01);
+    c.bus.write_byte(0x1001, 0x02);
+    c.bus.write_byte(0x1002, 0x03);
+    c.bus.load_bin("bin/ldd.bin", 0).unwrap();
+    for _ in 0..3 {
+        c.execute();
+    }
+    assert_eq!(c.execute(), 16);
+    assert_eq!(0x1001, c.registers.get_hl());
+    assert_eq!(0x2001, c.registers.get_de());
+    assert_eq!(0x0002, c.registers.get_bc());
+    assert_eq!(0x03, c.bus.read_byte(0x2002));
+    assert_eq!(c.registers.flags.to_byte(), PF);
+    assert_eq!(c.execute(), 16);
+    assert_eq!(0x1000, c.registers.get_hl());
+    assert_eq!(0x2000, c.registers.get_de());
+    assert_eq!(0x0001, c.registers.get_bc());
+    assert_eq!(0x02, c.bus.read_byte(0x2001));
+    assert_eq!(c.registers.flags.to_byte(), PF);
+    assert_eq!(c.execute(), 16);
+    assert_eq!(0x0FFF, c.registers.get_hl());
+    assert_eq!(0x1FFF, c.registers.get_de());
+    assert_eq!(0x0000, c.registers.get_bc());
+    assert_eq!(0x01, c.bus.read_byte(0x2000));
+    assert_eq!(c.registers.flags.to_byte(), 0);
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
