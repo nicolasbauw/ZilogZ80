@@ -368,7 +368,7 @@ impl CPU {
     fn add_16(&mut self, n1: u16, n2: u16) -> u16 {
         let r = n1.wrapping_add(n2);
         self.registers.flags.c = u32::from(n1) + u32::from(n2) > 0xffff;
-        self.registers.flags.h = (n1 & 0x0800) + (n2 & 0x0800) > 0x0800;
+        self.registers.flags.h = (n1 & 0x0FFF) + (n2 & 0x0FFF) > 0x0FFF;
         self.registers.flags.n = false;
         r
     }
@@ -385,7 +385,7 @@ impl CPU {
         self.registers.flags.s = (r as i16) < 0;
         self.registers.flags.z = r == 0x00;
         self.registers.flags.c = u32::from(h) + u32::from(n) > 0xffff;
-        self.registers.flags.h = (h & 0x0800) + (n & 0x0800) > 0x0800;
+        self.registers.flags.h = (h & 0x0FFF) + (n & 0x0FFF) > 0x0FFF;
         self.registers.flags.n = false;
         self.registers.flags.p = {
             let r = ((h as i16).overflowing_add(n as i16)).0.overflowing_add(c as i16);
@@ -404,7 +404,7 @@ impl CPU {
         self.registers.set_hl(r);
         self.registers.flags.z = r == 0x00;
         self.registers.flags.s = (r as i16) < 0;
-        self.registers.flags.h = (h as i16 & 0x0fff) - (n as i16 & 0x0fff)  - (c as i16) >= 0x00;
+        self.registers.flags.h = (h as i16 & 0x0fff) < (n as i16 & 0x0fff)  + (c as i16);
         self.registers.flags.c = u16::from(h) < u16::from(n) + u16::from(c);
         self.registers.flags.n = true;
         self.registers.flags.p = {
