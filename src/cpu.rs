@@ -1732,7 +1732,7 @@ impl CPU {
             },
 
             0xFD29 => {                                                             // ADD IY,IY
-                let reg = self.ix;
+                let reg = self.iy;
                 let r = self.add_16(self.iy, reg);
                 self.iy = r;
             },
