@@ -614,6 +614,21 @@ fn ld_i_hl_r_asm() {
 }
 
 #[test]
+fn ld_a_i_bc_de_nn_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/ld_a_i_bc_de_nn.bin", 0).unwrap();
+    c.bus.write_byte(0x1000, 0x11);
+    c.bus.write_byte(0x1001, 0x22);
+    c.bus.write_byte(0x1002, 0x33);
+    assert_eq!(c.execute(), 10); assert_eq!(0x1000, c.registers.get_bc());
+    assert_eq!(c.execute(), 10); assert_eq!(0x1001, c.registers.get_de());
+    assert_eq!(c.execute(), 7);  assert_eq!(0x11, c.registers.a);
+    assert_eq!(c.execute(), 7);  assert_eq!(0x22, c.registers.a);
+    assert_eq!(c.execute(), 13); assert_eq!(0x33, c.registers.a);
+}
+
+
+#[test]
 fn inc_dec_ss_asm() {
     let mut c = CPU::new();
     c.bus.load_bin("bin/inc_dec_ss.bin", 0).unwrap();
