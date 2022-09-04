@@ -404,7 +404,7 @@ impl CPU {
         self.registers.set_hl(r);
         self.registers.flags.z = r == 0x00;
         self.registers.flags.s = (r as i16) < 0;
-        self.registers.flags.h = (h as i16 & 0x0fff) < (n as i16 & 0x0fff)  + (c as i16);
+        self.registers.flags.h = (h  & 0x0fff) < (n & 0x0fff)  + c;
         self.registers.flags.c = u16::from(h) < u16::from(n) + u16::from(c);
         self.registers.flags.n = true;
         self.registers.flags.p = {
