@@ -6,7 +6,7 @@ const CYCLES: [u8; 256] = [
     0, 10, 0, 6, 4, 4, 7, 4, 4, 11, 7, 6, 4, 4, 7, 4,
     0, 10, 0, 6, 4, 4, 7, 4, 12, 11, 7, 6, 4, 4, 7, 4,
     0, 10, 16, 6, 4, 4, 7, 0, 0, 11, 16, 6, 4, 4, 7, 4,
-    0, 10, 13, 6, 11, 11, 10, 4, 0, 11, 0, 6, 4, 4, 7, 4,
+    0, 10, 13, 6, 11, 11, 10, 4, 0, 11, 13, 6, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
@@ -2305,13 +2305,19 @@ impl CPU {
             // LD A,(BC)
             0x0A => {
                 let addr = self.registers.get_bc();
-                self.registers.a = self.bus.read_byte(addr)
+                self.registers.a = self.bus.read_byte(addr);
             },
 
             // LD A,(DE)
             0x1A => {
                 let addr = self.registers.get_de();
-                self.registers.a = self.bus.read_byte(addr)
+                self.registers.a = self.bus.read_byte(addr);
+            },
+
+            // LD A,(nn)
+            0x3A => {
+                let addr = self.bus.read_word(self.pc + 1);
+                self.registers.a = self.bus.read_byte(addr);
             },
 
             // LD (nn),A
