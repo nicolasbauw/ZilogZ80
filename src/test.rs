@@ -692,6 +692,18 @@ fn daa_asm() {
 }
 
 #[test]
+fn cpl_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/cpl.bin", 0).unwrap();
+    assert_eq!(c.execute(), 4); assert_eq!(0x00, c.registers.a); assert_eq!(c.registers.flags.to_byte(), ZF|NF);        // SUB A
+    assert_eq!(c.execute(), 4); assert_eq!(0xFF, c.registers.a); assert_eq!(c.registers.flags.to_byte(), ZF|HF|NF);     // CPL
+    assert_eq!(c.execute(), 4); assert_eq!(0x00, c.registers.a); assert_eq!(c.registers.flags.to_byte(), ZF|HF|NF);     // CPL
+    assert_eq!(c.execute(), 7); assert_eq!(0xAA, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF);           // ADD A,0xAA
+    assert_eq!(c.execute(), 4); assert_eq!(0x55, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF);     // CPL
+    assert_eq!(c.execute(), 4); assert_eq!(0xAA, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF);     // CPL
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
