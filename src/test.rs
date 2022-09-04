@@ -646,6 +646,18 @@ fn inc_dec_ss_asm() {
 }
 
 #[test]
+fn ld_i_bc_de_nn_a_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/ld_i_bc_de_nn_a.bin", 0).unwrap();
+    assert_eq!(c.execute(), 10); assert_eq!(0x1000, c.registers.get_bc());          // LD BC,0x1000
+    assert_eq!(c.execute(), 10); assert_eq!(0x1001, c.registers.get_de());          // LD DE,0x1001
+    assert_eq!(c.execute(), 7);  assert_eq!(0x77, c.registers.a);                   // LD A,0x77
+    assert_eq!(c.execute(), 7);  assert_eq!(0x77, c.bus.read_byte(0x1000));         // LD (BC),A
+    assert_eq!(c.execute(), 7);  assert_eq!(0x77, c.bus.read_byte(0x1001));         // LD (DE),A
+    assert_eq!(c.execute(), 13); assert_eq!(0x77, c.bus.read_byte(0x1002));         // LD (0x1002),A
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
