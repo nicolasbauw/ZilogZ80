@@ -830,6 +830,24 @@ fn jp_cc_nn_asm() {
 }
 
 #[test]
+fn jp_jr_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/jp_jr.bin", 0x0204).unwrap();
+    c.pc = 0x0204;
+    assert_eq!(c.execute(), 10); assert_eq!(0x0216, c.registers.get_hl());
+    assert_eq!(c.execute(), 14); assert_eq!(0x0219, c.ix);
+    assert_eq!(c.execute(), 14); assert_eq!(0x0221, c.iy);
+    assert_eq!(c.execute(), 10); assert_eq!(0x0214, c.pc);
+    assert_eq!(c.execute(), 12); assert_eq!(0x0212, c.pc);
+    assert_eq!(c.execute(), 12); assert_eq!(0x0218, c.pc);
+    assert_eq!(c.execute(), 4);  assert_eq!(0x0216, c.pc);
+    assert_eq!(c.execute(), 8);  assert_eq!(0x0219, c.pc);
+    assert_eq!(c.execute(), 8);  assert_eq!(0x0221, c.pc);
+    assert_eq!(c.execute(), 12); assert_eq!(0x021B, c.pc);
+    assert_eq!(c.execute(), 12); assert_eq!(0x0223, c.pc);
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
