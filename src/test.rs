@@ -614,6 +614,23 @@ fn ld_i_hl_r_asm() {
 }
 
 #[test]
+fn inc_dec_ss_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/inc_dec_ss.bin", 0).unwrap();
+    for _ in 0..4 {
+        c.execute();
+    }
+    assert_eq!(c.execute(), 6); assert_eq!(0xFFFF, c.registers.get_bc());
+    assert_eq!(c.execute(), 6); assert_eq!(0x0000, c.registers.get_bc());
+    assert_eq!(c.execute(), 6); assert_eq!(0x0000, c.registers.get_de());
+    assert_eq!(c.execute(), 6); assert_eq!(0xFFFF, c.registers.get_de());
+    assert_eq!(c.execute(), 6); assert_eq!(0x0100, c.registers.get_hl());
+    assert_eq!(c.execute(), 6); assert_eq!(0x00FF, c.registers.get_hl());
+    assert_eq!(c.execute(), 6); assert_eq!(0x1112, c.sp);
+    assert_eq!(c.execute(), 6); assert_eq!(0x1111, c.sp);
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
