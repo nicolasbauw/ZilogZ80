@@ -1030,6 +1030,32 @@ fn cpd_asm() {
 }
 
 #[test]
+fn add_adc_sbc_16_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/add_adc_sbc_16.bin", 0).unwrap();
+    assert_eq!(c.execute(), 10); assert_eq!(0x00FC, c.registers.get_hl());
+    assert_eq!(c.execute(), 10); assert_eq!(0x0008, c.registers.get_bc());
+    assert_eq!(c.execute(), 10); assert_eq!(0xFFFF, c.registers.get_de());
+    assert_eq!(c.execute(), 11); assert_eq!(0x0104, c.registers.get_hl()); assert_eq!(c.registers.flags.to_byte(), 0);
+    assert_eq!(c.execute(), 11); assert_eq!(0x0103, c.registers.get_hl()); assert_eq!(c.registers.flags.to_byte(), HF|CF);
+    assert_eq!(c.execute(), 15); assert_eq!(0x010C, c.registers.get_hl()); assert_eq!(c.registers.flags.to_byte(), 0);
+    assert_eq!(c.execute(), 11); assert_eq!(0x0218, c.registers.get_hl()); assert_eq!(c.registers.flags.to_byte(), 0);
+    assert_eq!(c.execute(), 11); assert_eq!(0x0217, c.registers.get_hl()); assert_eq!(c.registers.flags.to_byte(), HF|CF);
+    assert_eq!(c.execute(), 15); assert_eq!(0x020E, c.registers.get_hl()); assert_eq!(c.registers.flags.to_byte(), NF);
+    assert_eq!(c.execute(), 14); assert_eq!(0x00FC, c.ix);
+    assert_eq!(c.execute(), 10); assert_eq!(0x1000, c.sp);
+    assert_eq!(c.execute(), 15); assert_eq!(0x0104, c.ix); assert_eq!(c.registers.flags.to_byte(), 0);
+    assert_eq!(c.execute(), 15); assert_eq!(0x0103, c.ix); assert_eq!(c.registers.flags.to_byte(), HF|CF);
+    assert_eq!(c.execute(), 15); assert_eq!(0x0206, c.ix); assert_eq!(c.registers.flags.to_byte(), 0);
+    assert_eq!(c.execute(), 15); assert_eq!(0x1206, c.ix); assert_eq!(c.registers.flags.to_byte(), 0);
+    assert_eq!(c.execute(), 14); assert_eq!(0xFFFF, c.iy);
+    assert_eq!(c.execute(), 15); assert_eq!(0x0007, c.iy); assert_eq!(c.registers.flags.to_byte(), HF|CF);
+    assert_eq!(c.execute(), 15); assert_eq!(0x0006, c.iy); assert_eq!(c.registers.flags.to_byte(), HF|CF);
+    assert_eq!(c.execute(), 15); assert_eq!(0x000C, c.iy); assert_eq!(c.registers.flags.to_byte(), 0);
+    assert_eq!(c.execute(), 15); assert_eq!(0x100C, c.iy); assert_eq!(c.registers.flags.to_byte(), 0);
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
