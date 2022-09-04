@@ -2908,6 +2908,7 @@ impl CPU {
                 if self.registers.flags.c {
                     self.call_stack_push();
                     self.pc = addr;
+                    cycles += 7;
                 } else { self.pc += 3 }
             },
 
