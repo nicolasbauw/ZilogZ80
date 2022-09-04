@@ -716,6 +716,27 @@ fn ccf_scf_asm() {
 }
 
 #[test]
+fn call_ret_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/call_ret.bin", 0x0204).unwrap();
+    c.pc = 0x0204;
+    assert_eq!(c.execute(), 17);
+    assert_eq!(0x020A, c.pc);
+    assert_eq!(0xFFFE, c.sp);
+    assert_eq!(0x0207, c.bus.read_word(0xFFFE));
+    assert_eq!(c.execute(), 10);
+    assert_eq!(0x0207, c.pc);
+    assert_eq!(0x0000, c.sp);
+    assert_eq!(c.execute(), 17);
+    assert_eq!(0x020A, c.pc);
+    assert_eq!(0xFFFE, c.sp);
+    assert_eq!(0x020A, c.bus.read_word(0xFFFE));
+    assert_eq!(c.execute(), 10);
+    assert_eq!(0x020A, c.pc);
+    assert_eq!(0x0000, c.sp);
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
