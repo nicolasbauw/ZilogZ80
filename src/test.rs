@@ -658,6 +658,22 @@ fn ld_i_bc_de_nn_a_asm() {
 }
 
 #[test]
+fn rlca_rla_rrca_rra_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/rlca_rla_rrca_rra.bin", 0).unwrap();
+    c.registers.flags.from_byte(0xFF);
+    assert_eq!(c.execute(), 7); assert_eq!(0xA0, c.registers.a);                    // LD A,0xA0
+    assert_eq!(c.execute(), 4); assert_eq!(0x41, c.registers.a);                    // RLCA
+    assert_eq!(c.execute(), 4); assert_eq!(0x82, c.registers.a);                    // RLCA
+    assert_eq!(c.execute(), 4); assert_eq!(0x41, c.registers.a);                    // RRCA
+    assert_eq!(c.execute(), 4); assert_eq!(0xA0, c.registers.a);                    // RRCA
+    assert_eq!(c.execute(), 4); assert_eq!(0x41, c.registers.a);                    // RLA
+    assert_eq!(c.execute(), 4); assert_eq!(0x83, c.registers.a);                    // RLA
+    assert_eq!(c.execute(), 4); assert_eq!(0x41, c.registers.a);                    // RRA
+    assert_eq!(c.execute(), 4); assert_eq!(0xA0, c.registers.a);                    // RRA
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
