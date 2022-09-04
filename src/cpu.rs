@@ -187,13 +187,20 @@ impl CPU {
     }
 
     // Returns A - (HL)
-    fn cpd(&mut self) -> u8 {
+    fn cpd(&mut self) {
         let bc = self.registers.get_bc();
         let hl = self.registers.get_hl();
-        let r = self.registers.a.wrapping_sub(self.bus.read_byte(hl));
+        let h = self.bus.read_byte(hl);
+        let r = self.registers.a.wrapping_sub(h);
+
         self.registers.set_hl(hl.wrapping_sub(1));
         self.registers.set_bc(bc.wrapping_sub(1));
-        r
+
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.z = self.registers.a == h;
+        self.registers.flags.h = self.registers.a < h;
+        self.registers.flags.p = self.registers.get_bc() != 0;
+        self.registers.flags.n = true;
     }
 
     // ADD A,r
@@ -1353,24 +1360,12 @@ impl CPU {
             },
 
             // CPD
-            0xEDA9 => {
-                let r = self.cpd();
-                self.registers.flags.s = (r as i8) < 0;
-                self.registers.flags.z = (r as i8) == 0;
-                self.registers.flags.h = (r & 0x0f) != 0x0f;
-                self.registers.flags.p = self.registers.get_bc() != 0;
-                self.registers.flags.n = true;
-            },
+            0xEDA9 => self.cpd(),
 
             // CPDR
             0xEDB9 => {
                 while self.registers.get_bc() !=0 {
-                    let r = self.cpd();
-                    self.registers.flags.s = (r as i8) < 0;
-                    self.registers.flags.z = (r as i8) == 0;
-                    self.registers.flags.h = (r & 0x0f) != 0x0f;
-                    self.registers.flags.p = self.registers.get_bc() != 0;
-                    self.registers.flags.n = true;
+                    self.cpd();
                     if self.registers.flags.z { break }
                     // TODO : return cycles * number of executions
                 }
