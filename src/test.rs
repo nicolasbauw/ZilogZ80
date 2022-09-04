@@ -674,6 +674,24 @@ fn rlca_rla_rrca_rra_asm() {
 }
 
 #[test]
+fn daa_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/daa.bin", 0).unwrap();
+    assert_eq!(c.execute(), 7); assert_eq!(0x15, c.registers.a);                                                          // LD A,0x15
+    assert_eq!(c.execute(), 7); assert_eq!(0x27, c.registers.b);                                                          // LD B,0x27
+    assert_eq!(c.execute(), 4); assert_eq!(0x3C, c.registers.a); assert_eq!(c.registers.flags.to_byte(), 0);              // ADD A,B
+    assert_eq!(c.execute(), 4); assert_eq!(0x42, c.registers.a); assert_eq!(c.registers.flags.to_byte(), HF|PF);          // DAA
+    assert_eq!(c.execute(), 4); assert_eq!(0x1B, c.registers.a); assert_eq!(c.registers.flags.to_byte(), HF|NF);          // SUB B
+    assert_eq!(c.execute(), 4); assert_eq!(0x15, c.registers.a); assert_eq!(c.registers.flags.to_byte(), NF);             // DAA
+    assert_eq!(c.execute(), 7); assert_eq!(0x90, c.registers.a); assert_eq!(c.registers.flags.to_byte(), NF);             // LD A,0x90
+    assert_eq!(c.execute(), 7); assert_eq!(0x15, c.registers.b); assert_eq!(c.registers.flags.to_byte(), NF);             // LD B,0x15
+    assert_eq!(c.execute(), 4); assert_eq!(0xA5, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF);             // ADD A,B
+    assert_eq!(c.execute(), 4); assert_eq!(0x05, c.registers.a); assert_eq!(c.registers.flags.to_byte(), PF|CF);          // DAA
+    assert_eq!(c.execute(), 4); assert_eq!(0xF0, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|NF|CF);       // SUB B
+    assert_eq!(c.execute(), 4); assert_eq!(0x90, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|PF|NF|CF);    // DAA
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
