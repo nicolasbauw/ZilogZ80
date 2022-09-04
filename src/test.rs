@@ -878,6 +878,25 @@ fn ldi_asm() {
 }
 
 #[test]
+fn ldir_asm() {
+    let mut c = CPU::new();
+    c.bus.write_byte(0x1000, 0x01);
+    c.bus.write_byte(0x1001, 0x02);
+    c.bus.write_byte(0x1002, 0x03);
+    c.bus.load_bin("bin/ldir.bin", 0).unwrap();
+    for _ in 0..3 {
+        c.execute();
+    }
+    c.execute();
+    assert_eq!(0x1003, c.registers.get_hl());
+    assert_eq!(0x2003, c.registers.get_de());
+    assert_eq!(0x0000, c.registers.get_bc());
+    assert_eq!(0x03, c.bus.read_byte(0x2002));
+    assert_eq!(c.registers.flags.to_byte(), 0);
+    c.execute(); assert_eq!(0x33, c.registers.a);
+}
+
+#[test]
 fn ld_b() {
     let mut c = CPU::new();
     c.registers.b = 0x11;
