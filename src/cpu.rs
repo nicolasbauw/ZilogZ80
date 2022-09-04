@@ -1284,7 +1284,7 @@ impl CPU {
             // EX (SP),IY
             0xFDE3 => {
                 let pointed_by_sp = self.bus.read_word(self.sp);
-                self.bus.write_word(self.sp, self.ix);
+                self.bus.write_word(self.sp, self.iy);
                 self.iy = pointed_by_sp;
             },
 
