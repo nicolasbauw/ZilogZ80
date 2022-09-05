@@ -1076,6 +1076,20 @@ fn ld_inn_hl_dd_ix_iy_asm() {
 }
 
 #[test]
+fn ld_a_ir_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/ld_a_ir.bin", 0).unwrap();
+    c.r = 0x34;
+    c.i = 0x1;
+    c.registers.flags.c = true;
+    c.execute();
+    assert_eq!(c.execute(), 9); assert_eq!(0x01, c.registers.a); assert_eq!(c.registers.flags.to_byte(), PF|CF);
+    assert_eq!(c.execute(), 4); assert_eq!(0x00, c.registers.a); assert_eq!(c.registers.flags.to_byte(), ZF|NF);
+    assert_eq!(c.execute(), 9); assert_eq!(0x39, c.registers.a); assert_eq!(c.registers.flags.to_byte(), PF);
+}
+
+
+#[test]
 fn ld_inn_hl() {
     let mut c = CPU::new();
     c.bus.write_byte(0x0000, 0xED);
