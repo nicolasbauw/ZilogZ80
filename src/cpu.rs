@@ -426,8 +426,12 @@ impl CPU {
     fn rrc(&mut self, n: u8) -> u8 {
         self.registers.flags.c = bit::get(n, 0);
         let r = if self.registers.flags.c {0x80 | (n >> 1) } else { n >> 1 };
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.s = (r as i8) < 0;
         self.registers.flags.h = false;
+        self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
         self.registers.flags.n = false;
+        self.registers.flags.c = bit::get(n, 0);
         r
     }
 
