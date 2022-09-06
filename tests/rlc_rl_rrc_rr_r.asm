@@ -1,0 +1,38 @@
+.target "z80"
+.format "bin"
+
+    LD A,0x01
+    LD B,0xFF
+    LD C,0x03
+    LD D,0xFE
+    LD E,0x11
+    LD H,0x3F
+    LD L,0x70
+    RRC A
+    RLC A
+    RRC B
+    RLC B
+    RLC C
+    RRC C
+    RLC D
+    RRC D
+    RRC E
+    RLC E
+    RLC H
+    RRC H
+    RLC L
+    RRC L
+    RR A
+    RL A
+    RR B
+    RL B
+    RL C
+    RR C
+    RL D
+    RR D
+    RR E
+    RL E
+    RL H
+    RR H
+    RL L
+    RR L
