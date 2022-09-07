@@ -422,7 +422,6 @@ impl CPU {
         self.registers.flags.h = false;
         self.registers.flags.n = false;
         self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
-        self.registers.flags.c = bit::get(n, 7);
         r
     }
 
@@ -435,7 +434,6 @@ impl CPU {
         self.registers.flags.h = false;
         self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
         self.registers.flags.n = false;
-        self.registers.flags.c = bit::get(n, 0);
         r
     }
 
