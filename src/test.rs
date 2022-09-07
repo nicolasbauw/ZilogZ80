@@ -1135,6 +1135,42 @@ fn rlc_rl_rrc_rr_r_asm() {
 }
 
 #[test]
+fn rrc_rlc_rr_rl_i_hl_ix_iy_asm() {
+    let mut c = CPU::new();
+    c.bus.write_byte(0x1000, 0x01);
+    c.bus.write_byte(0x1001, 0xFF);
+    c.bus.write_byte(0x1002, 0x11);
+    c.bus.load_bin("bin/rrc_rlc_rr_rl_i_hl_ix_iy.bin", 0).unwrap();
+    for _ in 0..3 {
+        c.execute();
+    }
+    assert_eq!(c.execute(), 15); assert_eq!(0x80, c.bus.read_byte(0x1000)); assert_eq!(c.registers.flags.to_byte(), SF|CF);     // RRC (HL)
+    assert_eq!(c.execute(), 7);  assert_eq!(0x80, c.registers.a);                                                               // LD A,(HL)
+    assert_eq!(c.execute(), 15); assert_eq!(0x01, c.bus.read_byte(0x1000)); assert_eq!(c.registers.flags.to_byte(), CF);        // RLC (HL)
+    assert_eq!(c.execute(), 7);  assert_eq!(0x01, c.registers.a);                                                               // LD A,(HL)
+    assert_eq!(c.execute(), 23); assert_eq!(0xFF, c.bus.read_byte(0x1001)); assert_eq!(c.registers.flags.to_byte(), SF|PF|CF);  // RRC (IX+1)
+    assert_eq!(c.execute(), 19); assert_eq!(0xFF, c.registers.a);                                                               // LD A,(IX+1)
+    assert_eq!(c.execute(), 23); assert_eq!(0xFF, c.bus.read_byte(0x1001)); assert_eq!(c.registers.flags.to_byte(), SF|PF|CF);  // RLC (IX+1)
+    assert_eq!(c.execute(), 19); assert_eq!(0xFF, c.registers.a);                                                               // LD A,(IX+1)
+    assert_eq!(c.execute(), 23); assert_eq!(0x88, c.bus.read_byte(0x1002)); assert_eq!(c.registers.flags.to_byte(), SF|PF|CF);  // RRC (IY-1)
+    assert_eq!(c.execute(), 19); assert_eq!(0x88, c.registers.a);                                                               // LD A,(IY-1)
+    assert_eq!(c.execute(), 23); assert_eq!(0x11, c.bus.read_byte(0x1002)); assert_eq!(c.registers.flags.to_byte(), PF|CF);     // RLC (IY-1)
+    assert_eq!(c.execute(), 19); assert_eq!(0x11, c.registers.a);                                                               // LD A,(IY-1)
+    assert_eq!(c.execute(), 15); assert_eq!(0x80, c.bus.read_byte(0x1000)); assert_eq!(c.registers.flags.to_byte(), SF|CF);     // RR (HL)
+    assert_eq!(c.execute(), 7);  assert_eq!(0x80, c.registers.a);                                                               // LD A,(HL)
+    assert_eq!(c.execute(), 15); assert_eq!(0x01, c.bus.read_byte(0x1000)); assert_eq!(c.registers.flags.to_byte(), CF);        // RL (HL)
+    assert_eq!(c.execute(), 7);  assert_eq!(0x01, c.registers.a);                                                               // LD A,(HL)
+    assert_eq!(c.execute(), 23); assert_eq!(0xFF, c.bus.read_byte(0x1001)); assert_eq!(c.registers.flags.to_byte(), SF|PF|CF);  // RR (IX+1)
+    assert_eq!(c.execute(), 19); assert_eq!(0xFF, c.registers.a);                                                               // LD A,(IX+1)
+    assert_eq!(c.execute(), 23); assert_eq!(0xFF, c.bus.read_byte(0x1001)); assert_eq!(c.registers.flags.to_byte(), SF|PF|CF);  // RL (IX+1)
+    assert_eq!(c.execute(), 19); assert_eq!(0xFF, c.registers.a);                                                               // LD A,(IX+1)
+    assert_eq!(c.execute(), 23); assert_eq!(0x23, c.bus.read_byte(0x1002)); assert_eq!(c.registers.flags.to_byte(), 0);         // RL (IY-1)
+    assert_eq!(c.execute(), 19); assert_eq!(0x23, c.registers.a);                                                               // LD A,(IY-1)
+    assert_eq!(c.execute(), 23); assert_eq!(0x11, c.bus.read_byte(0x1002)); assert_eq!(c.registers.flags.to_byte(), PF|CF);     // RR (IY-1)
+    assert_eq!(c.execute(), 19); assert_eq!(0x11, c.registers.a);                                                               // LD A,(IY-1)
+}
+
+#[test]
 fn ld_inn_hl() {
     let mut c = CPU::new();
     c.bus.write_byte(0x0000, 0xED);

@@ -1,0 +1,30 @@
+.target "z80"
+.format "bin"
+
+    LD  HL,0x1000
+    LD  IX,0x1000
+    LD  IY,0x1003
+    RRC (HL)
+    LD  A,(HL)
+    RLC (HL)
+    LD  A,(HL)
+    RRC (IX+1)
+    LD  A,(IX+1)
+    RLC (IX+1)
+    LD  A,(IX+1)
+    RRC (IY-1)
+    LD  A,(IY-1)
+    RLC (IY-1)
+    LD  A,(IY-1)
+    RR  (HL)
+    LD  A,(HL)
+    RL  (HL)
+    LD  A,(HL)
+    RR  (IX+1)
+    LD  A,(IX+1)
+    RL  (IX+1)
+    LD  A,(IX+1)
+    RL  (IY-1)
+    LD  A,(IY-1)
+    RR  (IY-1)
+    LD  A,(IY-1)
