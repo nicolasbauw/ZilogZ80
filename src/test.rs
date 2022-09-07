@@ -1219,6 +1219,24 @@ fn srl_r_asm() {
 }
 
 #[test]
+fn sla_i_hl_ix_iy_asm() {
+    let mut c = CPU::new();
+    c.bus.write_byte(0x1000, 0x01);
+    c.bus.write_byte(0x1001, 0x80);
+    c.bus.write_byte(0x1002, 0xAA);
+    c.bus.load_bin("bin/sla_i_hl_ix_iy.bin", 0).unwrap();
+    for _ in 0..3 {
+        c.execute();
+    }
+    assert_eq!(c.execute(), 15); assert_eq!(0x02, c.bus.read_byte(0x1000)); assert_eq!(c.registers.flags.to_byte(), 0);
+    assert_eq!(c.execute(), 7);  assert_eq!(0x02, c.registers.a);
+    assert_eq!(c.execute(), 23); assert_eq!(0x00, c.bus.read_byte(0x1001)); assert_eq!(c.registers.flags.to_byte(), ZF|PF|CF);
+    assert_eq!(c.execute(), 19); assert_eq!(0x00, c.registers.a);
+    assert_eq!(c.execute(), 23); assert_eq!(0x54, c.bus.read_byte(0x1002)); assert_eq!(c.registers.flags.to_byte(), CF);
+    assert_eq!(c.execute(), 19); assert_eq!(0x54, c.registers.a);
+}
+
+#[test]
 fn ld_inn_hl() {
     let mut c = CPU::new();
     c.bus.write_byte(0x0000, 0xED);
