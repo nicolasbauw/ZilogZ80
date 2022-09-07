@@ -462,6 +462,9 @@ impl CPU {
             true => (n >> 1) | 0x80,
             false => n >> 1
         };
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
         r
     }
 
