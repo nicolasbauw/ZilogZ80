@@ -1273,6 +1273,29 @@ fn srl_i_hl_ix_iy_asm() {
 }
 
 #[test]
+fn rld_rrd_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/rld_rrd.bin", 0).unwrap();
+    assert_eq!(c.execute(), 7);  assert_eq!(0x12, c.registers.a);
+    assert_eq!(c.execute(), 10); assert_eq!(0x1000, c.registers.get_hl());
+    assert_eq!(c.execute(), 10); assert_eq!(0x34, c.bus.read_byte(0x1000));
+    assert_eq!(c.execute(), 18); assert_eq!(0x14, c.registers.a); assert_eq!(0x23, c.bus.read_byte(0x1000));
+    assert_eq!(c.execute(), 18); assert_eq!(0x12, c.registers.a); assert_eq!(0x34, c.bus.read_byte(0x1000));
+    assert_eq!(c.execute(), 7);  assert_eq!(0x34, c.registers.a);
+    assert_eq!(c.execute(), 7);  assert_eq!(0xFE, c.registers.a);
+    assert_eq!(c.execute(), 10); assert_eq!(0x00, c.bus.read_byte(0x1000));
+    assert_eq!(c.execute(), 18); assert_eq!(0xF0, c.registers.a); assert_eq!(0x0E, c.bus.read_byte(0x1000)); assert_eq!(c.registers.flags.to_byte(), SF|PF);
+    assert_eq!(c.execute(), 18); assert_eq!(0xFE, c.registers.a); assert_eq!(0x00, c.bus.read_byte(0x1000)); assert_eq!(c.registers.flags.to_byte(), SF);
+    assert_eq!(c.execute(), 7);  assert_eq!(0x00, c.registers.a);
+    assert_eq!(c.execute(), 7);  assert_eq!(0x01, c.registers.a);
+    assert_eq!(c.execute(), 10); assert_eq!(0x00, c.bus.read_byte(0x1000));
+    c.registers.flags.from_byte(CF);
+    assert_eq!(c.execute(), 18); assert_eq!(0x00, c.registers.a); assert_eq!(0x01, c.bus.read_byte(0x1000)); assert_eq!(c.registers.flags.to_byte(), ZF|PF|CF);
+    assert_eq!(c.execute(), 18); assert_eq!(0x01, c.registers.a); assert_eq!(0x00, c.bus.read_byte(0x1000)); assert_eq!(c.registers.flags.to_byte(), CF);
+    assert_eq!(c.execute(), 7);  assert_eq!(0x00, c.registers.a);
+}
+
+#[test]
 fn ld_inn_hl() {
     let mut c = CPU::new();
     c.bus.write_byte(0x0000, 0xED);
