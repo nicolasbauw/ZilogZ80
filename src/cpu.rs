@@ -609,7 +609,7 @@ impl CPU {
     // DDCB FDCB
     fn execute_3bytes(&mut self) -> u32 {
         let opcode = self.bus.read_le_dword(self.pc);
-        let mut cycles = 0;
+        let cycles;
 
         match opcode & 0xFFFF00FF {
             0xDDCB0006 => {                                                           // RLC (IX+d)
