@@ -3862,3 +3862,13 @@ fn ld_d() {
         assert_eq!(c.execute(), 11);
         assert_eq!(c.pc, 0x0018);
     }
+
+#[test]
+fn debug_unkn() {
+    let mut c = CPU::new();
+    c.bus.write_byte(0x0000, 0xDD);
+    c.bus.write_byte(0x0001, 0x00);
+    c.debug.unknw_instr = true;
+    assert_eq!(c.execute(), 0xFF);
+    assert_eq!(c.debug.string, String::from("0xDD00"));
+}

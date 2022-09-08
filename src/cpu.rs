@@ -114,6 +114,20 @@ pub fn signed_to_abs(n: u8) -> u8 {
     !n +1
 }
 
+pub struct Debug {
+    pub unknw_instr: bool,
+    pub string: String
+}
+
+impl Debug {
+    pub fn new() -> Debug {
+        Debug {
+            unknw_instr: false,
+            string: String::new(),
+        }
+    }
+}
+
 pub struct CPU {
     pub registers: Registers,
     pub alt_registers: Registers,
@@ -128,6 +142,7 @@ pub struct CPU {
     pub halt: bool,
     iff1: bool,
     iff2: bool,
+    pub debug: Debug,
 }
 
 impl CPU {
@@ -146,6 +161,7 @@ impl CPU {
             halt: false,
             iff1: false,
             iff2: false,
+            debug: Debug::new(),
         }
     }
 
@@ -970,7 +986,10 @@ impl CPU {
                 cycles = 23;
             },
 
-            _ => {}
+            _ => {
+                if self.debug.unknw_instr { self.debug.string = format!("{:#10X}", opcode) };
+                cycles = 0xFF;
+                }
         }
         self.pc += 4;
         cycles
@@ -978,7 +997,7 @@ impl CPU {
 
     fn execute_2bytes(&mut self) -> u32 {
         let opcode = self.bus.read_le_word(self.pc);
-        let cycles = match opcode & 0xFF00 {
+        let mut cycles = match opcode & 0xFF00 {
                 0xDD00 => CYCLES_DD[(opcode & 0x00FF) as usize].into(),
                 0xFD00 => CYCLES_FD[(opcode & 0x00FF) as usize].into(),
                 0xED00 => CYCLES_ED[(opcode & 0x00FF) as usize].into(),
@@ -2119,7 +2138,10 @@ impl CPU {
 
             // Call and Return Group
 
-            _ => {}
+            _ => {
+                if self.debug.unknw_instr { self.debug.string = format!("{:#06X}", opcode); }
+                cycles = 0xFF;
+            }
         }
 
         match opcode {
@@ -3083,7 +3105,10 @@ impl CPU {
                 self.pc = 0x0038;
             },
 
-            _ => {},
+            _ => {
+                if self.debug.unknw_instr { self.debug.string = format!("{:#04X}", opcode); }
+                cycles = 0xFF;
+            },
 
         }
 
