@@ -21,3 +21,7 @@
     ADD IY,DE
     ADD IY,IY
     ADD IY,SP
+    LD  HL,0x7FFF
+    LD  BC,0x0001
+    ADC HL,BC
+    SBC HL,BC
