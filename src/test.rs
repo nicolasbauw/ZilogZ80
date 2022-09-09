@@ -462,6 +462,20 @@ fn sbc_r_asm() {
 }
 
 #[test]
+fn sbc_ixyh_ixyl_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/sbc_ixyh_ixyl.bin", 0).unwrap();
+    c.execute(); c.execute();
+    assert_eq!(c.execute(), 4); assert_eq!(0x00, c.registers.a); assert_eq!(c.registers.flags.to_byte(), ZF|NF);        // SUB A,A
+    assert_eq!(c.execute(), 8); assert_eq!(0xFF, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // SBC A,IXH
+    assert_eq!(c.execute(), 8); assert_eq!(0x06, c.registers.a); assert_eq!(c.registers.flags.to_byte(), NF);           // SBC A,IXL
+    c.execute(); c.execute();
+    assert_eq!(c.execute(), 4); assert_eq!(0x00, c.registers.a); assert_eq!(c.registers.flags.to_byte(), ZF|NF);        // SUB A,A
+    assert_eq!(c.execute(), 8); assert_eq!(0xFF, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // SBC A,IYH
+    assert_eq!(c.execute(), 8); assert_eq!(0x06, c.registers.a); assert_eq!(c.registers.flags.to_byte(), NF);           // SBC A,IYL
+}
+
+#[test]
 fn sbc_i_hl_ix_iy_asm() {
     let mut c = CPU::new();
     c.bus.write_byte(0x1000, 0x41);
