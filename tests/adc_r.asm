@@ -16,3 +16,6 @@
     ADC A,H
     ADC A,L
     ADC A,0x01
+    LD  A,0x0F
+    LD  B,0x01
+    ADC A,B
