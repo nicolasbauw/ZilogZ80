@@ -2236,6 +2236,102 @@ impl CPU {
                 self.subc(n);
             },
 
+            // AND IXH
+            0xDDA4 => {
+                let n = ( self.ix >> 8) as u8;
+                self.and(n);
+            },
+
+            // AND IXL
+            0xDDA5 => {
+                let n = ( self.ix & 0x00FF )  as u8;
+                self.and(n);
+            },
+
+            // AND IYH
+            0xFDA4 => {
+                let n = ( self.iy >> 8) as u8;
+                self.and(n);
+            },
+
+            // AND IYL
+            0xFDA5 => {
+                let n = ( self.iy & 0x00FF )  as u8;
+                self.and(n);
+            },
+
+            // OR IXH
+            0xDDB4 => {
+                let n = ( self.ix >> 8) as u8;
+                self.or(n);
+            },
+
+            // OR IXL
+            0xDDB5 => {
+                let n = ( self.ix & 0x00FF )  as u8;
+                self.or(n);
+            },
+
+            // OR IYH
+            0xFDB4 => {
+                let n = ( self.iy >> 8) as u8;
+                self.or(n);
+            },
+
+            // OR IYL
+            0xFDB5 => {
+                let n = ( self.iy & 0x00FF )  as u8;
+                self.or(n);
+            },
+
+            // XOR IXH
+            0xDDAC => {
+                let n = ( self.ix >> 8) as u8;
+                self.xor(n);
+            },
+
+            // XOR IXL
+            0xDDAD => {
+                let n = ( self.ix & 0x00FF )  as u8;
+                self.xor(n);
+            },
+
+            // XOR IYH
+            0xFDAC => {
+                let n = ( self.iy >> 8) as u8;
+                self.xor(n);
+            },
+
+            // XOR IYL
+            0xFDAD => {
+                let n = ( self.iy & 0x00FF )  as u8;
+                self.xor(n);
+            },
+
+            // CP IXH
+            0xDDBC => {
+                let n = ( self.ix >> 8) as u8;
+                self.cp(n);
+            },
+
+            // CP IXL
+            0xDDBD => {
+                let n = ( self.ix & 0x00FF )  as u8;
+                self.cp(n);
+            },
+
+            // CP IYH
+            0xFDBC => {
+                let n = ( self.iy >> 8) as u8;
+                self.cp(n);
+            },
+
+            // CP IYL
+            0xFDBD => {
+                let n = ( self.iy & 0x00FF )  as u8;
+                self.cp(n);
+            },
+
             _ => {
                 if self.debug.unknw_instr { self.debug.string = format!("{:#06X}", opcode); }
                 cycles = 0xFF;
