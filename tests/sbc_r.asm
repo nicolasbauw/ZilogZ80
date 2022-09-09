@@ -17,3 +17,6 @@
     SBC A,L
     SBC A,0x01
     SBC A,0xFE
+    LD  A,0x10
+    LD  B,0x01
+    SBC A,B
