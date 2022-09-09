@@ -2332,6 +2332,32 @@ impl CPU {
                 self.cp(n);
             },
 
+            // INC IXH
+            0xDD24 => {
+                let n = ( self.ix >> 8) as u8;
+                self.inc(n);
+            },
+
+            // DEC IXH
+            0xDD25 => {
+                let n = ( self.ix >> 8) as u8;
+                self.dec(n);
+            },
+
+            // INC IXL
+            0xDD2C => {
+                let n = ( self.ix & 0x00FF ) as u8;
+                self.inc(n);
+            },
+
+            // DEC IXL
+            0xDD2D => {
+                let n = ( self.ix & 0x00FF ) as u8;
+                self.dec(n);
+            },
+
+            
+
             _ => {
                 if self.debug.unknw_instr { self.debug.string = format!("{:#06X}", opcode); }
                 cycles = 0xFF;
