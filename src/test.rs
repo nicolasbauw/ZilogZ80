@@ -13,13 +13,13 @@ const VF: u8 = 1 << 2;
 const PF: u8 = 1 << 2;
 
 // undocumented 'X' flag
-const XF: u8 = 1 << 3;
+// const XF: u8 = 1 << 3;
 
 // half carry flag
 const HF: u8 = 1 << 4;
 
 // undocumented 'Y' flag
-const YF: u8 = 1 << 5;
+// const YF: u8 = 1 << 5;
 
 // zero flag
 const ZF: u8 = 1 << 6;
