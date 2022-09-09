@@ -11,6 +11,7 @@ fn main() {
 fn load_execute() -> Result<(), Box<dyn Error>> {
     let  a: Vec<String> = env::args().collect();
     let mut c = CPU::new();
+    c.debug.unknw_instr = true;
     // Loads assembled program into memory
     c.bus.load_bin(&a[1], 0x100)?;
     
@@ -29,7 +30,9 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     c.sp = 0xFF00;
 
     loop {
-        c.execute();
+        if c.execute() == 0xFF {
+            println!("{}", c.debug.string)
+        };
         if c.pc == 0x0005 { bdos_call(&c) }
         if c.pc == 0x0000 { break }             //  if CP/M warm boot -> we exit
     }
