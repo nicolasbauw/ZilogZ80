@@ -260,6 +260,30 @@ fn add_i_hl_ix_iy_asm() {
 }
 
 #[test]
+fn add_ixh_ixl_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/add_a_ixh_ixl.bin", 0).unwrap();
+    assert_eq!(c.execute(), 7); assert_eq!(0x0F, c.registers.a); assert_eq!(c.registers.flags.to_byte(), 0);        // LD A,0x0F
+    assert_eq!(c.execute(), 4); assert_eq!(0x1E, c.registers.a); assert_eq!(c.registers.flags.to_byte(), HF);       // ADD A,A
+    assert_eq!(c.execute(), 14); assert_eq!(0xE080, c.ix);                                                          // LD  IX,0xE080
+    assert_eq!(c.execute(), 8); assert_eq!(0xFE, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF);       // ADD A,IXH
+    assert_eq!(c.execute(), 7); assert_eq!(0x81, c.registers.a);                                                    // LD  A,0x81
+    assert_eq!(c.execute(), 8); assert_eq!(0x01, c.registers.a); assert_eq!(c.registers.flags.to_byte(), VF|CF);    // ADD A,IXL
+}
+
+#[test]
+fn add_a_iyh_iyl_asm() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/add_a_iyh_iyl.bin", 0).unwrap();
+    assert_eq!(c.execute(), 7); assert_eq!(0x0F, c.registers.a); assert_eq!(c.registers.flags.to_byte(), 0);        // LD A,0x0F
+    assert_eq!(c.execute(), 4); assert_eq!(0x1E, c.registers.a); assert_eq!(c.registers.flags.to_byte(), HF);       // ADD A,A
+    assert_eq!(c.execute(), 14); assert_eq!(0xE080, c.iy);                                                          // LD  IY,0xE080
+    assert_eq!(c.execute(), 8); assert_eq!(0xFE, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF);       // ADD A,IYH
+    assert_eq!(c.execute(), 7); assert_eq!(0x81, c.registers.a);                                                    // LD  A,0x81
+    assert_eq!(c.execute(), 8); assert_eq!(0x01, c.registers.a); assert_eq!(c.registers.flags.to_byte(), VF|CF);    // ADD A,IYL
+}
+
+#[test]
 fn adc_r_asm() {
     let mut c = CPU::new();
     c.bus.load_bin("bin/adc_r.bin", 0).unwrap();
