@@ -1146,6 +1146,8 @@ fn add_adc_sbc_16_asm() {
     assert_eq!(c.execute(), 10); assert_eq!(0x0001, c.registers.get_bc());
     assert_eq!(c.execute(), 15); assert_eq!(0x8000, c.registers.get_hl()); assert_eq!(c.registers.flags.to_byte(), SF|HF|PF);
     assert_eq!(c.execute(), 15); assert_eq!(0x7FFF, c.registers.get_hl()); assert_eq!(c.registers.flags.to_byte(), NF|HF|PF);
+    c.execute(); c.execute(); c.execute();
+    assert_eq!(c.execute(), 15); assert_eq!(0x8000, c.registers.get_hl()); assert_eq!(c.registers.flags.to_byte(), CF|NF|HF|SF);
 }
 
 #[test]
