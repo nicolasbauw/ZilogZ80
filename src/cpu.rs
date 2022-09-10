@@ -243,7 +243,7 @@ impl CPU {
         self.registers.flags.z = r == 0x00;
         self.registers.flags.s = (r as i8) < 0;
         self.registers.flags.p = check_add_overflow(self.registers.a, n.wrapping_add(c));
-        self.registers.flags.h = (a & 0x0f) + (n & 0x0f) > 0x0f;
+        self.registers.flags.h = (a & 0x0f) + (n & 0x0f) + c > 0x0f;
         self.registers.flags.c = u16::from(a) + u16::from(n) + u16::from(c) > 0xff;
         self.registers.flags.n = false;
         self.registers.a = r;
@@ -400,11 +400,11 @@ impl CPU {
         self.registers.set_hl(r);
         self.registers.flags.s = (r as i16) < 0;
         self.registers.flags.z = r == 0x00;
-        self.registers.flags.c = u32::from(h) + u32::from(n) > 0xffff;
-        self.registers.flags.h = (h & 0x0FFF) + (n & 0x0FFF) > 0x0FFF;
+        self.registers.flags.c = u32::from(h) + u32::from(n) + c as u32 > 0xffff;
+        self.registers.flags.h = (h & 0x0FFF) + (n & 0x0FFF) + c > 0x0FFF;
         self.registers.flags.n = false;
         self.registers.flags.p = {
-            let r = ((h as i16).overflowing_add(n as i16)).0.overflowing_add(c as i16);
+            let r = (h as i16).overflowing_add((n + c) as i16);
             r.1
         }
     }
@@ -424,7 +424,7 @@ impl CPU {
         self.registers.flags.c = u16::from(h) < u16::from(n) + u16::from(c);
         self.registers.flags.n = true;
         self.registers.flags.p = {
-            let r = ((h as i16).overflowing_sub(n as i16)).0.overflowing_sub(c as i16);
+            let r = (h as i16).overflowing_sub(n as i16);
             r.1
         }
     }
@@ -487,6 +487,18 @@ impl CPU {
 
     // Arithmetic shift left
     fn sla(&mut self, n: u8) -> u8 {
+        let r = n << 1;
+        self.registers.flags.s = (r as i8) < 0;
+        self.registers.flags.z = r == 0x00;
+        self.registers.flags.h = false;
+        self.registers.flags.p = r.count_ones() & 0x01 == 0x00;
+        self.registers.flags.n = false;
+        self.registers.flags.c = bit::get(n, 7);
+        r
+    }
+
+    // Logical shift left
+    fn sll(&mut self, n: u8) -> u8 {
         let r = n << 1;
         self.registers.flags.s = (r as i8) < 0;
         self.registers.flags.z = r == 0x00;
@@ -981,6 +993,25 @@ impl CPU {
                     let m =self.iy + ( displacement as u16 );
                     let d = self.bus.read_byte(m);
                     let r = bit::reset(d, bit);
+                    self.bus.write_byte(m, r);
+                }
+                cycles = 23;
+            },
+
+            // Undocumented instructions
+            // SLL (IY+d)
+            0xFDCB0036 => {                                                           // SLL (IY+d)
+                let displacement = self.bus.read_byte(self.pc + 2);
+                if bit::get(displacement, 7) {
+                    let m = self.iy - ( signed_to_abs(displacement) as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.sll(d);
+                    self.bus.write_byte(m, r);
+                }
+                else {
+                    let m =self.iy + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.sll(d);
                     self.bus.write_byte(m, r);
                 }
                 cycles = 23;
@@ -2335,25 +2366,29 @@ impl CPU {
             // INC IXH
             0xDD24 => {
                 let n = ( self.ix >> 8) as u8;
-                self.inc(n);
+                let r = self.inc(n);
+                self.ix = (self.ix & 0x00FF) | ((r as u16) << 8);
             },
 
             // DEC IXH
             0xDD25 => {
                 let n = ( self.ix >> 8) as u8;
-                self.dec(n);
+                let r = self.dec(n);
+                self.ix = (self.ix & 0x00FF) | ((r as u16) << 8);
             },
 
             // INC IXL
             0xDD2C => {
                 let n = ( self.ix & 0x00FF ) as u8;
-                self.inc(n);
+                let r = self.inc(n);
+                self.ix = (self.ix & 0xFF00) | r as u16;
             },
 
             // DEC IXL
             0xDD2D => {
                 let n = ( self.ix & 0x00FF ) as u8;
-                self.dec(n);
+                let r = self.dec(n);
+                self.ix = (self.ix & 0xFF00) | r as u16;
             },
 
             
