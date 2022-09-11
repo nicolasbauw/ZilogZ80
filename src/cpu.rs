@@ -2180,7 +2180,7 @@ impl CPU {
                 self.registers.flags.n = false;
             }
 
-            // RLD
+            // RRD
             0xED67 => {
                 let hl_contents = self.bus.read_byte(self.registers.get_hl());
                 let a_contents = self.registers.a;
@@ -2435,6 +2435,31 @@ impl CPU {
                 let r = self.dec(n);
                 self.ix = (self.ix & 0xFF00) | r as u16;
             },
+
+            // LD IXH,n
+            0xDD26 => {
+                let n = self.bus.read_byte(self.pc + 3);
+                self.ix = (self.ix & 0x00FF) | ((n as u16) << 8);
+            }
+
+            // LD IYH,n
+            0xFD26 => {
+                let n = self.bus.read_byte(self.pc + 3);
+                self.iy = (self.iy & 0x00FF) | ((n as u16) << 8);
+            }
+
+            // LD IXL,n
+            0xDD2E => {
+                let n = self.bus.read_byte(self.pc + 3);
+                self.ix = (self.ix & 0xFF00) | n as u16;
+            },
+
+            // LD IYL,n
+            0xFD2E => {
+                let n = self.bus.read_byte(self.pc + 3);
+                self.iy = (self.iy & 0xFF00) | n as u16;
+            },
+            
 
             
 
