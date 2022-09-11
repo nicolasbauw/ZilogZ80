@@ -233,7 +233,7 @@ impl CPU {
     }
 
     // ADD A,s : ADD with carry
-    fn addc(&mut self, n: u8)  {
+    fn adc(&mut self, n: u8)  {
         let c: u8 = match self.registers.flags.c {
             false => 0,
             true => 1,
@@ -263,7 +263,7 @@ impl CPU {
     }
 
     // SBC s
-    fn subc(&mut self, n: u8)  {
+    fn sbc(&mut self, n: u8)  {
         let c: u8 = match self.registers.flags.c {
             false => 0,
             true => 1,
@@ -390,7 +390,7 @@ impl CPU {
     }
 
     // Register pair addition with carry
-    fn addc_16(&mut self, n: u16) {
+    fn adc_16(&mut self, n: u16) {
         let c: u16 = match self.registers.flags.c {
             false => 0,
             true => 1,
@@ -410,7 +410,7 @@ impl CPU {
     }
 
     // Register pair substraction with carry
-    fn subc_16(&mut self, n: u16)  {
+    fn sbc_16(&mut self, n: u16)  {
         let c: u16 = match self.registers.flags.c {
             false => 0,
             true => 1,
@@ -1469,7 +1469,7 @@ impl CPU {
                 }
                 else {
                     let d = self.bus.read_byte(self.ix + ( displacement as u16 ));
-                    self.addc(d);
+                    self.adc(d);
                 }
             },
 
@@ -1482,7 +1482,7 @@ impl CPU {
                 }
                 else {
                     let d = self.bus.read_byte(self.iy + ( displacement as u16 ));
-                    self.addc(d);
+                    self.adc(d);
                 }
             },
 
@@ -1517,11 +1517,11 @@ impl CPU {
                 let displacement = self.bus.read_byte(self.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.ix - ( signed_to_abs(displacement) as u16 ));
-                    self.subc(d);
+                    self.sbc(d);
                 }
                 else {
                     let d = self.bus.read_byte(self.ix + ( displacement as u16 ));
-                    self.subc(d);
+                    self.sbc(d);
                 }
             },
 
@@ -1530,11 +1530,11 @@ impl CPU {
                 let displacement = self.bus.read_byte(self.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.iy - ( signed_to_abs(displacement) as u16 ));
-                    self.subc(d);
+                    self.sbc(d);
                 }
                 else {
                     let d = self.bus.read_byte(self.iy + ( displacement as u16 ));
-                    self.subc(d);
+                    self.sbc(d);
                 }
             },
 
@@ -1725,37 +1725,37 @@ impl CPU {
             // ADC HL,ss
             0xED4A => {                                                             // ADC HL,BC
                 let reg = self.registers.get_bc();
-                self.addc_16(reg);
+                self.adc_16(reg);
             },
             0xED5A => {                                                             // ADC HL,DE
                 let reg = self.registers.get_de();
-                self.addc_16(reg);
+                self.adc_16(reg);
             },
             0xED6A => {                                                             // ADC HL,HL
                 let reg = self.registers.get_hl();
-                self.addc_16(reg);
+                self.adc_16(reg);
             },
             0xED7A => {                                                             // ADC HL,SP
                 let reg = self.sp;
-                self.addc_16(reg);
+                self.adc_16(reg);
             },
 
             // SBC HL,ss
             0xED42 => {                                                             // SBC HL,BC
                 let reg = self.registers.get_bc();
-                self.subc_16(reg);
+                self.sbc_16(reg);
             },
             0xED52 => {                                                             // SBC HL,DE
                 let reg = self.registers.get_de();
-                self.subc_16(reg);
+                self.sbc_16(reg);
             },
             0xED62 => {                                                             // SBC HL,HL
                 let reg = self.registers.get_hl();
-                self.subc_16(reg);
+                self.sbc_16(reg);
             },
             0xED72 => {                                                             // SBC HL,SP
                 let reg = self.sp;
-                self.subc_16(reg);
+                self.sbc_16(reg);
             },
 
             // ADD IX,pp
@@ -2198,25 +2198,25 @@ impl CPU {
             // ADC A,IXH
             0xDD8C => {
                 let n = ( self.ix >> 8) as u8;
-                self.addc(n);
+                self.adc(n);
             },
 
             // ADC A,IXL
             0xDD8D => {
                 let n = ( self.ix & 0x00FF )  as u8;
-                self.addc(n);
+                self.adc(n);
             },
 
             // ADC A,IYH
             0xFD8C => {
                 let n = ( self.iy >> 8) as u8;
-                self.addc(n);
+                self.adc(n);
             },
 
             // ADC A,IYL
             0xFD8D => {
                 let n = ( self.iy & 0x00FF )  as u8;
-                self.addc(n);
+                self.adc(n);
             },
 
             // SUB IXH
@@ -2246,25 +2246,25 @@ impl CPU {
             // SBC A,IXH
             0xDD9C => {
                 let n = ( self.ix >> 8) as u8;
-                self.subc(n);
+                self.sbc(n);
             },
 
             // SBC A,IXL
             0xDD9D => {
                 let n = ( self.ix & 0x00FF )  as u8;
-                self.subc(n);
+                self.sbc(n);
             },
 
             // SBC A,IYH
             0xFD9C => {
                 let n = ( self.iy >> 8) as u8;
-                self.subc(n);
+                self.sbc(n);
             },
 
             // SBC A,IYL
             0xFD9D => {
                 let n = ( self.iy & 0x00FF )  as u8;
-                self.subc(n);
+                self.sbc(n);
             },
 
             // AND IXH
@@ -2758,23 +2758,23 @@ impl CPU {
             },
 
             // ADC A,r
-            0x88 => self.addc(self.registers.b),                                    // ADC A,B
-            0x89 => self.addc(self.registers.c),                                    // ADC A,C
-            0x8A => self.addc(self.registers.d),                                    // ADC A,D
-            0x8B => self.addc(self.registers.e),                                    // ADC A,E
-            0x8C => self.addc(self.registers.h),                                    // ADC A,H
-            0x8D => self.addc(self.registers.l),                                    // ADC A,L
+            0x88 => self.adc(self.registers.b),                                    // ADC A,B
+            0x89 => self.adc(self.registers.c),                                    // ADC A,C
+            0x8A => self.adc(self.registers.d),                                    // ADC A,D
+            0x8B => self.adc(self.registers.e),                                    // ADC A,E
+            0x8C => self.adc(self.registers.h),                                    // ADC A,H
+            0x8D => self.adc(self.registers.l),                                    // ADC A,L
             0x8E => {                                                               // ADC A,(HL)
                 let addr = self.registers.get_hl();
                 let n = self.bus.read_byte(addr);
-                self.addc(n)
+                self.adc(n)
             },
-            0x8F => self.addc(self.registers.a),                                    // ADC A,A
+            0x8F => self.adc(self.registers.a),                                    // ADC A,A
 
             // ADC a,n
             0xCE => {                                                               // ADC A,(HL)
                 let n = self.bus.read_byte(self.pc + 1);
-                self.addc(n)
+                self.adc(n)
             },
 
             // SUB s
@@ -2797,22 +2797,22 @@ impl CPU {
             },
 
             // SBC A,s
-            0x98 => self.subc(self.registers.b),                                    // SBC A,B
-            0x99 => self.subc(self.registers.c),                                    // SBC A,C
-            0x9A => self.subc(self.registers.d),                                    // SBC A,D
-            0x9B => self.subc(self.registers.e),                                    // SBC A,E
-            0x9C => self.subc(self.registers.h),                                    // SBC A,H
-            0x9D => self.subc(self.registers.l),                                    // SBC A,L
+            0x98 => self.sbc(self.registers.b),                                    // SBC A,B
+            0x99 => self.sbc(self.registers.c),                                    // SBC A,C
+            0x9A => self.sbc(self.registers.d),                                    // SBC A,D
+            0x9B => self.sbc(self.registers.e),                                    // SBC A,E
+            0x9C => self.sbc(self.registers.h),                                    // SBC A,H
+            0x9D => self.sbc(self.registers.l),                                    // SBC A,L
             0x9E => {                                                               // SBC A,(HL)
                 let addr = self.registers.get_hl();
                 let n = self.bus.read_byte(addr);
-                self.subc(n)
+                self.sbc(n)
             },
-            0x9F => self.subc(self.registers.a),                                    // SBC A,A
+            0x9F => self.sbc(self.registers.a),                                    // SBC A,A
 
             0xDE => {                                                               // SBC A,n
                 let n = self.bus.read_byte(self.pc + 1);
-                self.subc(n);
+                self.sbc(n);
             },
 
             // AND s
