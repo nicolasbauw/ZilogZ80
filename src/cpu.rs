@@ -1447,7 +1447,7 @@ impl CPU {
                 }
             },
 
-            // ADD A,(IX+d)
+            // ADD A,(IY+d)
             0xFD86 => {
                 let displacement = self.bus.read_byte(self.pc + 2);
                 if bit::get(displacement, 7) {
@@ -1460,12 +1460,12 @@ impl CPU {
                 }
             },
 
-            // ADD A,(IX+d)
+            // ADC A,(IX+d)
             0xDD8E => {
                 let displacement = self.bus.read_byte(self.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.ix - ( signed_to_abs(displacement) as u16 ));
-                    self.add(d);
+                    self.adc(d);
                 }
                 else {
                     let d = self.bus.read_byte(self.ix + ( displacement as u16 ));
@@ -1473,12 +1473,12 @@ impl CPU {
                 }
             },
 
-            // ADD A,(IY+d)
+            // ADC A,(IY+d)
             0xFD8E => {
                 let displacement = self.bus.read_byte(self.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.iy - ( signed_to_abs(displacement) as u16 ));
-                    self.add(d);
+                    self.adc(d);
                 }
                 else {
                     let d = self.bus.read_byte(self.iy + ( displacement as u16 ));
@@ -1499,7 +1499,7 @@ impl CPU {
                 }
             },
 
-            // SUB (IX+d)
+            // SUB (IY+d)
             0xFD96 => {
                 let displacement = self.bus.read_byte(self.pc + 2);
                 if bit::get(displacement, 7) {
@@ -1512,7 +1512,7 @@ impl CPU {
                 }
             },
 
-            // SUB (IX+d)
+            // SBC (IX+d)
             0xDD9E => {
                 let displacement = self.bus.read_byte(self.pc + 2);
                 if bit::get(displacement, 7) {
@@ -1525,7 +1525,7 @@ impl CPU {
                 }
             },
 
-            // SUB (IY+d)
+            // SBC (IY+d)
             0xFD9E => {
                 let displacement = self.bus.read_byte(self.pc + 2);
                 if bit::get(displacement, 7) {
