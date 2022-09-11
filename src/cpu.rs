@@ -2739,17 +2739,17 @@ impl CPU {
             // 8-Bit Arithmetic Group
             // ADD A,r
             0x80 => self.add(self.registers.b),                                   // ADD A,B
-            0x81 => self.add(self.registers.c),                                   // ADD C
-            0x82 => self.add(self.registers.d),                                   // ADD D
-            0x83 => self.add(self.registers.e),                                   // ADD E
-            0x84 => self.add(self.registers.h),                                   // ADD H
-            0x85 => self.add(self.registers.l),                                   // ADD L
+            0x81 => self.add(self.registers.c),                                   // ADD A,C
+            0x82 => self.add(self.registers.d),                                   // ADD A,D
+            0x83 => self.add(self.registers.e),                                   // ADD A,E
+            0x84 => self.add(self.registers.h),                                   // ADD A,H
+            0x85 => self.add(self.registers.l),                                   // ADD A,L
             0x86 => {                                                             // ADD (HL)
                 let addr = self.registers.get_hl();
                 let n = self.bus.read_byte(addr);
                 self.add(n)
             },
-            0x87 => self.add(self.registers.a),                                    // ADD A
+            0x87 => self.add(self.registers.a),                                    // ADD A,A
 
             // ADD A,n
             0xC6 => {
@@ -2764,7 +2764,7 @@ impl CPU {
             0x8B => self.adc(self.registers.e),                                    // ADC A,E
             0x8C => self.adc(self.registers.h),                                    // ADC A,H
             0x8D => self.adc(self.registers.l),                                    // ADC A,L
-            0x8E => {                                                               // ADC A,(HL)
+            0x8E => {                                                              // ADC A,(HL)
                 let addr = self.registers.get_hl();
                 let n = self.bus.read_byte(addr);
                 self.adc(n)
@@ -2803,14 +2803,14 @@ impl CPU {
             0x9B => self.sbc(self.registers.e),                                    // SBC A,E
             0x9C => self.sbc(self.registers.h),                                    // SBC A,H
             0x9D => self.sbc(self.registers.l),                                    // SBC A,L
-            0x9E => {                                                               // SBC A,(HL)
+            0x9E => {                                                              // SBC A,(HL)
                 let addr = self.registers.get_hl();
                 let n = self.bus.read_byte(addr);
                 self.sbc(n)
             },
             0x9F => self.sbc(self.registers.a),                                    // SBC A,A
 
-            0xDE => {                                                               // SBC A,n
+            0xDE => {                                                              // SBC A,n
                 let n = self.bus.read_byte(self.pc + 1);
                 self.sbc(n);
             },
