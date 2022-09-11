@@ -25,7 +25,3 @@
     LD  BC,0x0001
     ADC HL,BC
     SBC HL,BC
-    LD  HL,0x0000 
-    LD  BC,0x7FFF 
-    SCF
-    SBC HL,BC
