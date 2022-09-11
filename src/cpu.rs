@@ -197,7 +197,7 @@ impl CPU {
         
         self.registers.flags.s = (r as i8) < 0;
         self.registers.flags.z = self.registers.a == h;
-        self.registers.flags.h = self.registers.a < h;
+        self.registers.flags.h = (self.registers.a as i8 & 0x0F) < (h as i8 & 0x0F);
         self.registers.flags.p = self.registers.get_bc() != 0;
         self.registers.flags.n = true;
     }
@@ -214,7 +214,7 @@ impl CPU {
 
         self.registers.flags.s = (r as i8) < 0;
         self.registers.flags.z = self.registers.a == h;
-        self.registers.flags.h = self.registers.a < h;
+        self.registers.flags.h = (self.registers.a as i8 & 0x0F) < (h as i8 & 0x0F);
         self.registers.flags.p = self.registers.get_bc() != 0;
         self.registers.flags.n = true;
     }
