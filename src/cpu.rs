@@ -424,7 +424,7 @@ impl CPU {
         self.registers.flags.c = u16::from(h) < u16::from(n) + u16::from(c);
         self.registers.flags.n = true;
         self.registers.flags.p = {
-            let r = (h as i16).overflowing_sub(n as i16);
+            let r = (h as i16).overflowing_sub((n + c)as i16);
             r.1
         }
     }
