@@ -49,7 +49,7 @@ ld <h,l>,(<ix,iy>+1)..........  OK
 ld a,(<ix,iy>+1)..............  OK
 ld <ixh,ixl,iyh,iyl>,nn.......  OK
 ld <bcdehla>,<bcdehla>........  OK
-ld <bcdexya>,<bcdexya>........  ERROR **** crc expected:478ba36b found:bf692e30
+ld <bcdexya>,<bcdexya>........  OK
 ld a,(nnnn) / ld (nnnn),a.....  ERROR **** crc expected:c9262de5 found:496cd503
 ldd<r> (1)....................  OK
 ldd<r> (2)....................  OK

@@ -2456,225 +2456,225 @@ impl CPU {
                 self.registers.iyl = n;
             },
 
-            /*// LD B,B
-            0xDD40 | 0xFD40
+            // LD B,B
+            0xDD40 | 0xFD40 => {},
 
             // LD B,C
-            0xDD41 | 0xFD41
+            0xDD41 | 0xFD41 => self.registers.b = self.registers.c,
 
             // LD B,D
-            0xDD42 | 0xFD42
+            0xDD42 | 0xFD42 => self.registers.b = self.registers.d,
 
             // LD B,E
-            0xDD43 | 0xFD43
+            0xDD43 | 0xFD43 => self.registers.b = self.registers.e,
 
             // LD B,IXH
-            0xDD44
+            0xDD44 => self.registers.b = self.registers.ixh,
 
             // LD B,IYH
-            0xFD44
+            0xFD44 => self.registers.b = self.registers.iyh,
 
             // LD B,IXL
-            0xDD45
+            0xDD45 => self.registers.b = self.registers.ixl,
 
             // LD B,IYL
-            0xFD45
+            0xFD45 => self.registers.b = self.registers.iyl,
 
             // LD B,A
-            0xDD47 | 0xFD47
+            0xDD47 | 0xFD47 => self.registers.b = self.registers.a,
 
             // LD C,B
-            0xDD48 | 0xFD48
+            0xDD48 | 0xFD48 => self.registers.c = self.registers.b,
 
             // LD C,C
-            0xDD49 | 0xFD49
+            0xDD49 | 0xFD49 => {},
 
             // LD C,D
-            0xDD4A | 0xFD4A
+            0xDD4A | 0xFD4A => self.registers.c = self.registers.d,
 
             // LD C,E
-            0xDD4B | 0xFD4B
+            0xDD4B | 0xFD4B => self.registers.c = self.registers.e,
 
             // LD C,IXH
-            0xDD4C
+            0xDD4C => self.registers.c = self.registers.ixh,
 
             // LD C,IYH
-            0xFD4C
+            0xFD4C => self.registers.c = self.registers.iyh,
 
             // LD C,IXL
-            0xDD4D
+            0xDD4D => self.registers.c = self.registers.ixl,
 
-            // LD C,IYH
-            0xFD4D
+            // LD C,IYL
+            0xFD4D => self.registers.c = self.registers.iyl,
 
             // LD C,A
-            0xDD4F | 0xFD4F
+            0xDD4F | 0xFD4F => self.registers.c = self.registers.a,
 
             // LD D,B
-            0xDD50 | 0xFD50
+            0xDD50 | 0xFD50 => self.registers.d = self.registers.b,
 
             // LD D,C
-            0xDD51 | 0xFD51
+            0xDD51 | 0xFD51 => self.registers.d = self.registers.c,
 
             // LD D,D
-            0xDD52 | 0xFD52
+            0xDD52 | 0xFD52 => {},
 
             // LD D,E
-            0xDD53 | 0xFD53
+            0xDD53 | 0xFD53 => self.registers.d = self.registers.e,
 
             // LD D,IXH
-            0xDD54
+            0xDD54 => self.registers.d = self.registers.ixh,
 
             // LD D,IYH
-            0xFD54
+            0xFD54 => self.registers.d = self.registers.iyh,
 
             // LD D,IXL
-            0xDD55
+            0xDD55 => self.registers.d = self.registers.ixl,
 
             // LD D,IYL
-            0xFD55
+            0xFD55 => self.registers.d = self.registers.iyl,
 
             // LD D,A
-            0xDD57 | 0xFD57
+            0xDD57 | 0xFD57 => self.registers.d = self.registers.a,
 
             // LD E,B
-            0xDD58 | 0xFD58
+            0xDD58 | 0xFD58 => self.registers.e = self.registers.b,
 
             // LD E,C
-            0xDD59 | 0xFD59
+            0xDD59 | 0xFD59 => self.registers.e = self.registers.c,
 
             // LD E,D
-            0xDD5A | 0xFD5A
+            0xDD5A | 0xFD5A => self.registers.e = self.registers.d,
 
             // LD E,E
-            0xDD5B | 0xFD5B
+            0xDD5B | 0xFD5B => {},
 
             // LD E,IXH
-            0xDD5C
+            0xDD5C => self.registers.e = self.registers.ixh,
 
             // LD E,IYH
-            0xFD5C
+            0xFD5C => self.registers.e = self.registers.iyh,
 
             // LD E,IXL
-            0xDD5D
+            0xDD5D => self.registers.e = self.registers.ixl,
 
             // LD E,IYL
-            0xFD5D
+            0xFD5D => self.registers.e = self.registers.iyl,
 
             // LD E,A
-            0xDD5F | 0xFD5F
+            0xDD5F | 0xFD5F => self.registers.e = self.registers.a,
 
             // LD IXH,B
-            0xDD60
+            0xDD60 => self.registers.ixh = self.registers.b,
 
             // LD IYH,B
-            0xFD60
+            0xFD60 => self.registers.iyh = self.registers.b,
 
             // LD IXH,C
-            0xDD61
+            0xDD61 => self.registers.ixh = self.registers.c,
 
             // LD IYH,C
-            0xFD61
+            0xFD61 => self.registers.iyh = self.registers.c,
 
             // LD IXH,D
-            0xDD62
+            0xDD62 => self.registers.ixh = self.registers.d,
 
             // LD IYH,D
-            0xFD62
+            0xFD62 => self.registers.iyh = self.registers.d,
 
             // LD IXH,E
-            0xDD63
+            0xDD63 => self.registers.ixh = self.registers.e,
 
             // LD IYH,E
-            0xFD63
+            0xFD63 => self.registers.iyh = self.registers.e,
 
             // LD IXH,IXH
-            0xDD64
+            0xDD64 => {},
 
             // LD IYH,IYH
-            0xFD64
+            0xFD64 => {},
 
             // LD IXH,IXL
-            0xDD65
+            0xDD65 => self.registers.ixh = self.registers.ixl,
 
             // LD IYH,IYL
-            0xFD65
+            0xFD65 => self.registers.iyh = self.registers.iyl,
 
             // LD IXH,A
-            0xDD67
+            0xDD67 => self.registers.ixh = self.registers.a,
 
             // LD IYH,A
-            0xFD67
+            0xFD67 => self.registers.iyh = self.registers.a,
 
             // LD IXL,B
-            0xDD68
+            0xDD68 => self.registers.ixl = self.registers.b,
 
-            // LD IYH,B
-            0xFD68
+            // LD IYL,B
+            0xFD68 => self.registers.iyl = self.registers.b,
 
             // LD IXL,C
-            0xDD69
+            0xDD69 => self.registers.ixl = self.registers.c,
 
-            // LD IYH,C
-            0xFD69
+            // LD IYL,C
+            0xFD69 => self.registers.iyl = self.registers.c,
 
             // LD IXL,D
-            0xDD6A
+            0xDD6A => self.registers.ixl = self.registers.d,
 
-            // LD IYH,D
-            0xFD6A
+            // LD IYL,D
+            0xFD6A => self.registers.iyl = self.registers.d,
 
             // LD IXL,E
-            0xDD6B
+            0xDD6B => self.registers.ixl = self.registers.e,
 
-            // LD IYH,E
-            0xFD6B
+            // LD IYL,E
+            0xFD6B => self.registers.iyl = self.registers.e,
 
             // LD IXL,IXH
-            0xDD6C
+            0xDD6C => self.registers.ixl = self.registers.ixh,
 
             // LD IYL,IYH
-            0xFD6C
+            0xFD6C => self.registers.iyl = self.registers.iyh,
 
             // LD IXL,IXL
-            0xDD6D
+            0xDD6D => {},
 
             // LD IYL,IYL
-            0xFD6D
+            0xFD6D => {},
 
             // LD IXL,A
-            0xDD6F
+            0xDD6F => self.registers.ixl = self.registers.a,
 
             // LD IYL,A
-            0xFD6F
+            0xFD6F => self.registers.iyl = self.registers.a,
 
             // LD A,B
-            0xDD78 | 0xFD78
+            0xDD78 | 0xFD78 => self.registers.a = self.registers.b,
 
             // LD A,C
-            0xDD79 | 0xFD79
+            0xDD79 | 0xFD79 => self.registers.a = self.registers.c,
 
             // LD A,D
-            0xDD7A | 0xFD7A
+            0xDD7A | 0xFD7A => self.registers.a = self.registers.d,
 
             // LD A,E
-            0xDD7B | 0xFD7B
+            0xDD7B | 0xFD7B => self.registers.a = self.registers.e,
 
             // LD A,IXH
-            0xDD7C
+            0xDD7C => self.registers.a = self.registers.ixh,
 
             // LD A,IYH
-            0xFD7C
+            0xFD7C => self.registers.a = self.registers.iyh,
 
             // LD A,IXL
-            0xDD7D
+            0xDD7D => self.registers.a = self.registers.ixl,
 
             // LD A,IYL
-            0xFD7D
+            0xFD7D => self.registers.a = self.registers.iyl,
 
             // LD A,A
-            0xDD7F | 0xFD7F
-            */
+            0xDD7F | 0xFD7F => {},
+            
 
             
 
