@@ -2459,7 +2459,226 @@ impl CPU {
                 let n = self.bus.read_byte(self.pc + 3);
                 self.iy = (self.iy & 0xFF00) | n as u16;
             },
-            
+
+            /*// LD B,B
+            0xDD40 | 0xFD40
+
+            // LD B,C
+            0xDD41 | 0xFD41
+
+            // LD B,D
+            0xDD42 | 0xFD42
+
+            // LD B,E
+            0xDD43 | 0xFD43
+
+            // LD B,IXH
+            0xDD44
+
+            // LD B,IYH
+            0xFD44
+
+            // LD B,IXL
+            0xDD45
+
+            // LD B,IYL
+            0xFD45
+
+            // LD B,A
+            0xDD47 | 0xFD47
+
+            // LD C,B
+            0xDD48 | 0xFD48
+
+            // LD C,C
+            0xDD49 | 0xFD49
+
+            // LD C,D
+            0xDD4A | 0xFD4A
+
+            // LD C,E
+            0xDD4B | 0xFD4B
+
+            // LD C,IXH
+            0xDD4C
+
+            // LD C,IYH
+            0xFD4C
+
+            // LD C,IXL
+            0xDD4D
+
+            // LD C,IYH
+            0xFD4D
+
+            // LD C,A
+            0xDD4F | 0xFD4F
+
+            // LD D,B
+            0xDD50 | 0xFD50
+
+            // LD D,C
+            0xDD51 | 0xFD51
+
+            // LD D,D
+            0xDD52 | 0xFD52
+
+            // LD D,E
+            0xDD53 | 0xFD53
+
+            // LD D,IXH
+            0xDD54
+
+            // LD D,IYH
+            0xFD54
+
+            // LD D,IXL
+            0xDD55
+
+            // LD D,IYL
+            0xFD55
+
+            // LD D,A
+            0xDD57 | 0xFD57
+
+            // LD E,B
+            0xDD58 | 0xFD58
+
+            // LD E,C
+            0xDD59 | 0xFD59
+
+            // LD E,D
+            0xDD5A | 0xFD5A
+
+            // LD E,E
+            0xDD5B | 0xFD5B
+
+            // LD E,IXH
+            0xDD5C
+
+            // LD E,IYH
+            0xFD5C
+
+            // LD E,IXL
+            0xDD5D
+
+            // LD E,IYL
+            0xFD5D
+
+            // LD E,A
+            0xDD5F | 0xFD5F
+
+            // LD IXH,B
+            0xDD60
+
+            // LD IYH,B
+            0xFD60
+
+            // LD IXH,C
+            0xDD61
+
+            // LD IYH,C
+            0xFD61
+
+            // LD IXH,D
+            0xDD62
+
+            // LD IYH,D
+            0xFD62
+
+            // LD IXH,E
+            0xDD63
+
+            // LD IYH,E
+            0xFD63
+
+            // LD IXH,IXH
+            0xDD64
+
+            // LD IYH,IYH
+            0xFD64
+
+            // LD IXH,IXL
+            0xDD65
+
+            // LD IYH,IYL
+            0xFD65
+
+            // LD IXH,A
+            0xDD67
+
+            // LD IYH,A
+            0xFD67
+
+            // LD IXL,B
+            0xDD68
+
+            // LD IYH,B
+            0xFD68
+
+            // LD IXL,C
+            0xDD69
+
+            // LD IYH,C
+            0xFD69
+
+            // LD IXL,D
+            0xDD6A
+
+            // LD IYH,D
+            0xFD6A
+
+            // LD IXL,E
+            0xDD6B
+
+            // LD IYH,E
+            0xFD6B
+
+            // LD IXL,IXH
+            0xDD6C
+
+            // LD IYL,IYH
+            0xFD6C
+
+            // LD IXL,IXL
+            0xDD6D
+
+            // LD IYL,IYL
+            0xFD6D
+
+            // LD IXL,A
+            0xDD6F
+
+            // LD IYL,A
+            0xFD6F
+
+            // LD A,B
+            0xDD78 | 0xFD78
+
+            // LD A,C
+            0xDD79 | 0xFD79
+
+            // LD A,D
+            0xDD7A | 0xFD7A
+
+            // LD A,E
+            0xDD7B | 0xFD7B
+
+            // LD A,IXH
+            0xDD7C
+
+            // LD A,IYH
+            0xFD7C
+
+            // LD A,IXL
+            0xDD7D
+
+            // LD A,IYL
+            0xFD7D
+
+            // LD A,A
+            0xDD7F | 0xFD7F
+            */
 
             
 
