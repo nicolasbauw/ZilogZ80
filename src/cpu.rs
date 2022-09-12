@@ -2692,10 +2692,56 @@ impl CPU {
 
             // LD A,A
             0xDD7F | 0xFD7F => {},
-            
 
-            
+            // SLL B
+            0xCB30 => {
+                let r = self.sll(self.registers.b);
+                self.registers.b = r;
+            },
 
+            // SLL C
+            0xCB31 => {
+                let r = self.sll(self.registers.c);
+                self.registers.c = r;
+            },
+
+            // SLL D
+            0xCB32 => {
+                let r = self.sll(self.registers.d);
+                self.registers.d = r;
+            },
+
+            // SLL E
+            0xCB33 => {
+                let r = self.sll(self.registers.e);
+                self.registers.e = r;
+            },
+
+            // SLL H
+            0xCB34 => {
+                let r = self.sll(self.registers.h);
+                self.registers.h = r;
+            },
+
+            // SLL L
+            0xCB35 => {
+                let r = self.sll(self.registers.l);
+                self.registers.l = r;
+            },
+
+            // SLL (HL)
+            0xCB36 => {
+                let addr = self.registers.get_hl();
+                let r = self.sll(self.bus.read_byte(addr));
+                self.bus.write_byte(addr, r);
+            },
+
+            // SLL A
+            0xCB37 => {
+                let r = self.sll(self.registers.a);
+                self.registers.a = r;
+            },
+            
             _ => {
                 if self.debug.unknw_instr { self.debug.string = format!("{:#06X}", opcode); }
                 cycles = 0xFF;
