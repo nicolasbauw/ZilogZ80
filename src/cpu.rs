@@ -540,7 +540,7 @@ impl CPU {
 
     // Logical shift left
     fn sll(&mut self, n: u8) -> u8 {
-        let r = n << 1;
+        let r = (n << 1) | 0x01;
         self.registers.flags.s = (r as i8) < 0;
         self.registers.flags.z = r == 0x00;
         self.registers.flags.h = false;
@@ -1040,8 +1040,26 @@ impl CPU {
             },
 
             // Undocumented instructions
+            // SLL (IX+d)
+            0xDDCB0036 => {
+                let displacement = self.bus.read_byte(self.pc + 2);
+                if bit::get(displacement, 7) {
+                    let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.sll(d);
+                    self.bus.write_byte(m, r);
+                }
+                else {
+                    let m = self.registers.get_ix() + ( displacement as u16 );
+                    let d = self.bus.read_byte(m);
+                    let r = self.sll(d);
+                    self.bus.write_byte(m, r);
+                }
+                cycles = 23;
+            },
+
             // SLL (IY+d)
-            0xFDCB0036 => {                                                           // SLL (IY+d)
+            0xFDCB0036 => {
                 let displacement = self.bus.read_byte(self.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );

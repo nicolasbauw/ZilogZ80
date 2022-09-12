@@ -58,7 +58,7 @@ ldi<r> (2)....................  OK
 neg...........................  OK
 <rrd,rld>.....................  ERROR **** crc expected:955ba326 found:e2191d5f
 <rlca,rrca,rla,rra>...........  OK
-shf/rot (<ix,iy>+1)...........  ERROR **** crc expected:713acd81 found:a5614399
+shf/rot (<ix,iy>+1)...........  OK
 shf/rot <b,c,d,e,h,l,(hl),a>..  ERROR **** crc expected:eb604d58 found:28ad3464
 <set,res> n,<bcdehl(hl)a>.....  OK
 <set,res> n,(<ix,iy>+1).......  OK
