@@ -422,8 +422,8 @@ fn sub_i_hl_ix_iy_asm() {
     c.bus.write_byte(0x1002, 0x81);
     c.bus.load_bin("bin/sub_i_hl_ix_iy.bin", 0).unwrap();
     assert_eq!(c.execute(), 10); assert_eq!(0x1000, c.registers.get_hl());                                              // LD HL,0x1000
-    assert_eq!(c.execute(), 14); assert_eq!(0x1000, c.registers.get_ix(),);                                                              // LD IX,0x1000
-    assert_eq!(c.execute(), 14); assert_eq!(0x1003, c.registers.get_iy());                                                              // LD IY,0x1003
+    assert_eq!(c.execute(), 14); assert_eq!(0x1000, c.registers.get_ix(),);                                             // LD IX,0x1000
+    assert_eq!(c.execute(), 14); assert_eq!(0x1003, c.registers.get_iy());                                              // LD IY,0x1003
     assert_eq!(c.execute(), 7);  assert_eq!(0x00, c.registers.a);                                                       // LD A,0x00
     assert_eq!(c.execute(), 7);  assert_eq!(0xBF, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF); // SUB A,(HL)
     assert_eq!(c.execute(), 19); assert_eq!(0x5E, c.registers.a); assert_eq!(c.registers.flags.to_byte(), VF|NF);       // SUB A,(IX+1)
@@ -438,8 +438,8 @@ fn cp_i_hl_ix_iy_asm() {
     c.bus.write_byte(0x1002, 0x22);
     c.bus.load_bin("bin/cp_i_hl_ix_iy.bin", 0).unwrap();
     assert_eq!(c.execute(), 10); assert_eq!(0x1000, c.registers.get_hl());                                              // LD HL,0x1000
-    assert_eq!(c.execute(), 14); assert_eq!(0x1000, c.registers.get_ix(),);                                                              // LD IX,0x1000
-    assert_eq!(c.execute(), 14); assert_eq!(0x1003, c.registers.get_iy());                                                              // LD IY,0x1003
+    assert_eq!(c.execute(), 14); assert_eq!(0x1000, c.registers.get_ix(),);                                             // LD IX,0x1000
+    assert_eq!(c.execute(), 14); assert_eq!(0x1003, c.registers.get_iy());                                              // LD IY,0x1003
     assert_eq!(c.execute(), 7);  assert_eq!(0x41, c.registers.a);                                                       // LD A,0x41
     assert_eq!(c.execute(), 7);  assert_eq!(0x41, c.registers.a); assert_eq!(c.registers.flags.to_byte(), ZF|NF);       // CP (HL)
     assert_eq!(c.execute(), 19); assert_eq!(0x41, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|NF|CF);    // CP (IX+1)
@@ -459,8 +459,7 @@ fn sbc_r_asm() {
     assert_eq!(c.execute(), 4); assert_eq!(0xF7, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // SBC A,D
     assert_eq!(c.execute(), 4); assert_eq!(0x7D, c.registers.a); assert_eq!(c.registers.flags.to_byte(), HF|VF|NF);     // SBC A,E
     assert_eq!(c.execute(), 4); assert_eq!(0xBD, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|VF|NF|CF);  // SBC A,H
-    //assert_eq!(c.execute(), 4); assert_eq!(0xFD, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // SBC A,L
-    c.execute();
+    assert_eq!(c.execute(), 4); assert_eq!(0xFD, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // SBC A,L (0xBD - 0xC0) should set CF
     assert_eq!(c.execute(), 7); assert_eq!(0xFB, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|NF);        // SBC A,0x01
     assert_eq!(c.execute(), 7); assert_eq!(0xFD, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // SBC A,0xFE
 }

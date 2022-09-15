@@ -8,7 +8,7 @@
     LD  E,0x79
     LD  H,0xC0
     LD  L,0xBF
-    SUB A,A
+    SUB A
     SBC A,B
     SBC A,C
     SBC A,D
@@ -17,4 +17,3 @@
     SBC A,L
     SBC A,0x01
     SBC A,0xFE
-    
