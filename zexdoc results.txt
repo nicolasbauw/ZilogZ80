@@ -11,7 +11,7 @@ bit n,(<ix,iy>+1).............  OK
 bit n,<b,c,d,e,h,l,(hl),a>....  OK
 cpd<r>........................  OK
 cpi<r>........................  OK
-<daa,cpl,scf,ccf>.............  ERROR **** crc expected:9b4ba675 found:8276cc38
+<daa,cpl,scf,ccf>.............  OK
 <inc,dec> a...................  OK
 <inc,dec> b...................  OK
 <inc,dec> bc..................  OK

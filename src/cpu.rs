@@ -342,24 +342,57 @@ impl CPU {
     }
 
     // Decimal adjust accumulator
+    // Function reworked using Rui F Ribeiro implementation (https://stackoverflow.com/questions/8119577/z80-daa-instruction)
     fn daa(&mut self) {
-        let mut inc_a: u8 = 0;
-        let mut c = self.registers.flags.c;
+        let mut t = 0;
         let lsb = self.registers.a & 0x0F;
-        if (lsb > 9) || self.registers.flags.h {
-            inc_a += 0x06;
+        
+        if self.registers.flags.h || (lsb > 9) {
+            t += 1;
         }
 
-        let msb = self.registers.a >> 4;
-        if (msb > 9) || self.registers.flags.c || (msb >= 9 && lsb > 9) {
-            inc_a += 0x60;
-            c = true;
+        if self.registers.flags.c || ( self.registers.a > 0x99) {
+            t += 2;
+            self.registers.flags.c = true;
         }
 
-        self.add(inc_a);
-        self.registers.flags.c = c;
+        if self.registers.flags.n && !self.registers.flags.h { self.registers.flags.h = false }
+        else
+        {
+            if self.registers.flags.n && self.registers.flags.h { self.registers.flags.h = lsb < 6; }
+            else { self.registers.flags.h = lsb >= 0x0A; }
+        }
+
+        match t {
+            1 => {
+                let r =  match self.registers.flags.n {
+                    true => 0xFA,   // -6
+                    false => 0x06,  // 6
+                };
+                self.registers.a = self.registers.a.wrapping_add(r);
+            }
+                
+            2 => {
+                let r = match self.registers.flags.n {
+                    true => 0xA0,   // -0x60
+                    false => 0x60,  // 0x60
+                };
+                self.registers.a = self.registers.a.wrapping_add(r);
+            }
+            
+            3 => {
+                let r = match self.registers.flags.n {
+                    true => 0x9A,   // -0x66
+                    false => 0x66,  // 0x66
+                };
+                self.registers.a = self.registers.a.wrapping_add(r);
+            }
+
+            _ => {},
+        }
+
         self.registers.flags.z = self.registers.a == 0x00;
-        self.registers.flags.s = (self.registers.a as i8) < 0;
+        self.registers.flags.s = bit::get(self.registers.a, 7);
         self.registers.flags.p = self.registers.a.count_ones() & 0x01 == 0x00;
     }
 

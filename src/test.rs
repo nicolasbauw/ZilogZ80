@@ -761,7 +761,6 @@ fn rlca_rla_rrca_rra_asm() {
     assert_eq!(c.execute(), 4); assert_eq!(0xA0, c.registers.a);                    // RRA
 }
 
-#[ignore]
 #[test]
 fn daa_asm() {
     let mut c = CPU::new();
