@@ -453,13 +453,20 @@ fn sbc_r_asm() {
     for _ in 0..7 {
         c.execute();
     }
+    // LD  A,0x04
+    // LD  B,0x01
+    // LD  C,0xF8
+    // LD  D,0x0F
+    // LD  E,0x79
+    // LD  H,0xC0
+    // LD  L,0xBF
     assert_eq!(c.execute(), 4); assert_eq!(0x00, c.registers.a); assert_eq!(c.registers.flags.to_byte(), ZF|NF);        // SUB A,A
-    assert_eq!(c.execute(), 4); assert_eq!(0xFF, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // SBC A,B
-    assert_eq!(c.execute(), 4); assert_eq!(0x06, c.registers.a); assert_eq!(c.registers.flags.to_byte(), NF);           // SBC A,C
-    assert_eq!(c.execute(), 4); assert_eq!(0xF7, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // SBC A,D
-    assert_eq!(c.execute(), 4); assert_eq!(0x7D, c.registers.a); assert_eq!(c.registers.flags.to_byte(), HF|VF|NF);     // SBC A,E
-    assert_eq!(c.execute(), 4); assert_eq!(0xBD, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|VF|NF|CF);  // SBC A,H
-    assert_eq!(c.execute(), 4); assert_eq!(0xFD, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // SBC A,L (0xBD - 0xC0) should set CF
+    assert_eq!(c.execute(), 4); assert_eq!(0xFF, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // SBC A,B (0x00 - 0x01)
+    assert_eq!(c.execute(), 4); assert_eq!(0x06, c.registers.a); assert_eq!(c.registers.flags.to_byte(), NF);           // SBC A,C (0xFF - 0xF8 - carry)
+    assert_eq!(c.execute(), 4); assert_eq!(0xF7, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // SBC A,D (0x06 - 0x0F)
+    assert_eq!(c.execute(), 4); assert_eq!(0x7D, c.registers.a); assert_eq!(c.registers.flags.to_byte(), HF|VF|NF);     // SBC A,E (0xF7 - 0x79)
+    assert_eq!(c.execute(), 4); assert_eq!(0xBD, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|VF|NF|CF);  // SBC A,H (0x7D - 0xC0)
+    assert_eq!(c.execute(), 4); assert_eq!(0xFD, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // SBC A,L (0xBD - 0xBF - carry ) should set HF
     assert_eq!(c.execute(), 7); assert_eq!(0xFB, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|NF);        // SBC A,0x01
     assert_eq!(c.execute(), 7); assert_eq!(0xFD, c.registers.a); assert_eq!(c.registers.flags.to_byte(), SF|HF|NF|CF);  // SBC A,0xFE
 }
