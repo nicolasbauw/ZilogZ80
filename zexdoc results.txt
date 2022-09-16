@@ -4,9 +4,9 @@ add hl,<bc,de,hl,sp>..........  OK
 add ix,<bc,de,ix,sp>..........  OK
 add iy,<bc,de,iy,sp>..........  OK
 aluop a,nn....................  OK
-aluop a,<b,c,d,e,h,l,(hl),a>..  ERROR **** crc expected:fe43b016 found:2dd612fe
-aluop a,<ixh,ixl,iyh,iyl>.....  ERROR **** crc expected:a4026d5a found:8545aa84
-aluop a,(<ix,iy>+1)...........  ERROR **** crc expected:e849676e found:c8ba0a1a
+aluop a,<b,c,d,e,h,l,(hl),a>..  ERROR **** crc expected:fe43b016 found:7e13452c
+aluop a,<ixh,ixl,iyh,iyl>.....  OK
+aluop a,(<ix,iy>+1)...........  OK
 bit n,(<ix,iy>+1).............  OK
 bit n,<b,c,d,e,h,l,(hl),a>....  OK
 cpd<r>........................  OK
