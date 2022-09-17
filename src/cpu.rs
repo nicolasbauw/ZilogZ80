@@ -674,7 +674,7 @@ impl CPU {
     }
 
     // DDCB FDCB
-    fn execute_3bytes(&mut self) -> u32 {
+    fn execute_4bytes(&mut self) -> u32 {
         let opcode = self.bus.read_le_dword(self.pc);
         let cycles;
 
@@ -1110,7 +1110,7 @@ impl CPU {
 
         match opcode {
             // 4 bytes instructions
-            0xDDCB | 0xFDCB => return self.execute_3bytes(),
+            0xDDCB | 0xFDCB => return self.execute_4bytes(),
 
             // 8-Bit Load Group
             // LD r,(IX+d)
