@@ -2685,25 +2685,25 @@ impl CPU {
         match opcode {
             // 8-Bit Load Group
             // LD r,r'      LD r,(HL)
-            0x40 => {},                                                             // LD B,B
+            0x40 => {},                                                 // LD B,B
             0x41 => self.reg.b = self.reg.c,                            // LD B,C
             0x42 => self.reg.b = self.reg.d,                            // LD B,D
             0x43 => self.reg.b = self.reg.e,                            // LD B,E
             0x44 => self.reg.b = self.reg.h,                            // LD B,H
             0x45 => self.reg.b = self.reg.l,                            // LD B,L
-            0x46 => {                                                               // LD B,(HL)
+            0x46 => {                                                   // LD B,(HL)
                 let addr = self.reg.get_hl();
                 self.reg.b = self.bus.read_byte(addr)
             }
             0x47 => self.reg.b = self.reg.a,                            // LD B,A
 
             0x48 => self.reg.c = self.reg.b,                            // LD C,B
-            0x49 => {},                                                             // LD C,C
+            0x49 => {},                                                 // LD C,C
             0x4A => self.reg.c = self.reg.d,                            // LD C,D
             0x4B => self.reg.c = self.reg.e,                            // LD C,E
             0x4C => self.reg.c = self.reg.h,                            // LD C,H
             0x4D => self.reg.c = self.reg.l,                            // LD C,L
-            0x4E => {                                                               // LD C,(HL)
+            0x4E => {                                                   // LD C,(HL)
                 let addr = self.reg.get_hl();
                 self.reg.c = self.bus.read_byte(addr)
             }
@@ -2711,11 +2711,11 @@ impl CPU {
 
             0x50 => self.reg.d = self.reg.b,                            // LD D,B
             0x51 => self.reg.d = self.reg.c,                            // LD D,C
-            0x52 => {},                                                             // LD D,D
+            0x52 => {},                                                 // LD D,D
             0x53 => self.reg.d = self.reg.e,                            // LD D,E
             0x54 => self.reg.d = self.reg.h,                            // LD D,H
             0x55 => self.reg.d = self.reg.l,                            // LD D,L
-            0x56 => {                                                               // LD D,(HL)
+            0x56 => {                                                   // LD D,(HL)
                 let addr = self.reg.get_hl();
                 self.reg.d = self.bus.read_byte(addr)
             }
@@ -2724,10 +2724,10 @@ impl CPU {
             0x58 => self.reg.e = self.reg.b,                            // LD E,B
             0x59 => self.reg.e = self.reg.c,                            // LD E,C
             0x5A => self.reg.e = self.reg.d,                            // LD E,D
-            0x5B => {},                                                             // LD E,E
+            0x5B => {},                                                 // LD E,E
             0x5C => self.reg.e = self.reg.h,                            // LD E,H
             0x5D => self.reg.e = self.reg.l,                            // LD E,L
-            0x5E => {                                                               // LD E,(HL)
+            0x5E => {                                                   // LD E,(HL)
                 let addr = self.reg.get_hl();
                 self.reg.e = self.bus.read_byte(addr)
             }
@@ -2737,9 +2737,9 @@ impl CPU {
             0x61 => self.reg.h = self.reg.c,                            // LD H,C
             0x62 => self.reg.h = self.reg.d,                            // LD H,D
             0x63 => self.reg.h = self.reg.e,                            // LD H,E
-            0x64 => {},                                                             // LD H,H
+            0x64 => {},                                                 // LD H,H
             0x65 => self.reg.h = self.reg.l,                            // LD H,L
-            0x66 => {                                                               // LD H,(HL)
+            0x66 => {                                                   // LD H,(HL)
                 let addr = self.reg.get_hl();
                 self.reg.h = self.bus.read_byte(addr)
             }
@@ -2750,8 +2750,8 @@ impl CPU {
             0x6A => self.reg.l = self.reg.d,                            // LD L,D
             0x6B => self.reg.l = self.reg.e,                            // LD L,E
             0x6C => self.reg.l = self.reg.h,                            // LD L,H
-            0x6D => {},                                                             // LD L,L
-            0x6E => {                                                               // LD L,(HL)
+            0x6D => {},                                                 // LD L,L
+            0x6E => {                                                   // LD L,(HL)
                 let addr = self.reg.get_hl();
                 self.reg.l = self.bus.read_byte(addr)
             }
@@ -2763,7 +2763,7 @@ impl CPU {
             0x7B => self.reg.a = self.reg.e,                            // LD A,E
             0x7C => self.reg.a = self.reg.h,                            // LD A,H
             0x7D => self.reg.a = self.reg.l,                            // LD A,L
-            0x7E => {                                                               // LD A,(HL)
+            0x7E => {                                                   // LD A,(HL)
                 let addr = self.reg.get_hl();
                 self.reg.a = self.bus.read_byte(addr)
             }
@@ -2998,7 +2998,7 @@ impl CPU {
             0x83 => self.add(self.reg.e),                                   // ADD A,E
             0x84 => self.add(self.reg.h),                                   // ADD A,H
             0x85 => self.add(self.reg.l),                                   // ADD A,L
-            0x86 => {                                                             // ADD (HL)
+            0x86 => {                                                       // ADD (HL)
                 let addr = self.reg.get_hl();
                 let n = self.bus.read_byte(addr);
                 self.add(n)
@@ -3018,7 +3018,7 @@ impl CPU {
             0x8B => self.adc(self.reg.e),                                    // ADC A,E
             0x8C => self.adc(self.reg.h),                                    // ADC A,H
             0x8D => self.adc(self.reg.l),                                    // ADC A,L
-            0x8E => {                                                              // ADC A,(HL)
+            0x8E => {                                                        // ADC A,(HL)
                 let addr = self.reg.get_hl();
                 let n = self.bus.read_byte(addr);
                 self.adc(n)
@@ -3026,7 +3026,7 @@ impl CPU {
             0x8F => self.adc(self.reg.a),                                    // ADC A,A
 
             // ADC a,n
-            0xCE => {                                                               // ADC A,(HL)
+            0xCE => {                                                        // ADC A,(HL)
                 let n = self.bus.read_byte(self.reg.pc + 1);
                 self.adc(n)
             },
@@ -3038,14 +3038,14 @@ impl CPU {
             0x93 => self.sub(self.reg.e),                                     // SUB E
             0x94 => self.sub(self.reg.h),                                     // SUB H
             0x95 => self.sub(self.reg.l),                                     // SUB L
-            0x96 => {                                                               // SUB (HL)
+            0x96 => {                                                         // SUB (HL)
                 let addr = self.reg.get_hl();
                 let n = self.bus.read_byte(addr);
                 self.sub(n)
             },
             0x97 => self.sub(self.reg.a),                                     // SUB A
 
-            0xD6 => {                                                               // SUB n
+            0xD6 => {                                                         // SUB n
                 let n = self.bus.read_byte(self.reg.pc + 1);
                 self.sub(n);
             },
@@ -3057,14 +3057,14 @@ impl CPU {
             0x9B => self.sbc(self.reg.e),                                    // SBC A,E
             0x9C => self.sbc(self.reg.h),                                    // SBC A,H
             0x9D => self.sbc(self.reg.l),                                    // SBC A,L
-            0x9E => {                                                              // SBC A,(HL)
+            0x9E => {                                                        // SBC A,(HL)
                 let addr = self.reg.get_hl();
                 let n = self.bus.read_byte(addr);
                 self.sbc(n)
             },
             0x9F => self.sbc(self.reg.a),                                    // SBC A,A
 
-            0xDE => {                                                              // SBC A,n
+            0xDE => {                                                        // SBC A,n
                 let n = self.bus.read_byte(self.reg.pc + 1);
                 self.sbc(n);
             },
@@ -3076,14 +3076,14 @@ impl CPU {
             0xA3 => self.and(self.reg.e),                                     // AND E
             0xA4 => self.and(self.reg.h),                                     // AND H
             0xA5 => self.and(self.reg.l),                                     // AND L
-            0xA6 => {                                                               // AND (HL)
+            0xA6 => {                                                         // AND (HL)
                 let addr = self.reg.get_hl();
                 let n = self.bus.read_byte(addr);
                 self.and(n)
             },
             0xA7 => self.and(self.reg.a),                                     // AND A
 
-            0xE6 => {                                                               // AND n
+            0xE6 => {                                                         // AND n
                 let n = self.bus.read_byte(self.reg.pc + 1);
                 self.and(n);
             },
@@ -3095,14 +3095,14 @@ impl CPU {
             0xB3 => self.or(self.reg.e),                                      // OR E
             0xB4 => self.or(self.reg.h),                                      // OR H
             0xB5 => self.or(self.reg.l),                                      // OR L
-            0xB6 => {                                                               // OR (HL)
+            0xB6 => {                                                         // OR (HL)
                 let addr = self.reg.get_hl();
                 let n = self.bus.read_byte(addr);
                 self.or(n)
             },
             0xB7 => self.or(self.reg.a),                                      // OR A
 
-            0xF6 => {                                                               // OR n
+            0xF6 => {                                                         // OR n
                 let n = self.bus.read_byte(self.reg.pc + 1);
                 self.or(n);
             },
@@ -3114,14 +3114,14 @@ impl CPU {
             0xAB => self.xor(self.reg.e),                                     // XOR E
             0xAC => self.xor(self.reg.h),                                     // XOR H
             0xAD => self.xor(self.reg.l),                                     // XOR L
-            0xAE => {                                                               // XOR (HL)
+            0xAE => {                                                         // XOR (HL)
                 let addr = self.reg.get_hl();
                 let n = self.bus.read_byte(addr);
                 self.xor(n)
             },
             0xAF => self.xor(self.reg.a),                                     // XOR A
 
-            0xEE => {                                                               // XOR n
+            0xEE => {                                                         // XOR n
                 let n = self.bus.read_byte(self.reg.pc + 1);
                 self.xor(n);
             },
@@ -3133,14 +3133,14 @@ impl CPU {
             0xBB => self.cp(self.reg.e),                                      // CP E
             0xBC => self.cp(self.reg.h),                                      // CP H
             0xBD => self.cp(self.reg.l),                                      // CP L
-            0xBE => {                                                               // CP (HL)
+            0xBE => {                                                         // CP (HL)
                 let addr = self.reg.get_hl();
                 let n = self.bus.read_byte(addr);
                 self.cp(n)
             },
             0xBF => self.cp(self.reg.a),                                      // CP A
 
-            0xFE => {                                                               // CP n
+            0xFE => {                                                         // CP n
                 let n = self.bus.read_byte(self.reg.pc + 1);
                 self.cp(n);
             },
@@ -3152,7 +3152,7 @@ impl CPU {
             0x1C => self.reg.e = self.inc(self.reg.e),                  // INC E
             0x24 => self.reg.h = self.inc(self.reg.h),                  // INC H
             0x2C => self.reg.l = self.inc(self.reg.l),                  // INC L
-            0x34 => {                                                               // INC (HL)
+            0x34 => {                                                   // INC (HL)
                 let addr = self.reg.get_hl();
                 let r = self.inc(self.bus.read_byte(addr));
                 self.bus.write_byte(addr, r);
@@ -3166,7 +3166,7 @@ impl CPU {
             0x1D => self.reg.e = self.dec(self.reg.e),                  // DEC E
             0x25 => self.reg.h = self.dec(self.reg.h),                  // DEC H
             0x2D => self.reg.l = self.dec(self.reg.l),                  // DEC L
-            0x35 => {                                                               // DEC (HL)
+            0x35 => {                                                   // DEC (HL)
                 let addr = self.reg.get_hl();
                 let r = self.dec(self.bus.read_byte(addr));
                 self.bus.write_byte(addr, r);
