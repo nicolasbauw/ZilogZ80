@@ -112,7 +112,6 @@ impl Debug {
 pub struct CPU {
     pub registers: Registers,
     pub alt_registers: Registers,
-    pub pc: u16,
     pub bus: AddressBus,
     im: u8,
     pub halt: bool,
@@ -126,7 +125,6 @@ impl CPU {
         CPU {
             registers: Registers::new(),
             alt_registers: Registers::new(),
-            pc: 0,
             bus: AddressBus::new(),
             im: 0,
             halt: false,
@@ -647,25 +645,25 @@ impl CPU {
     // call stack push
     fn call_stack_push(&mut self) {
         self.registers.sp = self.registers.sp.wrapping_sub(2);
-        self.bus.write_word(self.registers.sp , self.pc.wrapping_add(3));
+        self.bus.write_word(self.registers.sp , self.registers.pc.wrapping_add(3));
     }
 
     // call stack pop
     fn call_stack_pop(&mut self) {
-        self.pc = self.bus.read_word(self.registers.sp);
+        self.registers.pc = self.bus.read_word(self.registers.sp);
         self.registers.sp = self.registers.sp.wrapping_add(2);
     }
 
     // interrupt stack push
     fn interrupt_stack_push(&mut self) {
         self.registers.sp = self.registers.sp.wrapping_sub(2);
-        self.bus.write_word(self.registers.sp , self.pc);
+        self.bus.write_word(self.registers.sp , self.registers.pc);
     }
 
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 4 };
 
-        match self.bus.read_byte(self.pc) {
+        match self.bus.read_byte(self.registers.pc) {
             0xDD | 0xFD | 0xED | 0xCB => return self.execute_2bytes(),
             _ => return self.execute_1byte(),
         }
@@ -673,12 +671,12 @@ impl CPU {
 
     // DDCB FDCB
     fn execute_4bytes(&mut self) -> u32 {
-        let opcode = self.bus.read_le_dword(self.pc);
+        let opcode = self.bus.read_le_dword(self.registers.pc);
         let cycles;
 
         match opcode & 0xFFFF00FF {
             0xDDCB0006 => {                                                           // RLC (IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -695,7 +693,7 @@ impl CPU {
             },
 
             0xFDCB0006 => {                                                           // RLC (IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -712,7 +710,7 @@ impl CPU {
             },
 
             0xDDCB0016 => {                                                           // RL (IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                     if bit::get(displacement, 7) {
                         let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
                         let d = self.bus.read_byte(m);
@@ -729,7 +727,7 @@ impl CPU {
             },
 
             0xFDCB0016 => {                                                           // RL (IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                     if bit::get(displacement, 7) {
                         let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );
                         let d = self.bus.read_byte(m);
@@ -746,7 +744,7 @@ impl CPU {
             },
 
             0xDDCB000E => {                                                           // RRC (IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -763,7 +761,7 @@ impl CPU {
             },
 
             0xFDCB000E => {                                                           // RRC (IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -780,7 +778,7 @@ impl CPU {
             },
 
             0xDDCB001E => {                                                           // RR (IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -797,7 +795,7 @@ impl CPU {
             },
 
             0xFDCB001E => {                                                           // RR (IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -814,7 +812,7 @@ impl CPU {
             },
 
             0xDDCB0026 => {                                                           // SLA (IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -831,7 +829,7 @@ impl CPU {
             },
 
             0xFDCB0026 => {                                                           // SLA (IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -848,7 +846,7 @@ impl CPU {
             },
 
             0xDDCB002E => {                                                           // SRA (IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -865,7 +863,7 @@ impl CPU {
             },
 
             0xFDCB002E => {                                                           // SRA (IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -882,7 +880,7 @@ impl CPU {
             },
 
             0xDDCB003E => {                                                           // SRL (IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -899,7 +897,7 @@ impl CPU {
             },
 
             0xFDCB003E => {                                                           // SRL (IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -918,8 +916,8 @@ impl CPU {
             0xDDCB0046 | 0xDDCB004E | 0xDDCB0056 |
             0xDDCB005E | 0xDDCB0066 | 0xDDCB006E |
             0xDDCB0076 | 0xDDCB007E => {                                                           // BIT b,(IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
-                let operand = self.bus.read_byte(self.pc + 3);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
+                let operand = self.bus.read_byte(self.registers.pc + 3);
                 let bit = ((operand & 0x38) >> 3) as usize;
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
@@ -944,8 +942,8 @@ impl CPU {
             0xFDCB0046 | 0xFDCB004E | 0xFDCB0056 |
             0xFDCB005E | 0xFDCB0066 | 0xFDCB006E |
             0xFDCB0076 | 0xFDCB007E => {                                                           // BIT b,(IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
-                let operand = self.bus.read_byte(self.pc + 3);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
+                let operand = self.bus.read_byte(self.registers.pc + 3);
                 let bit = ((operand & 0x38) >> 3) as usize;
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );
@@ -970,8 +968,8 @@ impl CPU {
             0xDDCB00C6 | 0xDDCB00CE | 0xDDCB00D6 |
             0xDDCB00DE | 0xDDCB00E6 | 0xDDCB00EE |
             0xDDCB00F6 | 0xDDCB00FE => {                                                           // SET b,(IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
-                let operand = self.bus.read_byte(self.pc + 3);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
+                let operand = self.bus.read_byte(self.registers.pc + 3);
                 let bit = ((operand & 0x38) >> 3) as usize;
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
@@ -991,8 +989,8 @@ impl CPU {
             0xFDCB00C6 | 0xFDCB00CE | 0xFDCB00D6 |
             0xFDCB00DE | 0xFDCB00E6 | 0xFDCB00EE |
             0xFDCB00F6 | 0xFDCB00FE => {                                                           // SET b,(IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
-                let operand = self.bus.read_byte(self.pc + 3);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
+                let operand = self.bus.read_byte(self.registers.pc + 3);
                 let bit = ((operand & 0x38) >> 3) as usize;
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );
@@ -1012,8 +1010,8 @@ impl CPU {
             0xDDCB0086 | 0xDDCB008E | 0xDDCB0096 |
             0xDDCB009E | 0xDDCB00A6 | 0xDDCB00AE |
             0xDDCB00B6 | 0xDDCB00BE => {                                                           // RES b,(IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
-                let operand = self.bus.read_byte(self.pc + 3);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
+                let operand = self.bus.read_byte(self.registers.pc + 3);
                 let bit = ((operand & 0x38) >> 3) as usize;
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
@@ -1033,8 +1031,8 @@ impl CPU {
             0xFDCB0086 | 0xFDCB008E | 0xFDCB0096 |
             0xFDCB009E | 0xFDCB00A6 | 0xFDCB00AE |
             0xFDCB00B6 | 0xFDCB00BE => {                                                           // RES b,(IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
-                let operand = self.bus.read_byte(self.pc + 3);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
+                let operand = self.bus.read_byte(self.registers.pc + 3);
                 let bit = ((operand & 0x38) >> 3) as usize;
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );
@@ -1054,7 +1052,7 @@ impl CPU {
             // Undocumented instructions
             // SLL (IX+d)
             0xDDCB0036 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -1072,7 +1070,7 @@ impl CPU {
 
             // SLL (IY+d)
             0xFDCB0036 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -1093,12 +1091,12 @@ impl CPU {
                 cycles = 0xFF;
                 }
         }
-        self.pc += 4;
+        self.registers.pc += 4;
         cycles
     }
 
     fn execute_2bytes(&mut self) -> u32 {
-        let opcode = self.bus.read_le_word(self.pc);
+        let opcode = self.bus.read_le_word(self.registers.pc);
         let mut cycles = match opcode & 0xFF00 {
                 0xDD00 | 0xFD00 => CYCLES_DD_FD[(opcode & 0x00FF) as usize].into(),
                 0xED00 => CYCLES_ED[(opcode & 0x00FF) as usize].into(),
@@ -1113,175 +1111,175 @@ impl CPU {
             // 8-Bit Load Group
             // LD r,(IX+d)
             0xDD46 => {                                                             // LD B,(IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.b = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.b = self.bus.read_byte(self.registers.get_ix() + ( displacement as u16 )) }
             },
             0xDD4E => {                                                             // LD C,(IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.c = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.c = self.bus.read_byte(self.registers.get_ix() + ( displacement as u16 )) }
             },
             0xDD56 => {                                                             // LD D,(IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.d = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.d = self.bus.read_byte(self.registers.get_ix() + ( displacement as u16 )) }
             },
             0xDD5E => {                                                             // LD E,(IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.e = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.e = self.bus.read_byte(self.registers.get_ix() + ( displacement as u16 )) }
             },
             0xDD66 => {                                                             // LD H,(IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.h = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.h = self.bus.read_byte(self.registers.get_ix() + ( displacement as u16 )) }
             },
             0xDD6E => {                                                             // LD L,(IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.l = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.l = self.bus.read_byte(self.registers.get_ix() + ( displacement as u16 )) }
             },
             0xDD7E => {                                                             // LD A,(IX+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.a = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.a = self.bus.read_byte(self.registers.get_ix() + ( displacement as u16 )) }
             },
 
             // LD r,(IY+d)
             0xFD46 => {                                                             // LD B,(IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.b = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.b = self.bus.read_byte(self.registers.get_iy() + ( displacement as u16 )) }
             },
             0xFD4E => {                                                             // LD C,(IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.c = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.c = self.bus.read_byte(self.registers.get_iy() + ( displacement as u16 )) }
             },
             0xFD56 => {                                                             // LD D,(IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.d = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.d = self.bus.read_byte(self.registers.get_iy() + ( displacement as u16 )) }
             },
             0xFD5E => {                                                             // LD E,(IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.e = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.e = self.bus.read_byte(self.registers.get_iy() + ( displacement as u16 )) }
             },
             0xFD66 => {                                                             // LD H,(IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.h = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.h = self.bus.read_byte(self.registers.get_iy() + ( displacement as u16 )) }
             },
             0xFD6E => {                                                             // LD L,(IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.l = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.l = self.bus.read_byte(self.registers.get_iy() + ( displacement as u16 )) }
             },
             0xFD7E => {                                                             // LD A,(IY+d)
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.registers.a = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 )) }
                 else { self.registers.a = self.bus.read_byte(self.registers.get_iy() + ( displacement as u16 )) }
             },
 
             // LD (IX+d),r
             0xDD70 => {                                                             // LD (IX+d),B
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ), self.registers.b) }
                 else { self.bus.write_byte(self.registers.get_ix() + ( displacement as u16 ), self.registers.b) }
             },
             0xDD71 => {                                                             // LD (IX+d),C
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ), self.registers.c) }
                 else { self.bus.write_byte(self.registers.get_ix() + ( displacement as u16 ), self.registers.c) }
             },
             0xDD72 => {                                                             // LD (IX+d),D
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ), self.registers.d) }
                 else { self.bus.write_byte(self.registers.get_ix() + ( displacement as u16 ), self.registers.d) }
             },
             0xDD73 => {                                                             // LD (IX+d),E
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ), self.registers.e) }
                 else { self.bus.write_byte(self.registers.get_ix() + ( displacement as u16 ), self.registers.e) }
             },
             0xDD74 => {                                                             // LD (IX+d),H
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ), self.registers.h) }
                 else { self.bus.write_byte(self.registers.get_ix() + ( displacement as u16 ), self.registers.h) }
             },
             0xDD75 => {                                                             // LD (IX+d),L
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ), self.registers.l) }
                 else { self.bus.write_byte(self.registers.get_ix() + ( displacement as u16 ), self.registers.l) }
             },
             0xDD77 => {                                                             // LD (IX+d),A
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ), self.registers.a) }
                 else { self.bus.write_byte(self.registers.get_ix() + ( displacement as u16 ), self.registers.a) }
             },
 
             // LD (IY+d),r
             0xFD70 => {                                                             // LD (IY+d),B
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ), self.registers.b) }
                 else { self.bus.write_byte(self.registers.get_iy() + ( displacement as u16 ), self.registers.b) }
             },
             0xFD71 => {                                                             // LD (IY+d),C
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ), self.registers.c) }
                 else { self.bus.write_byte(self.registers.get_iy() + ( displacement as u16 ), self.registers.c) }
             },
             0xFD72 => {                                                             // LD (IY+d),D
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ), self.registers.d) }
                 else { self.bus.write_byte(self.registers.get_iy() + ( displacement as u16 ), self.registers.d) }
             },
             0xFD73 => {                                                             // LD (IY+d),E
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ), self.registers.e) }
                 else { self.bus.write_byte(self.registers.get_iy() + ( displacement as u16 ), self.registers.e) }
             },
             0xFD74 => {                                                             // LD (IY+d),H
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ), self.registers.h) }
                 else { self.bus.write_byte(self.registers.get_iy() + ( displacement as u16 ), self.registers.h) }
             },
             0xFD75 => {                                                             // LD (IY+d),L
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ), self.registers.l) }
                 else { self.bus.write_byte(self.registers.get_iy() + ( displacement as u16 ), self.registers.l) }
             },
             0xFD77 => {                                                             // LD (IY+d),A
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ), self.registers.a) }
                 else { self.bus.write_byte(self.registers.get_iy() + ( displacement as u16 ), self.registers.a) }
             },
 
             // LD (IX+d),n
             0xDD36 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
-                let data = self.bus.read_byte(self.pc + 3);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
+                let data = self.bus.read_byte(self.registers.pc + 3);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ), data) }
                 else { self.bus.write_byte(self.registers.get_ix() + ( displacement as u16 ), data) }
             }
 
             // LD IX,nn
             0xDD21 => {
-                self.registers.set_ix(self.bus.read_word(self.pc + 2));
+                self.registers.set_ix(self.bus.read_word(self.registers.pc + 2));
             }
 
 
             // LD IY,nn
             0xFD21 => {
-                self.registers.set_iy(self.bus.read_word(self.pc + 2));
+                self.registers.set_iy(self.bus.read_word(self.registers.pc + 2));
             }
 
             // LD (IY+d),n
             0xFD36 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
-                let data = self.bus.read_byte(self.pc + 3);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
+                let data = self.bus.read_byte(self.registers.pc + 3);
                 if bit::get(displacement, 7) { self.bus.write_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ), data) }
                 else { self.bus.write_byte(self.registers.get_iy() + ( displacement as u16 ), data) }
             }
@@ -1319,73 +1317,73 @@ impl CPU {
             // 16-Bit Load Group
             // LD dd,(nn)
             0xED4B => {                                                             // LD BC,(nn)
-                let addr = self.bus.read_word(self.pc +2);
+                let addr = self.bus.read_word(self.registers.pc +2);
                 let d = self.bus.read_word(addr);
                 self.registers.set_bc(d);
             },
 
             0xED5B => {                                                             // LD DE,(nn)
-                let addr = self.bus.read_word(self.pc +2);
+                let addr = self.bus.read_word(self.registers.pc +2);
                 let d = self.bus.read_word(addr);
                 self.registers.set_de(d);
             },
 
             0xED6B => {                                                             // LD HL,(nn)
-                let addr = self.bus.read_word(self.pc +2);
+                let addr = self.bus.read_word(self.registers.pc +2);
                 let d = self.bus.read_word(addr);
                 self.registers.set_hl(d);
             },
 
             0xED7B => {                                                             // LD SP,(nn)
-                let addr = self.bus.read_word(self.pc +2);
+                let addr = self.bus.read_word(self.registers.pc +2);
                 let d = self.bus.read_word(addr);
                 self.registers.sp = d;
             },
 
             // LD IX,(nn)
             0xDD2A => {
-                let addr = self.bus.read_word(self.pc +2);
+                let addr = self.bus.read_word(self.registers.pc +2);
                 let d = self.bus.read_word(addr);
                 self.registers.set_ix(d);
             },
 
             // LD IY,(nn)
             0xFD2A => {
-                let addr = self.bus.read_word(self.pc +2);
+                let addr = self.bus.read_word(self.registers.pc +2);
                 let d = self.bus.read_word(addr);
                 self.registers.set_iy(d);
             },
 
             // LD (nn),dd
             0xED43 => {                                                             // LD (nn),BC
-                let addr = self.bus.read_word(self.pc +2);
+                let addr = self.bus.read_word(self.registers.pc +2);
                 self.bus.write_word(addr, self.registers.get_bc());
             },
 
             0xED53 => {                                                             // LD (nn),DE
-                let addr = self.bus.read_word(self.pc +2);
+                let addr = self.bus.read_word(self.registers.pc +2);
                 self.bus.write_word(addr, self.registers.get_de());
             },
 
             0xED63 => {                                                             // LD (nn),HL
-                let addr = self.bus.read_word(self.pc +2);
+                let addr = self.bus.read_word(self.registers.pc +2);
                 self.bus.write_word(addr, self.registers.get_hl());
             },
 
             0xED73 => {                                                             // LD (nn),SP
-                let addr = self.bus.read_word(self.pc +2);
+                let addr = self.bus.read_word(self.registers.pc +2);
                 self.bus.write_word(addr, self.registers.sp);
             },
 
             // LD (nn),IX
             0xDD22 => {
-                let addr = self.bus.read_word(self.pc +2);
+                let addr = self.bus.read_word(self.registers.pc +2);
                 self.bus.write_word(addr, self.registers.get_ix());
             },
 
             // LD (nn),IY
             0xFD22 => {
-                let addr = self.bus.read_word(self.pc +2);
+                let addr = self.bus.read_word(self.registers.pc +2);
                 self.bus.write_word(addr, self.registers.get_iy());
             },
 
@@ -1506,7 +1504,7 @@ impl CPU {
             // 8-Bit Arithmetic Group
             // ADD A,(IX+d)
             0xDD86 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ));
                     self.add(d);
@@ -1519,7 +1517,7 @@ impl CPU {
 
             // ADD A,(IY+d)
             0xFD86 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ));
                     self.add(d);
@@ -1532,7 +1530,7 @@ impl CPU {
 
             // ADC A,(IX+d)
             0xDD8E => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ));
                     self.adc(d);
@@ -1545,7 +1543,7 @@ impl CPU {
 
             // ADC A,(IY+d)
             0xFD8E => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ));
                     self.adc(d);
@@ -1558,7 +1556,7 @@ impl CPU {
 
             // SUB (IX+d)
             0xDD96 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ));
                     self.sub(d);
@@ -1571,7 +1569,7 @@ impl CPU {
 
             // SUB (IY+d)
             0xFD96 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ));
                     self.sub(d);
@@ -1584,7 +1582,7 @@ impl CPU {
 
             // SBC (IX+d)
             0xDD9E => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ));
                     self.sbc(d);
@@ -1597,7 +1595,7 @@ impl CPU {
 
             // SBC (IY+d)
             0xFD9E => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ));
                     self.sbc(d);
@@ -1610,7 +1608,7 @@ impl CPU {
 
             // AND (IX+d)
             0xDDA6 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ));
                     self.and(d);
@@ -1623,7 +1621,7 @@ impl CPU {
 
             // AND (IY+d)
             0xFDA6 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ));
                     self.and(d);
@@ -1636,7 +1634,7 @@ impl CPU {
 
             // OR (IX+d)
             0xDDB6 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ));
                     self.or(d);
@@ -1649,7 +1647,7 @@ impl CPU {
 
             // OR (IY+d)
             0xFDB6 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ));
                     self.or(d);
@@ -1662,7 +1660,7 @@ impl CPU {
 
             // XOR (IX+d)
             0xDDAE => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ));
                     self.xor(d);
@@ -1675,7 +1673,7 @@ impl CPU {
 
             // XOR (IY+d)
             0xFDAE => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ));
                     self.xor(d);
@@ -1688,7 +1686,7 @@ impl CPU {
 
             // CP (IX+d)
             0xDDBE => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_ix() - ( signed_to_abs(displacement) as u16 ));
                     self.cp(d);
@@ -1701,7 +1699,7 @@ impl CPU {
 
             // CP (IY+d)
             0xFDBE => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let d = self.bus.read_byte(self.registers.get_iy() - ( signed_to_abs(displacement) as u16 ));
                     self.cp(d);
@@ -1714,7 +1712,7 @@ impl CPU {
 
             // INC (IX+d)
             0xDD34 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -1731,7 +1729,7 @@ impl CPU {
 
             // INC (IY+d)
             0xFD34 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -1748,7 +1746,7 @@ impl CPU {
 
             // DEC (IX+d)
             0xDD35 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_ix() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -1765,7 +1763,7 @@ impl CPU {
 
             // DEC (IY+d)
             0xFD35 => {
-                let displacement = self.bus.read_byte(self.pc + 2);
+                let displacement = self.bus.read_byte(self.registers.pc + 2);
                 if bit::get(displacement, 7) {
                     let m = self.registers.get_iy() - ( signed_to_abs(displacement) as u16 );
                     let d = self.bus.read_byte(m);
@@ -2222,20 +2220,20 @@ impl CPU {
 
             // Bit Set, Reset, and Test Group
             // BIT b,r
-            0xCB40 ..= 0xCB7F => self.bit(self.bus.read_byte(self.pc + 1)),
+            0xCB40 ..= 0xCB7F => self.bit(self.bus.read_byte(self.registers.pc + 1)),
 
             // SET b,r
-            0xCBC0 ..= 0xCBFF => self.set(self.bus.read_byte(self.pc + 1)),
+            0xCBC0 ..= 0xCBFF => self.set(self.bus.read_byte(self.registers.pc + 1)),
 
             // RES b,r
-            0xCB80 ..= 0xCBBF => self.reset(self.bus.read_byte(self.pc + 1)),
+            0xCB80 ..= 0xCBBF => self.reset(self.bus.read_byte(self.registers.pc + 1)),
 
             // Jump group
             // JP (IX)
-            0xDDE9 => { self.pc = self.registers.get_ix(); },
+            0xDDE9 => { self.registers.pc = self.registers.get_ix(); },
 
             // JP (IY)
-            0xFDE9 => { self.pc = self.registers.get_iy(); },
+            0xFDE9 => { self.registers.pc = self.registers.get_iy(); },
 
             // Call and Return Group
             // TODO : RETI & RETN
@@ -2463,25 +2461,25 @@ impl CPU {
 
             // LD IXH,n
             0xDD26 => {
-                let n = self.bus.read_byte(self.pc + 3);
+                let n = self.bus.read_byte(self.registers.pc + 3);
                 self.registers.ixh = n;
             }
 
             // LD IYH,n
             0xFD26 => {
-                let n = self.bus.read_byte(self.pc + 3);
+                let n = self.bus.read_byte(self.registers.pc + 3);
                 self.registers.iyh = n;
             }
 
             // LD IXL,n
             0xDD2E => {
-                let n = self.bus.read_byte(self.pc + 3);
+                let n = self.bus.read_byte(self.registers.pc + 3);
                 self.registers.ixl = n;
             },
 
             // LD IYL,n
             0xFD2E => {
-                let n = self.bus.read_byte(self.pc + 3);
+                let n = self.bus.read_byte(self.registers.pc + 3);
                 self.registers.iyl = n;
             },
 
@@ -2770,19 +2768,19 @@ impl CPU {
             0xFD77 | 0xDD86 | 0xFD86 | 0xDD8E | 0xFD8E |
             0xDD96 | 0xFD96 | 0xDD9E | 0xFD9E | 0xDDA6 | 0xFDA6 |
             0xDDB6 | 0xFDB6 | 0xDDAE | 0xFDAE | 0xDDBE | 0xFDBE |
-            0xDD34 | 0xFD34 | 0xDD35 | 0xFD35=> self.pc += 3,
+            0xDD34 | 0xFD34 | 0xDD35 | 0xFD35=> self.registers.pc += 3,
             0xDD36 | 0xFD36 | 0xDD21 | 0xFD21 | 0xED4B | 0xED5B |
             0xED6B | 0xED7B | 0xDD2A | 0xFD2A |
             0xED43 | 0xED53 | 0xED63 | 0xED73 |
-            0xDD22 | 0xFD22 | 0xDDCB | 0xFDCB => self.pc += 4,
-            _ => self.pc +=2,
+            0xDD22 | 0xFD22 | 0xDDCB | 0xFDCB => self.registers.pc += 4,
+            _ => self.registers.pc +=2,
         }
 
         cycles
     }
 
     fn execute_1byte(&mut self) -> u32 {
-        let opcode = self.bus.read_byte(self.pc);
+        let opcode = self.bus.read_byte(self.registers.pc);
         let mut cycles = CYCLES[opcode as usize].into();
 
         // For the moment, we do not handle interrupts, so a RST can come only from software.
@@ -2908,36 +2906,36 @@ impl CPU {
 
             // LD r,n
             0x06 => {                                                               // LD B,n
-                let data = self.bus.read_byte(self.pc + 1);
+                let data = self.bus.read_byte(self.registers.pc + 1);
                 self.registers.b = data;
             },
             0x0E => {                                                               // LD C,n
-                let data = self.bus.read_byte(self.pc + 1);
+                let data = self.bus.read_byte(self.registers.pc + 1);
                 self.registers.c = data;
             },
             0x16 => {                                                               // LD D,n
-                let data = self.bus.read_byte(self.pc + 1);
+                let data = self.bus.read_byte(self.registers.pc + 1);
                 self.registers.d = data;
             },
             0x1E => {                                                               // LD E,n
-                let data = self.bus.read_byte(self.pc + 1);
+                let data = self.bus.read_byte(self.registers.pc + 1);
                 self.registers.e = data;
             },
             0x26 => {                                                               // LD H,n
-                let data = self.bus.read_byte(self.pc + 1);
+                let data = self.bus.read_byte(self.registers.pc + 1);
                 self.registers.h = data;
             },
             0x2E => {                                                               // LD L,n
-                let data = self.bus.read_byte(self.pc + 1);
+                let data = self.bus.read_byte(self.registers.pc + 1);
                 self.registers.l = data;
             },
             0x36 => {                                                               // LD (HL),n
-                let data = self.bus.read_byte(self.pc + 1);
+                let data = self.bus.read_byte(self.registers.pc + 1);
                 let addr = self.registers.get_hl();
                 self.bus.write_byte(addr, data);
             },
             0x3E => {                                                               // LD A,n
-                let data = self.bus.read_byte(self.pc + 1);
+                let data = self.bus.read_byte(self.registers.pc + 1);
                 self.registers.a = data;
             },
 
@@ -2955,7 +2953,7 @@ impl CPU {
 
             // LD A,(nn)
             0x3A => {
-                let addr = self.bus.read_word(self.pc + 1);
+                let addr = self.bus.read_word(self.registers.pc + 1);
                 self.registers.a = self.bus.read_byte(addr);
             },
 
@@ -2973,32 +2971,32 @@ impl CPU {
 
             // LD (nn),A
             0x32 => {
-                let addr = self.bus.read_word(self.pc + 1);
+                let addr = self.bus.read_word(self.registers.pc + 1);
                 self.bus.write_byte(addr, self.registers.a);
             },
 
             // 16-Bit Load Group
             // LD dd,nn
             0x01 => {                                                               // LD BC,nn
-                let d16 = self.bus.read_word(self.pc + 1); 
+                let d16 = self.bus.read_word(self.registers.pc + 1); 
                 self.registers.set_bc(d16);
             },
             0x11 => {                                                               // LD DE,nn
-                let d16 = self.bus.read_word(self.pc + 1); 
+                let d16 = self.bus.read_word(self.registers.pc + 1); 
                 self.registers.set_de(d16);
             },
             0x21 => {                                                               // LD HL,nn
-                let d16 = self.bus.read_word(self.pc + 1); 
+                let d16 = self.bus.read_word(self.registers.pc + 1); 
                 self.registers.set_hl(d16);
             },
             0x31 => {                                                               // LD SP,nn
-                let d16 = self.bus.read_word(self.pc + 1); 
+                let d16 = self.bus.read_word(self.registers.pc + 1); 
                 self.registers.sp = d16;
             },
 
             // LD HL,(nn)
             0x2A => {
-                let addr = self.bus.read_word(self.pc + 1);
+                let addr = self.bus.read_word(self.registers.pc + 1);
                 let d = self.bus.read_word(addr);
                 self.registers.set_hl(d);
             },
@@ -3006,7 +3004,7 @@ impl CPU {
             // LD (nn),HL
             0x22 => {
                 let d = self.registers.get_hl();
-                let addr = self.bus.read_word(self.pc + 1);
+                let addr = self.bus.read_word(self.registers.pc + 1);
                 self.bus.write_word(addr, d);
             },
 
@@ -3113,7 +3111,7 @@ impl CPU {
 
             // ADD A,n
             0xC6 => {
-                let n = self.bus.read_byte(self.pc + 1);
+                let n = self.bus.read_byte(self.registers.pc + 1);
                 self.add(n);
             },
 
@@ -3133,7 +3131,7 @@ impl CPU {
 
             // ADC a,n
             0xCE => {                                                               // ADC A,(HL)
-                let n = self.bus.read_byte(self.pc + 1);
+                let n = self.bus.read_byte(self.registers.pc + 1);
                 self.adc(n)
             },
 
@@ -3152,7 +3150,7 @@ impl CPU {
             0x97 => self.sub(self.registers.a),                                     // SUB A
 
             0xD6 => {                                                               // SUB n
-                let n = self.bus.read_byte(self.pc + 1);
+                let n = self.bus.read_byte(self.registers.pc + 1);
                 self.sub(n);
             },
 
@@ -3171,7 +3169,7 @@ impl CPU {
             0x9F => self.sbc(self.registers.a),                                    // SBC A,A
 
             0xDE => {                                                              // SBC A,n
-                let n = self.bus.read_byte(self.pc + 1);
+                let n = self.bus.read_byte(self.registers.pc + 1);
                 self.sbc(n);
             },
 
@@ -3190,7 +3188,7 @@ impl CPU {
             0xA7 => self.and(self.registers.a),                                     // AND A
 
             0xE6 => {                                                               // AND n
-                let n = self.bus.read_byte(self.pc + 1);
+                let n = self.bus.read_byte(self.registers.pc + 1);
                 self.and(n);
             },
 
@@ -3209,7 +3207,7 @@ impl CPU {
             0xB7 => self.or(self.registers.a),                                      // OR A
 
             0xF6 => {                                                               // OR n
-                let n = self.bus.read_byte(self.pc + 1);
+                let n = self.bus.read_byte(self.registers.pc + 1);
                 self.or(n);
             },
 
@@ -3228,7 +3226,7 @@ impl CPU {
             0xAF => self.xor(self.registers.a),                                     // XOR A
 
             0xEE => {                                                               // XOR n
-                let n = self.bus.read_byte(self.pc + 1);
+                let n = self.bus.read_byte(self.registers.pc + 1);
                 self.xor(n);
             },
 
@@ -3247,7 +3245,7 @@ impl CPU {
             0xBF => self.cp(self.registers.a),                                      // CP A
 
             0xFE => {                                                               // CP n
-                let n = self.bus.read_byte(self.pc + 1);
+                let n = self.bus.read_byte(self.registers.pc + 1);
                 self.cp(n);
             },
 
@@ -3403,71 +3401,71 @@ impl CPU {
             // Jump group
             // JP nn
             0xC3 => {
-                let addr = self.bus.read_word(self.pc + 1);
-                self.pc = addr;
+                let addr = self.bus.read_word(self.registers.pc + 1);
+                self.registers.pc = addr;
             },
 
             // JP C,nn
             0xDA => {
-                let addr = self.bus.read_word(self.pc + 1);
-                if self.registers.flags.c { self.pc = addr; } else { self.pc += 3 }
+                let addr = self.bus.read_word(self.registers.pc + 1);
+                if self.registers.flags.c { self.registers.pc = addr; } else { self.registers.pc += 3 }
             },
 
             // JP NC,nn
             0xD2 => {
-                let addr = self.bus.read_word(self.pc + 1);
-                if !self.registers.flags.c { self.pc = addr; } else { self.pc += 3 }
+                let addr = self.bus.read_word(self.registers.pc + 1);
+                if !self.registers.flags.c { self.registers.pc = addr; } else { self.registers.pc += 3 }
             },
 
             // JP Z,nn
             0xCA => {
-                let addr = self.bus.read_word(self.pc + 1);
-                if self.registers.flags.z { self.pc = addr; } else { self.pc += 3 }
+                let addr = self.bus.read_word(self.registers.pc + 1);
+                if self.registers.flags.z { self.registers.pc = addr; } else { self.registers.pc += 3 }
             },
 
             // JP NZ,nn
             0xC2 => {
-                let addr = self.bus.read_word(self.pc + 1);
-                if !self.registers.flags.z { self.pc = addr; } else { self.pc += 3 }
+                let addr = self.bus.read_word(self.registers.pc + 1);
+                if !self.registers.flags.z { self.registers.pc = addr; } else { self.registers.pc += 3 }
             },
 
             // JP M,nn
             0xFA => {
-                let addr = self.bus.read_word(self.pc + 1);
-                if self.registers.flags.s { self.pc = addr; } else { self.pc += 3 }
+                let addr = self.bus.read_word(self.registers.pc + 1);
+                if self.registers.flags.s { self.registers.pc = addr; } else { self.registers.pc += 3 }
             },
 
             // JP P,nn
             0xF2 => {
-                let addr = self.bus.read_word(self.pc + 1);
-                if !self.registers.flags.s { self.pc = addr; } else { self.pc += 3 }
+                let addr = self.bus.read_word(self.registers.pc + 1);
+                if !self.registers.flags.s { self.registers.pc = addr; } else { self.registers.pc += 3 }
             },
 
             // JP PE,nn
             0xEA => {
-                let addr = self.bus.read_word(self.pc + 1);
-                if self.registers.flags.p { self.pc = addr; } else { self.pc += 3 }
+                let addr = self.bus.read_word(self.registers.pc + 1);
+                if self.registers.flags.p { self.registers.pc = addr; } else { self.registers.pc += 3 }
             },
 
             // JP PO,nn
             0xE2 => {
-                let addr = self.bus.read_word(self.pc + 1);
-                if !self.registers.flags.p { self.pc = addr; } else { self.pc += 3 }
+                let addr = self.bus.read_word(self.registers.pc + 1);
+                if !self.registers.flags.p { self.registers.pc = addr; } else { self.registers.pc += 3 }
             },
 
             // JR e
             0x18 => {
-                let displacement= self.bus.read_byte(self.pc + 1);
-                if bit::get(displacement, 7) { self.pc = self.pc - ( signed_to_abs(displacement) as u16 ) }
-                else { self.pc = self.pc + ( displacement as u16 ) }
+                let displacement= self.bus.read_byte(self.registers.pc + 1);
+                if bit::get(displacement, 7) { self.registers.pc = self.registers.pc - ( signed_to_abs(displacement) as u16 ) }
+                else { self.registers.pc = self.registers.pc + ( displacement as u16 ) }
             },
 
             // JR C,e
             0x38 => {
                 if self.registers.flags.c {
-                    let displacement= self.bus.read_byte(self.pc + 1);
-                    if bit::get(displacement, 7) { self.pc = self.pc - ( signed_to_abs(displacement) as u16 ) }
-                    else { self.pc = self.pc + ( displacement as u16 ) }
+                    let displacement= self.bus.read_byte(self.registers.pc + 1);
+                    if bit::get(displacement, 7) { self.registers.pc = self.registers.pc - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.registers.pc = self.registers.pc + ( displacement as u16 ) }
                     cycles += 5;
                 }
                 cycles += 7;
@@ -3476,9 +3474,9 @@ impl CPU {
             // JR NC,e
             0x30 => {
                 if !self.registers.flags.c {
-                    let displacement= self.bus.read_byte(self.pc + 1);
-                    if bit::get(displacement, 7) { self.pc = self.pc - ( signed_to_abs(displacement) as u16 ) }
-                    else { self.pc = self.pc + ( displacement as u16 ) }
+                    let displacement= self.bus.read_byte(self.registers.pc + 1);
+                    if bit::get(displacement, 7) { self.registers.pc = self.registers.pc - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.registers.pc = self.registers.pc + ( displacement as u16 ) }
                     cycles += 5;
                 }
                 cycles += 7;
@@ -3487,9 +3485,9 @@ impl CPU {
             // JR Z,e
             0x28 => {
                 if self.registers.flags.z {
-                    let displacement= self.bus.read_byte(self.pc + 1);
-                    if bit::get(displacement, 7) { self.pc = self.pc - ( signed_to_abs(displacement) as u16 ) }
-                    else { self.pc = self.pc + ( displacement as u16 ) }
+                    let displacement= self.bus.read_byte(self.registers.pc + 1);
+                    if bit::get(displacement, 7) { self.registers.pc = self.registers.pc - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.registers.pc = self.registers.pc + ( displacement as u16 ) }
                     cycles += 5;
                 }
                 cycles += 7;
@@ -3498,24 +3496,24 @@ impl CPU {
             // JR NZ,e
             0x20 => {
                 if !self.registers.flags.z {
-                    let displacement= self.bus.read_byte(self.pc + 1);
-                    if bit::get(displacement, 7) { self.pc = self.pc - ( signed_to_abs(displacement) as u16 ) }
-                    else { self.pc = self.pc + ( displacement as u16 ) }
+                    let displacement= self.bus.read_byte(self.registers.pc + 1);
+                    if bit::get(displacement, 7) { self.registers.pc = self.registers.pc - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.registers.pc = self.registers.pc + ( displacement as u16 ) }
                     cycles += 5;
                 }
                 cycles += 7;
             },
 
             // JP (HL)
-            0xE9 => { self.pc = self.registers.get_hl(); },
+            0xE9 => { self.registers.pc = self.registers.get_hl(); },
 
             // DJNZ, e
             0x10 => {
                 self.registers.b = (self.registers.b).wrapping_sub(1);
                 if self.registers.b != 0 {
-                    let displacement= self.bus.read_byte(self.pc + 1);
-                    if bit::get(displacement, 7) { self.pc = self.pc - ( signed_to_abs(displacement) as u16 ) }
-                    else { self.pc = self.pc + ( displacement as u16 ) }
+                    let displacement= self.bus.read_byte(self.registers.pc + 1);
+                    if bit::get(displacement, 7) { self.registers.pc = self.registers.pc - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.registers.pc = self.registers.pc + ( displacement as u16 ) }
                     cycles += 5;
                 }
                 cycles += 8;
@@ -3524,188 +3522,188 @@ impl CPU {
             // Call and Return Group
             // CALL nn
             0xCD => {
-                let addr = self.bus.read_word(self.pc + 1);
+                let addr = self.bus.read_word(self.registers.pc + 1);
                 self.call_stack_push();
-                self.pc = addr;
+                self.registers.pc = addr;
             },
 
             // CALL C,nn
             0xDC => {
-                let addr = self.bus.read_word(self.pc + 1);
+                let addr = self.bus.read_word(self.registers.pc + 1);
                 if self.registers.flags.c {
                     self.call_stack_push();
-                    self.pc = addr;
+                    self.registers.pc = addr;
                     cycles += 7;
-                } else { self.pc += 3 }
+                } else { self.registers.pc += 3 }
             },
 
             // CALL NC,nn
             0xD4 => {
-                let addr = self.bus.read_word(self.pc + 1);
+                let addr = self.bus.read_word(self.registers.pc + 1);
                 if !self.registers.flags.c {
                     self.call_stack_push();
-                    self.pc = addr;
+                    self.registers.pc = addr;
                     cycles += 7;
-                } else { self.pc += 3 }
+                } else { self.registers.pc += 3 }
             },
 
             // CALL Z,nn
             0xCC => {
-                let addr = self.bus.read_word(self.pc + 1);
+                let addr = self.bus.read_word(self.registers.pc + 1);
                 if self.registers.flags.z {
                     self.call_stack_push();
-                    self.pc = addr;
+                    self.registers.pc = addr;
                     cycles += 7;
-                } else { self.pc += 3 }
+                } else { self.registers.pc += 3 }
             },
 
             // CALL NZ,nn
             0xC4 => {
-                let addr = self.bus.read_word(self.pc + 1);
+                let addr = self.bus.read_word(self.registers.pc + 1);
                 if !self.registers.flags.z {
                     self.call_stack_push();
-                    self.pc = addr;
+                    self.registers.pc = addr;
                     cycles += 7;
-                 } else { self.pc += 3 }
+                 } else { self.registers.pc += 3 }
             },
 
             // CALL M,nn
             0xFC => {
-                let addr = self.bus.read_word(self.pc + 1);
+                let addr = self.bus.read_word(self.registers.pc + 1);
                 if self.registers.flags.s {
                     self.call_stack_push();
-                    self.pc = addr;
+                    self.registers.pc = addr;
                     cycles += 7;
-                } else { self.pc += 3 }
+                } else { self.registers.pc += 3 }
             },
 
             // CALL P,nn
             0xF4 => {
-                let addr = self.bus.read_word(self.pc + 1);
+                let addr = self.bus.read_word(self.registers.pc + 1);
                 if !self.registers.flags.s {
                     self.call_stack_push();
-                    self.pc = addr;
+                    self.registers.pc = addr;
                     cycles += 7;
-                } else { self.pc += 3 }
+                } else { self.registers.pc += 3 }
             },
 
             // CALL PE,nn
             0xEC => {
-                let addr = self.bus.read_word(self.pc + 1);
+                let addr = self.bus.read_word(self.registers.pc + 1);
                 if self.registers.flags.p {
                     self.call_stack_push();
-                    self.pc = addr;
+                    self.registers.pc = addr;
                     cycles += 7;
-                } else { self.pc += 3 }
+                } else { self.registers.pc += 3 }
             },
 
             // CALL PO,nn
             0xE4 => {
-                let addr = self.bus.read_word(self.pc + 1);
+                let addr = self.bus.read_word(self.registers.pc + 1);
                 if !self.registers.flags.p {
                     self.call_stack_push();
-                    self.pc = addr;
+                    self.registers.pc = addr;
                     cycles += 7;
-                } else { self.pc += 3 }
+                } else { self.registers.pc += 3 }
             },
 
             // RET
             0xC9 => self.call_stack_pop(),
 
             // RET C
-            0xD8 => if self.registers.flags.c { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+            0xD8 => if self.registers.flags.c { self.call_stack_pop(); cycles += 6; } else { self.registers.pc +=1; },
 
             // RET NC
-            0xD0 => if !self.registers.flags.c { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+            0xD0 => if !self.registers.flags.c { self.call_stack_pop(); cycles += 6; } else { self.registers.pc +=1; },
 
             // RET Z
-            0xC8 => if self.registers.flags.z { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+            0xC8 => if self.registers.flags.z { self.call_stack_pop(); cycles += 6; } else { self.registers.pc +=1; },
 
             // RET NZ
-            0xC0 => if !self.registers.flags.z { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+            0xC0 => if !self.registers.flags.z { self.call_stack_pop(); cycles += 6; } else { self.registers.pc +=1; },
 
             // RET M
-            0xF8 => if self.registers.flags.s { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+            0xF8 => if self.registers.flags.s { self.call_stack_pop(); cycles += 6; } else { self.registers.pc +=1; },
 
             // RET P
-            0xF0 => if !self.registers.flags.s { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+            0xF0 => if !self.registers.flags.s { self.call_stack_pop(); cycles += 6; } else { self.registers.pc +=1; },
 
             // RET PE
-            0xE8 => if self.registers.flags.p { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+            0xE8 => if self.registers.flags.p { self.call_stack_pop(); cycles += 6; } else { self.registers.pc +=1; },
 
             // RET PO
-            0xE0 => if !self.registers.flags.p { self.call_stack_pop(); cycles += 6; } else { self.pc +=1; },
+            0xE0 => if !self.registers.flags.p { self.call_stack_pop(); cycles += 6; } else { self.registers.pc +=1; },
 
             // RST 0
             0xC7 => {
                 match direct_rst {
                     false => self.interrupt_stack_push(),
-                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                    true => { self.registers.pc +=1; self.interrupt_stack_push(); }
                 }
-                self.pc = 0x0000;
+                self.registers.pc = 0x0000;
             },
 
             // RST 08
             0xCF => {
                 match direct_rst {
                     false => self.interrupt_stack_push(),
-                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                    true => { self.registers.pc +=1; self.interrupt_stack_push(); }
                 }
-                self.pc = 0x0008;
+                self.registers.pc = 0x0008;
             },
 
             // RST 10
             0xD7 => {
                 match direct_rst {
                     false => self.interrupt_stack_push(),
-                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                    true => { self.registers.pc +=1; self.interrupt_stack_push(); }
                 }
-                self.pc = 0x0010;
+                self.registers.pc = 0x0010;
             },
 
             // RST 18
             0xDF => {
                 match direct_rst {
                     false => self.interrupt_stack_push(),
-                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                    true => { self.registers.pc +=1; self.interrupt_stack_push(); }
                 }
-                self.pc = 0x0018;
+                self.registers.pc = 0x0018;
             },
 
             // RST 20
             0xE7 => {
                 match direct_rst {
                     false => self.interrupt_stack_push(),
-                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                    true => { self.registers.pc +=1; self.interrupt_stack_push(); }
                 }
-                self.pc = 0x0020;
+                self.registers.pc = 0x0020;
             },
 
             // RST 28
             0xEF => {
                 match direct_rst {
                     false => self.interrupt_stack_push(),
-                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                    true => { self.registers.pc +=1; self.interrupt_stack_push(); }
                 }
-                self.pc = 0x0028;
+                self.registers.pc = 0x0028;
             },
 
             // RST 30
             0xF7 => {
                 match direct_rst {
                     false => self.interrupt_stack_push(),
-                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                    true => { self.registers.pc +=1; self.interrupt_stack_push(); }
                 }
-                self.pc = 0x0030;
+                self.registers.pc = 0x0030;
             },
 
             // RST 38
             0xFF => {
                 match direct_rst {
                     false => self.interrupt_stack_push(),
-                    true => { self.pc +=1; self.interrupt_stack_push(); }
+                    true => { self.registers.pc +=1; self.interrupt_stack_push(); }
                 }
-                self.pc = 0x0038;
+                self.registers.pc = 0x0038;
             },
 
             _ => {
@@ -3723,9 +3721,9 @@ impl CPU {
             0xE7 | 0xEF | 0xF7 | 0xFF | 0x76 => {},
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
             0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE | 0xFE |
-            0x18 | 0x38 | 0x30 | 0x28 | 0x20 | 0x10 => self.pc += 2,
-            0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 | 0x3A => self.pc += 3,
-            _ => self.pc +=1,
+            0x18 | 0x38 | 0x30 | 0x28 | 0x20 | 0x10 => self.registers.pc += 2,
+            0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 | 0x3A => self.registers.pc += 3,
+            _ => self.registers.pc +=1,
         }
 
         cycles

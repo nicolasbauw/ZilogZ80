@@ -18,7 +18,7 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     c.bus.write_word(0x0005, 0xc9);
 
     // Setting PC to 0x0100 (CP/M Binaries are loaded with a 256 byte offset)
-    c.pc = 0x0100;
+    c.registers.pc = 0x0100;
 
     /* Setting up stack : by disassembling CP/M software, it seems
     that the $0006 address is read to set the stack by some programs */
@@ -30,8 +30,8 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
 
     loop {
         c.execute();
-        if c.pc == 0x0005 { bdos_call(&c) }
-        if c.pc == 0x0000 { break }             //  if CP/M warm boot -> we exit
+        if c.registers.pc == 0x0005 { bdos_call(&c) }
+        if c.registers.pc == 0x0000 { break }             //  if CP/M warm boot -> we exit
     }
     Ok(())
 }
