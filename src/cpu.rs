@@ -78,37 +78,6 @@ const CYCLES_CB: [u8; 256] = [
     8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 8, 8,
 ];
 
-// Check addition overflow
-fn check_add_overflow(n1: u8, n2: u8) -> bool {
-    let r = (n1 as i8).overflowing_add(n2 as i8);
-    r.1
-}
-
-// Check substraction overflow
-fn check_sub_overflow(n1: u8, n2: u8) -> bool {
-    let r = (n1 as i8).overflowing_sub(n2 as i8);
-    r.1
-}
-
-// Converts a signed byte to its absolute value
-pub fn signed_to_abs(n: u8) -> u8 {
-    !n +1
-}
-
-pub struct Debug {
-    pub unknw_instr: bool,
-    pub string: String
-}
-
-impl Debug {
-    pub fn new() -> Debug {
-        Debug {
-            unknw_instr: false,
-            string: String::new(),
-        }
-    }
-}
-
 pub struct CPU {
     pub reg: Registers,
     pub alt_reg: Registers,
@@ -3728,5 +3697,38 @@ impl CPU {
         }
 
         cycles
+    }
+}
+
+// Utility & debug functions / structs
+
+// Check addition overflow
+fn check_add_overflow(n1: u8, n2: u8) -> bool {
+    let r = (n1 as i8).overflowing_add(n2 as i8);
+    r.1
+}
+
+// Check substraction overflow
+fn check_sub_overflow(n1: u8, n2: u8) -> bool {
+    let r = (n1 as i8).overflowing_sub(n2 as i8);
+    r.1
+}
+
+// Converts a signed byte to its absolute value
+pub fn signed_to_abs(n: u8) -> u8 {
+    !n +1
+}
+
+pub struct Debug {
+    pub unknw_instr: bool,
+    pub string: String
+}
+
+impl Debug {
+    pub fn new() -> Debug {
+        Debug {
+            unknw_instr: false,
+            string: String::new(),
+        }
     }
 }
