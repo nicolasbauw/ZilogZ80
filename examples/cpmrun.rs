@@ -26,7 +26,7 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     
     /* Setting up stack in case of the program does not read the $0006 address
     and does not set any stack. */
-    c.sp = 0xFF00;
+    c.registers.sp = 0xFF00;
 
     loop {
         c.execute();

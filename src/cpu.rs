@@ -112,7 +112,6 @@ impl Debug {
 pub struct CPU {
     pub registers: Registers,
     pub alt_registers: Registers,
-    pub sp: u16,
     pub pc: u16,
     pub bus: AddressBus,
     im: u8,
@@ -127,7 +126,6 @@ impl CPU {
         CPU {
             registers: Registers::new(),
             alt_registers: Registers::new(),
-            sp: 0,
             pc: 0,
             bus: AddressBus::new(),
             im: 0,
@@ -648,20 +646,20 @@ impl CPU {
 
     // call stack push
     fn call_stack_push(&mut self) {
-        self.sp = self.sp.wrapping_sub(2);
-        self.bus.write_word(self.sp , self.pc.wrapping_add(3));
+        self.registers.sp = self.registers.sp.wrapping_sub(2);
+        self.bus.write_word(self.registers.sp , self.pc.wrapping_add(3));
     }
 
     // call stack pop
     fn call_stack_pop(&mut self) {
-        self.pc = self.bus.read_word(self.sp);
-        self.sp = self.sp.wrapping_add(2);
+        self.pc = self.bus.read_word(self.registers.sp);
+        self.registers.sp = self.registers.sp.wrapping_add(2);
     }
 
     // interrupt stack push
     fn interrupt_stack_push(&mut self) {
-        self.sp = self.sp.wrapping_sub(2);
-        self.bus.write_word(self.sp , self.pc);
+        self.registers.sp = self.registers.sp.wrapping_sub(2);
+        self.bus.write_word(self.registers.sp , self.pc);
     }
 
     pub fn execute(&mut self) -> u32 {
@@ -1341,7 +1339,7 @@ impl CPU {
             0xED7B => {                                                             // LD SP,(nn)
                 let addr = self.bus.read_word(self.pc +2);
                 let d = self.bus.read_word(addr);
-                self.sp = d;
+                self.registers.sp = d;
             },
 
             // LD IX,(nn)
@@ -1376,7 +1374,7 @@ impl CPU {
 
             0xED73 => {                                                             // LD (nn),SP
                 let addr = self.bus.read_word(self.pc +2);
-                self.bus.write_word(addr, self.sp);
+                self.bus.write_word(addr, self.registers.sp);
             },
 
             // LD (nn),IX
@@ -1392,47 +1390,47 @@ impl CPU {
             },
 
             // LD SP,IX
-            0xDDF9 => self.sp = self.registers.get_ix(),
+            0xDDF9 => self.registers.sp = self.registers.get_ix(),
 
             // LD SP,IY
-            0xFDF9 => self.sp = self.registers.get_iy(),
+            0xFDF9 => self.registers.sp = self.registers.get_iy(),
 
             // PUSH IX
             0xDDE5 => {
-                self.sp = self.sp.wrapping_sub(2);
-                self.bus.write_word(self.sp, self.registers.get_ix());
+                self.registers.sp = self.registers.sp.wrapping_sub(2);
+                self.bus.write_word(self.registers.sp, self.registers.get_ix());
             },
 
             // PUSH IY
             0xFDE5 => {
-                self.sp = self.sp.wrapping_sub(2);
-                self.bus.write_word(self.sp, self.registers.get_iy());
+                self.registers.sp = self.registers.sp.wrapping_sub(2);
+                self.bus.write_word(self.registers.sp, self.registers.get_iy());
             },
 
             // POP IX
             0xDDE1 => {
-                self.registers.set_ix(self.bus.read_word(self.sp));
-                self.sp = self.sp.wrapping_add(2);
+                self.registers.set_ix(self.bus.read_word(self.registers.sp));
+                self.registers.sp = self.registers.sp.wrapping_add(2);
             },
 
             // POP IY
             0xFDE1 => {
-                self.registers.set_iy(self.bus.read_word(self.sp));
-                self.sp = self.sp.wrapping_add(2);
+                self.registers.set_iy(self.bus.read_word(self.registers.sp));
+                self.registers.sp = self.registers.sp.wrapping_add(2);
             },
 
             // Exchange, Block Transfer, and Search Group
             // EX (SP),IX
             0xDDE3 => {
-                let pointed_by_sp = self.bus.read_word(self.sp);
-                self.bus.write_word(self.sp, self.registers.get_ix());
+                let pointed_by_sp = self.bus.read_word(self.registers.sp);
+                self.bus.write_word(self.registers.sp, self.registers.get_ix());
                 self.registers.set_ix(pointed_by_sp);
             },
 
             // EX (SP),IY
             0xFDE3 => {
-                let pointed_by_sp = self.bus.read_word(self.sp);
-                self.bus.write_word(self.sp, self.registers.get_iy());
+                let pointed_by_sp = self.bus.read_word(self.registers.sp);
+                self.bus.write_word(self.registers.sp, self.registers.get_iy());
                 self.registers.set_iy(pointed_by_sp);
             },
 
@@ -1808,7 +1806,7 @@ impl CPU {
                 self.adc_16(reg);
             },
             0xED7A => {                                                             // ADC HL,SP
-                let reg = self.sp;
+                let reg = self.registers.sp;
                 self.adc_16(reg);
             },
 
@@ -1826,7 +1824,7 @@ impl CPU {
                 self.sbc_16(reg);
             },
             0xED72 => {                                                             // SBC HL,SP
-                let reg = self.sp;
+                let reg = self.registers.sp;
                 self.sbc_16(reg);
             },
 
@@ -1847,7 +1845,7 @@ impl CPU {
                 self.registers.set_ix(r);
             },
             0xDD39 => {                                                             // ADD IX,SP
-                let reg = self.sp;
+                let reg = self.registers.sp;
                 let r = self.add_16(self.registers.get_ix(), reg);
                 self.registers.set_ix(r);
             },
@@ -1872,7 +1870,7 @@ impl CPU {
             },
 
             0xFD39 => {                                                             // ADD IY,SP
-                let reg = self.sp;
+                let reg = self.registers.sp;
                 let r = self.add_16(self.registers.get_iy(), reg);
                 self.registers.set_iy(r);
             },
@@ -2995,7 +2993,7 @@ impl CPU {
             },
             0x31 => {                                                               // LD SP,nn
                 let d16 = self.bus.read_word(self.pc + 1); 
-                self.sp = d16;
+                self.registers.sp = d16;
             },
 
             // LD HL,(nn)
@@ -3013,48 +3011,48 @@ impl CPU {
             },
 
             // LD SP,HL
-            0xF9 => self.sp = self.registers.get_hl(),
+            0xF9 => self.registers.sp = self.registers.get_hl(),
 
             // PUSH qq
             0xC5 => {                                                               // PUSH BC
-                self.sp = self.sp.wrapping_sub(2);
-                self.bus.write_word(self.sp, self.registers.get_bc());
+                self.registers.sp = self.registers.sp.wrapping_sub(2);
+                self.bus.write_word(self.registers.sp, self.registers.get_bc());
             },
             0xD5 => {                                                               // PUSH DE
-                self.sp = self.sp.wrapping_sub(2);
-                self.bus.write_word(self.sp, self.registers.get_de());
+                self.registers.sp = self.registers.sp.wrapping_sub(2);
+                self.bus.write_word(self.registers.sp, self.registers.get_de());
             },
             0xE5 => {                                                               // PUSH HL
-                self.sp = self.sp.wrapping_sub(2);
-                self.bus.write_word(self.sp, self.registers.get_hl());
+                self.registers.sp = self.registers.sp.wrapping_sub(2);
+                self.bus.write_word(self.registers.sp, self.registers.get_hl());
             },
             0xF5 => {                                                               // PUSH AF
-                self.sp = self.sp.wrapping_sub(2);
-                self.bus.write_byte(self.sp, self.registers.flags.to_byte());
-                self.bus.write_byte(self.sp + 1, self.registers.a);
+                self.registers.sp = self.registers.sp.wrapping_sub(2);
+                self.bus.write_byte(self.registers.sp, self.registers.flags.to_byte());
+                self.bus.write_byte(self.registers.sp + 1, self.registers.a);
             },
 
             // POP qq
             0xC1 => {                                                               // POP BC
-                self.registers.set_bc(self.bus.read_word(self.sp));
-                self.sp = self.sp.wrapping_add(2);
+                self.registers.set_bc(self.bus.read_word(self.registers.sp));
+                self.registers.sp = self.registers.sp.wrapping_add(2);
             },
 
             0xD1 => {                                                               // POP DE
-                self.registers.set_de(self.bus.read_word(self.sp));
-                self.sp = self.sp.wrapping_add(2);
+                self.registers.set_de(self.bus.read_word(self.registers.sp));
+                self.registers.sp = self.registers.sp.wrapping_add(2);
             },
 
             0xE1 => {                                                               // POP HL
-                self.registers.set_hl(self.bus.read_word(self.sp));
-                self.sp = self.sp.wrapping_add(2);
+                self.registers.set_hl(self.bus.read_word(self.registers.sp));
+                self.registers.sp = self.registers.sp.wrapping_add(2);
             },
 
             0xF1 => {                                                               // POP AF
-                self.registers.a = self.bus.read_byte((self.sp)+1);
-                let bflags = self.bus.read_byte(self.sp);
+                self.registers.a = self.bus.read_byte((self.registers.sp)+1);
+                let bflags = self.bus.read_byte(self.registers.sp);
                 self.registers.flags.from_byte(bflags);
-                self.sp = self.sp.wrapping_add(2);
+                self.registers.sp = self.registers.sp.wrapping_add(2);
             },
 
             // Exchange, Block Transfer, and Search Group
@@ -3092,9 +3090,9 @@ impl CPU {
 
             // EX (SP),HL
             0xE3 => {
-                let pointed_by_sp = self.bus.read_word(self.sp);
+                let pointed_by_sp = self.bus.read_word(self.registers.sp);
                 let hl = self.registers.get_hl();
-                self.bus.write_word(self.sp, hl);
+                self.bus.write_word(self.registers.sp, hl);
                 self.registers.set_hl(pointed_by_sp);
             },
 
@@ -3342,7 +3340,7 @@ impl CPU {
                 self.registers.set_hl(r);
             },
             0x39 => {                                                       // ADD HL,SP
-                let reg = self.sp;
+                let reg = self.registers.sp;
                 let r = self.add_16(self.registers.get_hl(), reg);
                 self.registers.set_hl(r);
             },
@@ -3364,8 +3362,8 @@ impl CPU {
             },
 
             0x33 => {                                                       // INC SP
-                let r = self.sp.wrapping_add(1);
-                self.sp = r;
+                let r = self.registers.sp.wrapping_add(1);
+                self.registers.sp = r;
             },
 
             // DEC ss
@@ -3385,8 +3383,8 @@ impl CPU {
             },
 
             0x3B => {                                                       // DEC SP
-                let r = self.sp.wrapping_sub(1);
-                self.sp = r;
+                let r = self.registers.sp.wrapping_sub(1);
+                self.registers.sp = r;
             },
 
             // Rotate and Shift Group

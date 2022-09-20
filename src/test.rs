@@ -101,7 +101,7 @@ fn ld_hl_dd_ix_iy_inn_asm() {
     assert_eq!(c.execute(), 20); assert_eq!(0x0302, c.registers.get_bc());      // LD BC,(0x1001)
     assert_eq!(c.execute(), 20); assert_eq!(0x0403, c.registers.get_de());      // LD DE,(0x1002)
     assert_eq!(c.execute(), 16); assert_eq!(0x0504, c.registers.get_hl());      // LD HL,(0x1003)
-    assert_eq!(c.execute(), 20); assert_eq!(0x0605, c.sp);                      // LD SP,(0x1004)
+    assert_eq!(c.execute(), 20); assert_eq!(0x0605, c.registers.sp);                      // LD SP,(0x1004)
     assert_eq!(c.execute(), 20); assert_eq!(0x0706, c.registers.get_ix(),);                      // LD IX,(0x1004)
     assert_eq!(c.execute(), 20); assert_eq!(0x0807, c.registers.get_iy());                      // LD IY,(0x1005)
 }
@@ -113,7 +113,7 @@ fn ld_ix_iy_nn_asm() {
     assert_eq!(c.execute(), 10); assert_eq!(0x1234, c.registers.get_bc());      // LD BC,0x1234
     assert_eq!(c.execute(), 10); assert_eq!(0x5678, c.registers.get_de());      // LD DE,0x5678
     assert_eq!(c.execute(), 10); assert_eq!(0x9ABC, c.registers.get_hl());      // LD HL,0x9ABC
-    assert_eq!(c.execute(), 10); assert_eq!(0x1368, c.sp);                      // LD SP,0x1368
+    assert_eq!(c.execute(), 10); assert_eq!(0x1368, c.registers.sp);                      // LD SP,0x1368
     assert_eq!(c.execute(), 14); assert_eq!(0x4321, c.registers.get_ix(),);                      // LD IX,0x4321
     assert_eq!(c.execute(), 14); assert_eq!(0x8765, c.registers.get_iy());                      // LD IY,0x8765        
 }
@@ -125,9 +125,9 @@ fn ld_sp_hl_ix_iy_asm() {
     assert_eq!(c.execute(), 10); assert_eq!(0x1234, c.registers.get_hl());      // LD HL,0x1234
     assert_eq!(c.execute(), 14); assert_eq!(0x5678, c.registers.get_ix(),);                      // LD IX,0x5678
     assert_eq!(c.execute(), 14); assert_eq!(0x9ABC, c.registers.get_iy());                      // LD IY,0x9ABC
-    assert_eq!(c.execute(), 6); assert_eq!(0x1234, c.sp);                       // LD SP,HL
-    assert_eq!(c.execute(), 10); assert_eq!(0x5678, c.sp);                      // LD SP,IX
-    assert_eq!(c.execute(), 10); assert_eq!(0x9ABC, c.sp);                      // LD SP,IY
+    assert_eq!(c.execute(), 6); assert_eq!(0x1234, c.registers.sp);                       // LD SP,HL
+    assert_eq!(c.execute(), 10); assert_eq!(0x5678, c.registers.sp);                      // LD SP,IX
+    assert_eq!(c.execute(), 10); assert_eq!(0x9ABC, c.registers.sp);                      // LD SP,IY
 }
 
 #[test]
@@ -206,19 +206,19 @@ fn push_pop_asm() {
     assert_eq!(c.execute(), 7);  assert_eq!(0xEF00, c.registers.get_af());                                  // LD A,0xEF
     assert_eq!(c.execute(), 14); assert_eq!(0x2345, c.registers.get_ix(),);                                                  // LD IX,0x2345
     assert_eq!(c.execute(), 14); assert_eq!(0x6789, c.registers.get_iy());                                                  // LD IY,0x6789
-    assert_eq!(c.execute(), 10); assert_eq!(0x0100, c.sp);                                                  // LD SP,0x0100
-    assert_eq!(c.execute(), 11); assert_eq!(0xEF00, c.bus.read_word(0x00FE)); assert_eq!(0x00FE, c.sp);     // PUSH AF
-    assert_eq!(c.execute(), 11); assert_eq!(0x1234, c.bus.read_word(0x00FC)); assert_eq!(0x00FC, c.sp);     // PUSH BC
-    assert_eq!(c.execute(), 11); assert_eq!(0x5678, c.bus.read_word(0x00FA)); assert_eq!(0x00FA, c.sp);     // PUSH DE
-    assert_eq!(c.execute(), 11); assert_eq!(0x9ABC, c.bus.read_word(0x00F8)); assert_eq!(0x00F8, c.sp);     // PUSH HL
-    assert_eq!(c.execute(), 15); assert_eq!(0x2345, c.bus.read_word(0x00F6)); assert_eq!(0x00F6, c.sp);     // PUSH IX
-    assert_eq!(c.execute(), 15); assert_eq!(0x6789, c.bus.read_word(0x00F4)); assert_eq!(0x00F4, c.sp);     // PUSH IY
-    assert_eq!(c.execute(), 10); assert_eq!(0x6789, c.registers.get_af()); assert_eq!(0x00F6, c.sp);        // POP AF
-    assert_eq!(c.execute(), 10); assert_eq!(0x2345, c.registers.get_bc()); assert_eq!(0x00F8, c.sp);        // POP BC
-    assert_eq!(c.execute(), 10); assert_eq!(0x9ABC, c.registers.get_de()); assert_eq!(0x00FA, c.sp);        // POP DE
-    assert_eq!(c.execute(), 10); assert_eq!(0x5678, c.registers.get_hl()); assert_eq!(0x00FC, c.sp);        // POP HL
-    assert_eq!(c.execute(), 14); assert_eq!(0x1234, c.registers.get_ix(),); assert_eq!(0x00FE, c.sp);                        // POP IX
-    assert_eq!(c.execute(), 14); assert_eq!(0xEF00, c.registers.get_iy()); assert_eq!(0x0100, c.sp);                        // POP IY
+    assert_eq!(c.execute(), 10); assert_eq!(0x0100, c.registers.sp);                                                  // LD SP,0x0100
+    assert_eq!(c.execute(), 11); assert_eq!(0xEF00, c.bus.read_word(0x00FE)); assert_eq!(0x00FE, c.registers.sp);     // PUSH AF
+    assert_eq!(c.execute(), 11); assert_eq!(0x1234, c.bus.read_word(0x00FC)); assert_eq!(0x00FC, c.registers.sp);     // PUSH BC
+    assert_eq!(c.execute(), 11); assert_eq!(0x5678, c.bus.read_word(0x00FA)); assert_eq!(0x00FA, c.registers.sp);     // PUSH DE
+    assert_eq!(c.execute(), 11); assert_eq!(0x9ABC, c.bus.read_word(0x00F8)); assert_eq!(0x00F8, c.registers.sp);     // PUSH HL
+    assert_eq!(c.execute(), 15); assert_eq!(0x2345, c.bus.read_word(0x00F6)); assert_eq!(0x00F6, c.registers.sp);     // PUSH IX
+    assert_eq!(c.execute(), 15); assert_eq!(0x6789, c.bus.read_word(0x00F4)); assert_eq!(0x00F4, c.registers.sp);     // PUSH IY
+    assert_eq!(c.execute(), 10); assert_eq!(0x6789, c.registers.get_af()); assert_eq!(0x00F6, c.registers.sp);        // POP AF
+    assert_eq!(c.execute(), 10); assert_eq!(0x2345, c.registers.get_bc()); assert_eq!(0x00F8, c.registers.sp);        // POP BC
+    assert_eq!(c.execute(), 10); assert_eq!(0x9ABC, c.registers.get_de()); assert_eq!(0x00FA, c.registers.sp);        // POP DE
+    assert_eq!(c.execute(), 10); assert_eq!(0x5678, c.registers.get_hl()); assert_eq!(0x00FC, c.registers.sp);        // POP HL
+    assert_eq!(c.execute(), 14); assert_eq!(0x1234, c.registers.get_ix(),); assert_eq!(0x00FE, c.registers.sp);                        // POP IX
+    assert_eq!(c.execute(), 14); assert_eq!(0xEF00, c.registers.get_iy()); assert_eq!(0x0100, c.registers.sp);                        // POP IY
 }
 
 #[test]
@@ -649,8 +649,8 @@ fn inc_dec_ss_ix_iy_asm() {
     assert_eq!(c.execute(), 6);  assert_eq!(0xFFFF, c.registers.get_de());      // DEC DE
     assert_eq!(c.execute(), 6);  assert_eq!(0x0100, c.registers.get_hl());      // INC HL
     assert_eq!(c.execute(), 6);  assert_eq!(0x00FF, c.registers.get_hl());      // DEC HL
-    assert_eq!(c.execute(), 6);  assert_eq!(0x1112, c.sp);                      // INC SP
-    assert_eq!(c.execute(), 6);  assert_eq!(0x1111, c.sp);                      // DEC SP
+    assert_eq!(c.execute(), 6);  assert_eq!(0x1112, c.registers.sp);                      // INC SP
+    assert_eq!(c.execute(), 6);  assert_eq!(0x1111, c.registers.sp);                      // DEC SP
     assert_eq!(c.execute(), 10); assert_eq!(0x1000, c.registers.get_ix(),);                      // INC IX
     assert_eq!(c.execute(), 10); assert_eq!(0x0FFF, c.registers.get_ix(),);                      // DEC IX
     assert_eq!(c.execute(), 10); assert_eq!(0x1235, c.registers.get_iy());                      // INC IY
@@ -735,8 +735,8 @@ fn inc_dec_ss_asm() {
     assert_eq!(c.execute(), 6); assert_eq!(0xFFFF, c.registers.get_de());
     assert_eq!(c.execute(), 6); assert_eq!(0x0100, c.registers.get_hl());
     assert_eq!(c.execute(), 6); assert_eq!(0x00FF, c.registers.get_hl());
-    assert_eq!(c.execute(), 6); assert_eq!(0x1112, c.sp);
-    assert_eq!(c.execute(), 6); assert_eq!(0x1111, c.sp);
+    assert_eq!(c.execute(), 6); assert_eq!(0x1112, c.registers.sp);
+    assert_eq!(c.execute(), 6); assert_eq!(0x1111, c.registers.sp);
 }
 
 #[test]
@@ -816,18 +816,18 @@ fn call_ret_asm() {
     c.pc = 0x0204;
     assert_eq!(c.execute(), 17);
     assert_eq!(0x020A, c.pc);
-    assert_eq!(0xFFFE, c.sp);
+    assert_eq!(0xFFFE, c.registers.sp);
     assert_eq!(0x0207, c.bus.read_word(0xFFFE));
     assert_eq!(c.execute(), 10);
     assert_eq!(0x0207, c.pc);
-    assert_eq!(0x0000, c.sp);
+    assert_eq!(0x0000, c.registers.sp);
     assert_eq!(c.execute(), 17);
     assert_eq!(0x020A, c.pc);
-    assert_eq!(0xFFFE, c.sp);
+    assert_eq!(0xFFFE, c.registers.sp);
     assert_eq!(0x020A, c.bus.read_word(0xFFFE));
     assert_eq!(c.execute(), 10);
     assert_eq!(0x020A, c.pc);
-    assert_eq!(0x0000, c.sp);
+    assert_eq!(0x0000, c.registers.sp);
 }
 
 #[test]
@@ -835,7 +835,7 @@ fn call_cc_ret_cc_asm() {
     let mut c = CPU::new();
     c.bus.load_bin("bin/call_cc_ret_cc.bin", 0x0204).unwrap();
     c.pc = 0x0204;
-    c.sp = 0x0100;
+    c.registers.sp = 0x0100;
     assert_eq!(c.execute(), 4);  assert_eq!(0x00, c.registers.a);
     assert_eq!(c.execute(), 10); assert_eq!(0x0208, c.pc);
     assert_eq!(c.execute(), 17); assert_eq!(0x0229, c.pc);
@@ -894,7 +894,7 @@ fn ex_asm() {
     assert_eq!(0x5678, c.registers.get_hl()); assert_eq!(0x1111, c.alt_registers.get_hl());
     assert_eq!(0x1234, c.registers.get_de()); assert_eq!(0x2222, c.alt_registers.get_de());
     assert_eq!(0x9ABC, c.registers.get_bc()); assert_eq!(0x3333, c.alt_registers.get_bc());
-    assert_eq!(c.execute(), 10); assert_eq!(0x0100, c.sp);
+    assert_eq!(c.execute(), 10); assert_eq!(0x0100, c.registers.sp);
     assert_eq!(c.execute(), 11); assert_eq!(0x1234, c.bus.read_word(0x00FE));
     assert_eq!(c.execute(), 19); assert_eq!(0x1234, c.registers.get_hl()); assert_eq!(0x5678, c.bus.read_word(0x00FE));
     assert_eq!(c.execute(), 14); assert_eq!(0x8899, c.registers.get_ix(),);
@@ -1136,7 +1136,7 @@ fn add_adc_sbc_16_asm() {
     assert_eq!(c.execute(), 11); assert_eq!(0x0217, c.registers.get_hl()); assert_eq!(c.flags(), HF|CF);
     assert_eq!(c.execute(), 15); assert_eq!(0x020E, c.registers.get_hl()); assert_eq!(c.flags(), NF);
     assert_eq!(c.execute(), 14); assert_eq!(0x00FC, c.registers.get_ix(),);
-    assert_eq!(c.execute(), 10); assert_eq!(0x1000, c.sp);
+    assert_eq!(c.execute(), 10); assert_eq!(0x1000, c.registers.sp);
     assert_eq!(c.execute(), 15); assert_eq!(0x0104, c.registers.get_ix(),); assert_eq!(c.flags(), 0);
     assert_eq!(c.execute(), 15); assert_eq!(0x0103, c.registers.get_ix(),); assert_eq!(c.flags(), HF|CF);
     assert_eq!(c.execute(), 15); assert_eq!(0x0206, c.registers.get_ix(),); assert_eq!(c.flags(), 0);
@@ -1164,7 +1164,7 @@ fn ld_inn_hl_dd_ix_iy_asm() {
     assert_eq!(c.execute(), 20); assert_eq!(0x5678, c.bus.read_word(0x1004));   // LD (0x1004),DE
     assert_eq!(c.execute(), 10); assert_eq!(0x9ABC, c.registers.get_hl());      // LD HL,0x9ABC
     assert_eq!(c.execute(), 16); assert_eq!(0x9ABC, c.bus.read_word(0x1006));   // LD (0x1006),HL
-    assert_eq!(c.execute(), 10); assert_eq!(0x1368, c.sp);                      // LD SP,0x1368
+    assert_eq!(c.execute(), 10); assert_eq!(0x1368, c.registers.sp);                      // LD SP,0x1368
     assert_eq!(c.execute(), 20); assert_eq!(0x1368, c.bus.read_word(0x1008));   // LD (0x1008),SP
     assert_eq!(c.execute(), 14); assert_eq!(0x4321, c.registers.get_ix(),);                      // LD IX,0x4321
     assert_eq!(c.execute(), 20); assert_eq!(0x4321, c.bus.read_word(0x100A));   // LD (0x100A),IX
@@ -1900,7 +1900,7 @@ fn ld_d() {
         c.bus.write_byte(0x2131, 0x78);
         assert_eq!(c.execute(), 20);
         assert_eq!(c.pc, 0x0004);
-        assert_eq!(c.sp, 0x7865);
+        assert_eq!(c.registers.sp, 0x7865);
     }
 
     #[test]
@@ -1993,7 +1993,7 @@ fn ld_d() {
         c.bus.write_byte(0x0001, 0x73);
         c.bus.write_byte(0x0002, 0x00);
         c.bus.write_byte(0x0003, 0x10);
-        c.sp = 0x4644;
+        c.registers.sp = 0x4644;
         assert_eq!(c.execute(), 20);
         assert_eq!(c.pc, 0x0004);
         assert_eq!(c.bus.read_byte(0x1000), 0x44);
@@ -2036,7 +2036,7 @@ fn ld_d() {
         c.registers.l = 0x6c;
         assert_eq!(c.execute(), 6);
         assert_eq!(c.pc, 1);
-        assert_eq!(c.sp, 0x506c)
+        assert_eq!(c.registers.sp, 0x506c)
     }
 
     #[test]
@@ -2047,7 +2047,7 @@ fn ld_d() {
         c.registers.set_ix(0x98DA);
         assert_eq!(c.execute(), 10);
         assert_eq!(c.pc, 2);
-        assert_eq!(c.sp, 0x98DA)
+        assert_eq!(c.registers.sp, 0x98DA)
     }
 
     #[test]
@@ -2058,7 +2058,7 @@ fn ld_d() {
         c.registers.set_iy(0x98DA);
         assert_eq!(c.execute(), 10);
         assert_eq!(c.pc, 2);
-        assert_eq!(c.sp, 0x98DA)
+        assert_eq!(c.registers.sp, 0x98DA)
     }
 
     #[test]
@@ -2067,14 +2067,14 @@ fn ld_d() {
         c.bus.write_byte(0x0000, 0xF5);
         c.registers.a = 0x22;
         c.registers.flags.from_byte(0x33);
-        c.sp = 0x1007;
+        c.registers.sp = 0x1007;
         assert_eq!(c.flags(), 0b00110011);
         assert_eq!(c.execute(), 11);
         assert_eq!(c.pc, 1);
-        assert_eq!(c.sp, 0x1005);
+        assert_eq!(c.registers.sp, 0x1005);
         assert_eq!(c.bus.read_byte(0x1005), 0x33);
         assert_eq!(c.bus.read_byte(0x1006), 0x22);
-        assert_eq!(c.sp, 0x1005);
+        assert_eq!(c.registers.sp, 0x1005);
     }
 
     #[test]
@@ -2083,12 +2083,12 @@ fn ld_d() {
         c.bus.write_byte(0x0000, 0xDD);
         c.bus.write_byte(0x0001, 0xE5);
         c.registers.set_ix(0x2233);
-        c.sp = 0x1007;
+        c.registers.sp = 0x1007;
         assert_eq!(c.execute(), 15);
         assert_eq!(c.pc, 2);
         assert_eq!(c.bus.read_byte(0x1005), 0x33);
         assert_eq!(c.bus.read_byte(0x1006), 0x22);
-        assert_eq!(c.sp, 0x1005);
+        assert_eq!(c.registers.sp, 0x1005);
     }
 
     #[test]
@@ -2097,12 +2097,12 @@ fn ld_d() {
         c.bus.write_byte(0x0000, 0xFD);
         c.bus.write_byte(0x0001, 0xE5);
         c.registers.set_iy(0x2233);
-        c.sp = 0x1007;
+        c.registers.sp = 0x1007;
         assert_eq!(c.execute(), 15);
         assert_eq!(c.pc, 2);
         assert_eq!(c.bus.read_byte(0x1005), 0x33);
         assert_eq!(c.bus.read_byte(0x1006), 0x22);
-        assert_eq!(c.sp, 0x1005);
+        assert_eq!(c.registers.sp, 0x1005);
     }
 
     #[test]
@@ -2111,11 +2111,11 @@ fn ld_d() {
         c.bus.write_byte(0x0000, 0xE1);
         c.bus.write_byte(0x1000, 0x55);
         c.bus.write_byte(0x1001, 0x33);
-        c.sp = 0x1000;
+        c.registers.sp = 0x1000;
         assert_eq!(c.execute(), 10);
         assert_eq!(c.pc, 1);
         assert_eq!(c.registers.get_hl(), 0x3355);
-        assert_eq!(c.sp, 0x1002);
+        assert_eq!(c.registers.sp, 0x1002);
     }
 
     #[test]
@@ -2125,11 +2125,11 @@ fn ld_d() {
         c.bus.write_byte(0x0001, 0xE1);
         c.bus.write_byte(0x1000, 0x55);
         c.bus.write_byte(0x1001, 0x33);
-        c.sp = 0x1000;
+        c.registers.sp = 0x1000;
         assert_eq!(c.execute(), 14);
         assert_eq!(c.pc, 2);
         assert_eq!(c.registers.get_ix(), 0x3355);
-        assert_eq!(c.sp, 0x1002);
+        assert_eq!(c.registers.sp, 0x1002);
     }
 
     #[test]
@@ -2139,11 +2139,11 @@ fn ld_d() {
         c.bus.write_byte(0x0001, 0xE1);
         c.bus.write_byte(0x1000, 0x55);
         c.bus.write_byte(0x1001, 0x33);
-        c.sp = 0x1000;
+        c.registers.sp = 0x1000;
         assert_eq!(c.execute(), 14);
         assert_eq!(c.pc, 2);
         assert_eq!(c.registers.get_iy(), 0x3355);
-        assert_eq!(c.sp, 0x1002);
+        assert_eq!(c.registers.sp, 0x1002);
     }
 
     #[test]
@@ -2196,7 +2196,7 @@ fn ld_d() {
         let mut c = CPU::new();
         c.bus.write_byte(0x0000, 0xE3);
         c.registers.set_hl(0x7012);
-        c.sp = 0x8856;
+        c.registers.sp = 0x8856;
         c.bus.write_byte(0x8856, 0x11);
         c.bus.write_byte(0x8857, 0x22);
         assert_eq!(c.execute(), 19);
@@ -2204,7 +2204,7 @@ fn ld_d() {
         assert_eq!(c.registers.get_hl(), 0x2211);
         assert_eq!(c.bus.read_byte(0x8856), 0x12);
         assert_eq!(c.bus.read_byte(0x8857), 0x70);
-        assert_eq!(c.sp, 0x8856);
+        assert_eq!(c.registers.sp, 0x8856);
     }
 
     #[test]
@@ -2213,7 +2213,7 @@ fn ld_d() {
         c.bus.write_byte(0x0000, 0xDD);
         c.bus.write_byte(0x0001, 0xE3);
         c.registers.set_ix(0x3988);
-        c.sp = 0x0100;
+        c.registers.sp = 0x0100;
         c.bus.write_byte(0x0100, 0x90);
         c.bus.write_byte(0x0101, 0x48);
         assert_eq!(c.execute(), 23);
@@ -2221,7 +2221,7 @@ fn ld_d() {
         assert_eq!(c.registers.get_ix(), 0x4890);
         assert_eq!(c.bus.read_byte(0x0100), 0x88);
         assert_eq!(c.bus.read_byte(0x0101), 0x39);
-        assert_eq!(c.sp, 0x0100);
+        assert_eq!(c.registers.sp, 0x0100);
     }
 
     #[test]
@@ -2230,7 +2230,7 @@ fn ld_d() {
         c.bus.write_byte(0x0000, 0xFD);
         c.bus.write_byte(0x0001, 0xE3);
         c.registers.set_iy(0x3988);
-        c.sp = 0x0100;
+        c.registers.sp = 0x0100;
         c.bus.write_byte(0x0100, 0x90);
         c.bus.write_byte(0x0101, 0x48);
         assert_eq!(c.execute(), 23);
@@ -2238,7 +2238,7 @@ fn ld_d() {
         assert_eq!(c.registers.get_iy(), 0x4890);
         assert_eq!(c.bus.read_byte(0x0100), 0x88);
         assert_eq!(c.bus.read_byte(0x0101), 0x39);
-        assert_eq!(c.sp, 0x0100);
+        assert_eq!(c.registers.sp, 0x0100);
     }
 
     #[test]
@@ -3144,7 +3144,7 @@ fn ld_d() {
     fn add_hl_sp() {
         let mut c = CPU::new();
         c.bus.write_byte(0x0000, 0x39);
-        c.sp = 0x339F;
+        c.registers.sp = 0x339F;
         c.registers.set_hl(0xA17B);
         assert_eq!(c.execute(), 11);
         assert_eq!(c.registers.h, 0xD5);
@@ -3202,7 +3202,7 @@ fn ld_d() {
         c.bus.write_byte(0x0000, 0xED);
         c.bus.write_byte(0x0001, 0x7A);
         c.registers.set_hl(0x7FF0);
-        c.sp = 0x000F;
+        c.registers.sp = 0x000F;
         c.registers.flags.c = true;
         assert_eq!(c.execute(), 15);
         assert_eq!(c.registers.h, 0x80);
@@ -3897,14 +3897,14 @@ fn ld_d() {
     fn call_nn() {
         let mut c = CPU::new();
         c.pc = 0x1A47;
-        c.sp = 0x3002;
+        c.registers.sp = 0x3002;
         c.bus.write_byte(0x1A47, 0xCD);
         c.bus.write_byte(0x1A48, 0x35);
         c.bus.write_byte(0x1A49, 0x21);
         assert_eq!(c.execute(), 17);
         assert_eq!(c.bus.read_byte(0x3001), 0x1A);
         assert_eq!(c.bus.read_byte(0x3000), 0x4A);
-        assert_eq!(c.sp, 0x3000);
+        assert_eq!(c.registers.sp, 0x3000);
         assert_eq!(c.pc, 0x2135);
     }
 
@@ -3913,14 +3913,14 @@ fn ld_d() {
         let mut c = CPU::new();
         c.registers.flags.c = false;
         c.pc = 0x1A47;
-        c.sp = 0x3002;
+        c.registers.sp = 0x3002;
         c.bus.write_byte(0x1A47, 0xD4);
         c.bus.write_byte(0x1A48, 0x35);
         c.bus.write_byte(0x1A49, 0x21);
         assert_eq!(c.execute(), 17);
         assert_eq!(c.bus.read_byte(0x3001), 0x1A);
         assert_eq!(c.bus.read_byte(0x3000), 0x4A);
-        assert_eq!(c.sp, 0x3000);
+        assert_eq!(c.registers.sp, 0x3000);
         assert_eq!(c.pc, 0x2135);
     }
 
@@ -3928,12 +3928,12 @@ fn ld_d() {
     fn ret() {
         let mut c = CPU::new();
         c.pc = 0x3535;
-        c.sp = 0x2000;
+        c.registers.sp = 0x2000;
         c.bus.write_byte(0x3535, 0xC9);
         c.bus.write_byte(0x2000, 0xB5);
         c.bus.write_byte(0x2001, 0x18);
         assert_eq!(c.execute(), 10);
-        assert_eq!(c.sp, 0x2002);
+        assert_eq!(c.registers.sp, 0x2002);
         assert_eq!(c.pc, 0x18B5);
     }
 
@@ -3942,12 +3942,12 @@ fn ld_d() {
         let mut c = CPU::new();
         c.registers.flags.s = true;
         c.pc = 0x3535;
-        c.sp = 0x2000;
+        c.registers.sp = 0x2000;
         c.bus.write_byte(0x3535, 0xF8);
         c.bus.write_byte(0x2000, 0xB5);
         c.bus.write_byte(0x2001, 0x18);
         assert_eq!(c.execute(), 11);
-        assert_eq!(c.sp, 0x2002);
+        assert_eq!(c.registers.sp, 0x2002);
         assert_eq!(c.pc, 0x18B5);
     }
 
