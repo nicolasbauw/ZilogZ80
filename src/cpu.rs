@@ -10,6 +10,7 @@ pub struct CPU {
     pub bus: AddressBus,
     pub halt: bool,
     pub debug: Debug,
+    int: Option<u8>,
     im: u8,
     iff1: bool,
     iff2: bool,
@@ -22,11 +23,13 @@ impl CPU {
             reg: Registers::new(),
             alt: Registers::new(),
             bus: AddressBus::new(),
-            im: 0,
             halt: false,
+            debug: Debug::new(),
+            int: None,
+            im: 0,
             iff1: false,
             iff2: false,
-            debug: Debug::new(),
+            
         }
     }
 
@@ -2679,9 +2682,6 @@ impl CPU {
         let opcode = self.bus.read_byte(self.reg.pc);
         let mut cycles = CYCLES[opcode as usize].into();
 
-        // For the moment, we do not handle interrupts, so a RST can come only from software.
-        let direct_rst = true;
-
         match opcode {
             // 8-Bit Load Group
             // LD r,r'      LD r,(HL)
@@ -3532,72 +3532,72 @@ impl CPU {
 
             // RST 0
             0xC7 => {
-                match direct_rst {
-                    false => self.interrupt_stack_push(),
-                    true => { self.reg.pc +=1; self.interrupt_stack_push(); }
+                match self.int {
+                    Some(_) => self.interrupt_stack_push(),
+                    None => { self.reg.pc +=1; self.interrupt_stack_push(); }
                 }
                 self.reg.pc = 0x0000;
             },
 
             // RST 08
             0xCF => {
-                match direct_rst {
-                    false => self.interrupt_stack_push(),
-                    true => { self.reg.pc +=1; self.interrupt_stack_push(); }
+                match self.int {
+                    Some(_) => self.interrupt_stack_push(),
+                    None => { self.reg.pc +=1; self.interrupt_stack_push(); }
                 }
                 self.reg.pc = 0x0008;
             },
 
             // RST 10
             0xD7 => {
-                match direct_rst {
-                    false => self.interrupt_stack_push(),
-                    true => { self.reg.pc +=1; self.interrupt_stack_push(); }
+                match self.int {
+                    Some(_) => self.interrupt_stack_push(),
+                    None => { self.reg.pc +=1; self.interrupt_stack_push(); }
                 }
                 self.reg.pc = 0x0010;
             },
 
             // RST 18
             0xDF => {
-                match direct_rst {
-                    false => self.interrupt_stack_push(),
-                    true => { self.reg.pc +=1; self.interrupt_stack_push(); }
+                match self.int {
+                    Some(_) => self.interrupt_stack_push(),
+                    None => { self.reg.pc +=1; self.interrupt_stack_push(); }
                 }
                 self.reg.pc = 0x0018;
             },
 
             // RST 20
             0xE7 => {
-                match direct_rst {
-                    false => self.interrupt_stack_push(),
-                    true => { self.reg.pc +=1; self.interrupt_stack_push(); }
+                match self.int {
+                    Some(_) => self.interrupt_stack_push(),
+                    None => { self.reg.pc +=1; self.interrupt_stack_push(); }
                 }
                 self.reg.pc = 0x0020;
             },
 
             // RST 28
             0xEF => {
-                match direct_rst {
-                    false => self.interrupt_stack_push(),
-                    true => { self.reg.pc +=1; self.interrupt_stack_push(); }
+                match self.int {
+                    Some(_) => self.interrupt_stack_push(),
+                    None => { self.reg.pc +=1; self.interrupt_stack_push(); }
                 }
                 self.reg.pc = 0x0028;
             },
 
             // RST 30
             0xF7 => {
-                match direct_rst {
-                    false => self.interrupt_stack_push(),
-                    true => { self.reg.pc +=1; self.interrupt_stack_push(); }
+                match self.int {
+                    Some(_) => self.interrupt_stack_push(),
+                    None => { self.reg.pc +=1; self.interrupt_stack_push(); }
                 }
                 self.reg.pc = 0x0030;
             },
 
             // RST 38
             0xFF => {
-                match direct_rst {
-                    false => self.interrupt_stack_push(),
-                    true => { self.reg.pc +=1; self.interrupt_stack_push(); }
+                match self.int {
+                    Some(_) => self.interrupt_stack_push(),
+                    None => { self.reg.pc +=1; self.interrupt_stack_push(); }
                 }
                 self.reg.pc = 0x0038;
             },
