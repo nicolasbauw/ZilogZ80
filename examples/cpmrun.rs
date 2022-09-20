@@ -18,7 +18,7 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     c.bus.write_word(0x0005, 0xc9);
 
     // Setting PC to 0x0100 (CP/M Binaries are loaded with a 256 byte offset)
-    c.registers.pc = 0x0100;
+    c.reg.pc = 0x0100;
 
     /* Setting up stack : by disassembling CP/M software, it seems
     that the $0006 address is read to set the stack by some programs */
@@ -26,19 +26,19 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     
     /* Setting up stack in case of the program does not read the $0006 address
     and does not set any stack. */
-    c.registers.sp = 0xFF00;
+    c.reg.sp = 0xFF00;
 
     loop {
         c.execute();
-        if c.registers.pc == 0x0005 { bdos_call(&c) }
-        if c.registers.pc == 0x0000 { break }             //  if CP/M warm boot -> we exit
+        if c.reg.pc == 0x0005 { bdos_call(&c) }
+        if c.reg.pc == 0x0000 { break }             //  if CP/M warm boot -> we exit
     }
     Ok(())
 }
 
 fn bdos_call(c: &CPU) {
-    if c.registers.c == 0x09 {
-        let mut a = c.registers.get_de();
+    if c.reg.c == 0x09 {
+        let mut a = c.reg.get_de();
         loop {
             let c = c.bus.read_byte(a);
             if c as char == '$' {
@@ -49,7 +49,7 @@ fn bdos_call(c: &CPU) {
             print!("{}", c as char);
         }
     }
-    if c.registers.c == 0x02 {
-        print!("{}", c.registers.e as char);
+    if c.reg.c == 0x02 {
+        print!("{}", c.reg.e as char);
     }
 }
