@@ -112,8 +112,6 @@ impl Debug {
 pub struct CPU {
     pub registers: Registers,
     pub alt_registers: Registers,
-    pub i: u8,
-    pub r: u8,
     pub sp: u16,
     pub pc: u16,
     pub bus: AddressBus,
@@ -129,8 +127,6 @@ impl CPU {
         CPU {
             registers: Registers::new(),
             alt_registers: Registers::new(),
-            i: 0,
-            r: 0,
             sp: 0,
             pc: 0,
             bus: AddressBus::new(),
@@ -140,6 +136,10 @@ impl CPU {
             iff2: false,
             debug: Debug::new(),
         }
+    }
+
+    pub fn flags(&self) -> u8 {
+        self.registers.flags.to_byte()
     }
 
     fn ldi(&mut self) {
@@ -1290,9 +1290,9 @@ impl CPU {
 
             // LD A,I
             0xED57 => {
-                self.registers.a = self.i;
-                self.registers.flags.s = (self.i as i8) < 0;
-                self.registers.flags.z = self.i == 0;
+                self.registers.a = self.registers.i;
+                self.registers.flags.s = (self.registers.i as i8) < 0;
+                self.registers.flags.z = self.registers.i == 0;
                 self.registers.flags.h = false;
                 self.registers.flags.p = self.iff2;
                 self.registers.flags.n = false;
@@ -1302,9 +1302,9 @@ impl CPU {
 
             // LD A,R
             0xED5F => {
-                self.registers.a = self.r;
-                self.registers.flags.s = (self.r as i8) < 0;
-                self.registers.flags.z = self.r == 0;
+                self.registers.a = self.registers.r;
+                self.registers.flags.s = (self.registers.r as i8) < 0;
+                self.registers.flags.z = self.registers.r == 0;
                 self.registers.flags.h = false;
                 self.registers.flags.p = self.iff2;
                 self.registers.flags.n = false;
@@ -1313,10 +1313,10 @@ impl CPU {
             },
 
             // LD I,A
-            0xED47 => self.i = self.registers.a,
+            0xED47 => self.registers.i = self.registers.a,
 
             // LD R,A
-            0xED4F => self.r = self.registers.a,
+            0xED4F => self.registers.r = self.registers.a,
 
             // 16-Bit Load Group
             // LD dd,(nn)

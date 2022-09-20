@@ -12,6 +12,8 @@ pub struct Registers {
     pub ixl: u8,
     pub iyh: u8,
     pub iyl: u8,
+    pub i: u8,
+    pub r: u8,
     pub flags: Flags
 }
 
@@ -29,6 +31,8 @@ impl Registers {
             ixl: 0,
             iyh: 0,
             iyl: 0,
+            i: 0,
+            r: 0,
             flags: Flags::new()
         }
     }
