@@ -80,7 +80,7 @@ const CYCLES_CB: [u8; 256] = [
 
 pub struct CPU {
     pub reg: Registers,
-    pub alt_reg: Registers,
+    pub alt: Registers,
     pub bus: AddressBus,
     pub halt: bool,
     pub debug: Debug,
@@ -94,7 +94,7 @@ impl CPU {
     pub fn new() -> CPU {
         CPU {
             reg: Registers::new(),
-            alt_reg: Registers::new(),
+            alt: Registers::new(),
             bus: AddressBus::new(),
             im: 0,
             halt: false,
@@ -3035,9 +3035,9 @@ impl CPU {
             // EX AF,AF'
             0x08 => {
                 let af = self.reg.get_af();
-                let afp = self.alt_reg.get_af();
+                let afp = self.alt.get_af();
                 self.reg.set_af(afp);
-                self.alt_reg.set_af(af);
+                self.alt.set_af(af);
             }
 
             // EXX
@@ -3045,15 +3045,15 @@ impl CPU {
                 let bc = self.reg.get_bc();
                 let de = self.reg.get_de();
                 let hl = self.reg.get_hl();
-                let bcp = self.alt_reg.get_bc();
-                let dep = self.alt_reg.get_de();
-                let hlp = self.alt_reg.get_hl();
+                let bcp = self.alt.get_bc();
+                let dep = self.alt.get_de();
+                let hlp = self.alt.get_hl();
                 self.reg.set_bc(bcp);
                 self.reg.set_de(dep);
                 self.reg.set_hl(hlp);
-                self.alt_reg.set_bc(bc);
-                self.alt_reg.set_de(de);
-                self.alt_reg.set_hl(hl);
+                self.alt.set_bc(bc);
+                self.alt.set_de(de);
+                self.alt.set_hl(hl);
             }
 
             // EX (SP),HL

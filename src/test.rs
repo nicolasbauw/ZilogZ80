@@ -878,22 +878,22 @@ fn ex_asm() {
     assert_eq!(c.execute(), 10); assert_eq!(0x1234, c.reg.get_hl());
     assert_eq!(c.execute(), 10); assert_eq!(0x5678, c.reg.get_de());
     assert_eq!(c.execute(), 4);  assert_eq!(0x1234, c.reg.get_de()); assert_eq!(0x5678, c.reg.get_hl()); 
-    assert_eq!(c.execute(), 7);  assert_eq!(0x1100, c.reg.get_af()); assert_eq!(0x0000, c.alt_reg.get_af());
-    assert_eq!(c.execute(), 4);  assert_eq!(0x0000, c.reg.get_af()); assert_eq!(0x1100, c.alt_reg.get_af());
-    assert_eq!(c.execute(), 7);  assert_eq!(0x2200, c.reg.get_af()); assert_eq!(0x1100, c.alt_reg.get_af());
-    assert_eq!(c.execute(), 4);  assert_eq!(0x1100, c.reg.get_af()); assert_eq!(0x2200, c.alt_reg.get_af());
+    assert_eq!(c.execute(), 7);  assert_eq!(0x1100, c.reg.get_af()); assert_eq!(0x0000, c.alt.get_af());
+    assert_eq!(c.execute(), 4);  assert_eq!(0x0000, c.reg.get_af()); assert_eq!(0x1100, c.alt.get_af());
+    assert_eq!(c.execute(), 7);  assert_eq!(0x2200, c.reg.get_af()); assert_eq!(0x1100, c.alt.get_af());
+    assert_eq!(c.execute(), 4);  assert_eq!(0x1100, c.reg.get_af()); assert_eq!(0x2200, c.alt.get_af());
     assert_eq!(c.execute(), 10); assert_eq!(0x9ABC, c.reg.get_bc());
     assert_eq!(c.execute(), 4);
-    assert_eq!(0x0000, c.reg.get_hl()); assert_eq!(0x5678, c.alt_reg.get_hl());
-    assert_eq!(0x0000, c.reg.get_de()); assert_eq!(0x1234, c.alt_reg.get_de());
-    assert_eq!(0x0000, c.reg.get_bc()); assert_eq!(0x9ABC, c.alt_reg.get_bc());
+    assert_eq!(0x0000, c.reg.get_hl()); assert_eq!(0x5678, c.alt.get_hl());
+    assert_eq!(0x0000, c.reg.get_de()); assert_eq!(0x1234, c.alt.get_de());
+    assert_eq!(0x0000, c.reg.get_bc()); assert_eq!(0x9ABC, c.alt.get_bc());
     assert_eq!(c.execute(), 10); assert_eq!(0x1111, c.reg.get_hl());
     assert_eq!(c.execute(), 10); assert_eq!(0x2222, c.reg.get_de());
     assert_eq!(c.execute(), 10); assert_eq!(0x3333, c.reg.get_bc());
     assert_eq!(c.execute(), 4);
-    assert_eq!(0x5678, c.reg.get_hl()); assert_eq!(0x1111, c.alt_reg.get_hl());
-    assert_eq!(0x1234, c.reg.get_de()); assert_eq!(0x2222, c.alt_reg.get_de());
-    assert_eq!(0x9ABC, c.reg.get_bc()); assert_eq!(0x3333, c.alt_reg.get_bc());
+    assert_eq!(0x5678, c.reg.get_hl()); assert_eq!(0x1111, c.alt.get_hl());
+    assert_eq!(0x1234, c.reg.get_de()); assert_eq!(0x2222, c.alt.get_de());
+    assert_eq!(0x9ABC, c.reg.get_bc()); assert_eq!(0x3333, c.alt.get_bc());
     assert_eq!(c.execute(), 10); assert_eq!(0x0100, c.reg.sp);
     assert_eq!(c.execute(), 11); assert_eq!(0x1234, c.bus.read_word(0x00FE));
     assert_eq!(c.execute(), 19); assert_eq!(0x1234, c.reg.get_hl()); assert_eq!(0x5678, c.bus.read_word(0x00FE));
@@ -2164,11 +2164,11 @@ fn ld_d() {
         c.bus.write_byte(0x0000, 0x08);
         c.reg.set_af(0x9900);
         assert_eq!(c.reg.get_af(), 0x9900);
-        c.alt_reg.set_af(0x5944);
+        c.alt.set_af(0x5944);
         assert_eq!(c.execute(), 4);
         assert_eq!(c.reg.pc, 1);
         assert_eq!(c.reg.get_af(), 0x5944);
-        assert_eq!(c.alt_reg.get_af(), 0x9900);
+        assert_eq!(c.alt.get_af(), 0x9900);
     }
 
     #[test]
@@ -2178,17 +2178,17 @@ fn ld_d() {
         c.reg.set_bc(0x445A);
         c.reg.set_de(0x3DA2);
         c.reg.set_hl(0x8859);
-        c.alt_reg.set_bc(0x0988);
-        c.alt_reg.set_de(0x9300);
-        c.alt_reg.set_hl(0x00E7);
+        c.alt.set_bc(0x0988);
+        c.alt.set_de(0x9300);
+        c.alt.set_hl(0x00E7);
         assert_eq!(c.execute(), 4);
         assert_eq!(c.reg.pc, 1);
         assert_eq!(c.reg.get_bc(), 0x0988);
         assert_eq!(c.reg.get_de(), 0x9300);
         assert_eq!(c.reg.get_hl(), 0x00E7);
-        assert_eq!(c.alt_reg.get_bc(), 0x445A);
-        assert_eq!(c.alt_reg.get_de(), 0x3DA2);
-        assert_eq!(c.alt_reg.get_hl(), 0x8859);
+        assert_eq!(c.alt.get_bc(), 0x445A);
+        assert_eq!(c.alt.get_de(), 0x3DA2);
+        assert_eq!(c.alt.get_hl(), 0x8859);
     }
 
     #[test]
