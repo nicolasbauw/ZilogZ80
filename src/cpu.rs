@@ -567,6 +567,14 @@ impl CPU {
         // Interrupt requested in interrupt mode 1 ? Restart at address 0038h (opcode 0xFF)
         if self.iff1 && self.int.is_some() && self.im == 1 { self.int = Some(0xFF) };
 
+        // Interrupt requested in interrupt mode 2 ? Push PC onto the stack, build jump address and jump to that address
+        if self.iff1 && self.int.is_some() && self.im == 2 {
+            self.interrupt_stack_push();
+            let addr = ((self.im as u16) << 8) & (self.int.unwrap() as u16);
+            self.reg.pc = addr;
+            self.int = None;
+        };
+
         // We retrieve the opcode, wether it comes from an interrupt request or normal fetch
         let opcode = match self.iff1 {
             false => self.bus.read_byte(self.reg.pc),
@@ -1005,12 +1013,12 @@ impl CPU {
             },
 
             _ => {
-                if self.debug.unknw_instr { self.debug.string = format!("{:#10X}", opcode) };
+                if self.debug.unknw_instr { self.debug.string = format!("{:#10x}", opcode) };
                 cycles = 0xFF;
                 }
         }
         self.reg.pc += 4;
-        if self.debug.opcode == true { self.debug.string = format!("{:10x}", opcode) }
+        if self.debug.opcode == true { self.debug.string = format!("{:#10x}", opcode) }
         cycles
     }
 
@@ -2671,7 +2679,7 @@ impl CPU {
             },
             
             _ => {
-                if self.debug.unknw_instr { self.debug.string = format!("{:#06X}", opcode); }
+                if self.debug.unknw_instr { self.debug.string = format!("{:#06x}", opcode); }
                 cycles = 0xFF;
             }
         }
@@ -2695,7 +2703,7 @@ impl CPU {
             _ => self.reg.pc +=2,
         }
 
-        if self.debug.opcode == true { self.debug.string = format!("{:06x}", opcode) }
+        if self.debug.opcode == true { self.debug.string = format!("{:#06x}", opcode) }
 
         cycles
     }
@@ -3643,7 +3651,7 @@ impl CPU {
             _ => self.reg.pc +=1,
         }
 
-        if self.debug.opcode == true { self.debug.string = format!("{:04x}", opcode) }
+        if self.debug.opcode == true { self.debug.string = format!("{:#04x}", opcode) }
 
         cycles
     }

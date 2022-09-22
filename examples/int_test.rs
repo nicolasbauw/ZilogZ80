@@ -13,13 +13,13 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     c.debug.opcode = true;
 
     // Loads assembled program into memory
-    c.bus.load_bin("bin/int.bin", 0)?;
+    c.bus.load_bin("bin/int_im2.bin", 0)?;
 
-    for _ in 0..7 {
+    for _ in 0..9 {
         c.execute();
         if c.debug.opcode { print!("{}\n", c.debug.string); }
     }
-    c.int_request(0xcf);
+    c.int_request(0x02);
 
     loop {
         c.execute();
