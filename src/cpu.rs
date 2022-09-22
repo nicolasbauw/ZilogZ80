@@ -564,6 +564,9 @@ impl CPU {
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 4 };
 
+        // Interrupt requested in interrupt mode 1 ? Restart at address 0038h (opcode 0xFF)
+        if self.iff1 && self.int.is_some() && self.im == 1 { self.int = Some(0xFF) };
+
         // We retrieve the opcode, wether it comes from an interrupt request or normal fetch
         let opcode = match self.iff1 {
             false => self.bus.read_byte(self.reg.pc),

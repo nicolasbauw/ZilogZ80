@@ -3984,3 +3984,18 @@ fn int() {
         if c.reg.pc == 0x0000 { break }
     }
 }
+
+// if this test loops forever, mode 1 interrupts are not working
+#[test]
+fn int_im1() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/int_im1.bin", 0).unwrap();
+    for _ in 0..8 {
+        c.execute();
+    }
+    c.int_request(0xDF);
+    loop {
+        c.execute();
+        if c.reg.pc == 0x0000 { break }
+    }
+}
