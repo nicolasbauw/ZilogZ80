@@ -14,7 +14,6 @@ pub struct CPU {
     im: u8,
     iff1: bool,
     iff2: bool,
-    
 }
 
 impl CPU {
@@ -29,8 +28,11 @@ impl CPU {
             im: 0,
             iff1: false,
             iff2: false,
-            
         }
+    }
+
+    pub fn int_request(&mut self, instruction: u8) {
+        self.int = Some(instruction);
     }
 
     pub fn flags(&self) -> u8 {
@@ -562,10 +564,24 @@ impl CPU {
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 4 };
 
-        match self.bus.read_byte(self.reg.pc) {
-            0xDD | 0xFD | 0xED | 0xCB => return self.execute_2bytes(),
-            _ => return self.execute_1byte(),
-        }
+        // We retrieve the opcode, wether it comes from an interrupt request or normal fetch
+        let opcode = match self.iff1 {
+            false => self.bus.read_byte(self.reg.pc),
+            // interrupts enabled : is there a pending interrupt ?
+            true => match self.int {
+                None =>  self.bus.read_byte(self.reg.pc),
+                Some(o) => o as u8,
+            },
+        };
+
+        let cycles = match opcode {
+            0xDD | 0xFD | 0xED | 0xCB => self.execute_2bytes(),
+            _ => self.execute_1byte(opcode),
+        };
+
+        self.int = None;
+        cycles
+
     }
 
     // DDCB FDCB
@@ -991,6 +1007,7 @@ impl CPU {
                 }
         }
         self.reg.pc += 4;
+        if self.debug.opcode == true { self.debug.string = format!("{:10x}", opcode) }
         cycles
     }
 
@@ -2675,11 +2692,12 @@ impl CPU {
             _ => self.reg.pc +=2,
         }
 
+        if self.debug.opcode == true { self.debug.string = format!("{:06x}", opcode) }
+
         cycles
     }
 
-    fn execute_1byte(&mut self) -> u32 {
-        let opcode = self.bus.read_byte(self.reg.pc);
+    fn execute_1byte(&mut self, opcode: u8) -> u32 {
         let mut cycles = CYCLES[opcode as usize].into();
 
         match opcode {
@@ -3622,6 +3640,8 @@ impl CPU {
             _ => self.reg.pc +=1,
         }
 
+        if self.debug.opcode == true { self.debug.string = format!("{:04x}", opcode) }
+
         cycles
     }
 }
@@ -3647,6 +3667,7 @@ pub fn signed_to_abs(n: u8) -> u8 {
 
 pub struct Debug {
     pub unknw_instr: bool,
+    pub opcode: bool,
     pub string: String
 }
 
@@ -3654,6 +3675,7 @@ impl Debug {
     pub fn new() -> Debug {
         Debug {
             unknw_instr: false,
+            opcode: false,
             string: String::new(),
         }
     }

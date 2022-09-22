@@ -3969,3 +3969,18 @@ fn debug_unkn() {
     assert_eq!(c.execute(), 0xFF);
     assert_eq!(c.debug.string, String::from("0xDD00"));
 }
+
+// if this test loops forever, interrupts are not working
+#[test]
+fn int() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/int.bin", 0).unwrap();
+    for _ in 0..7 {
+        c.execute();
+    }
+    c.int_request(0xCF);
+    loop {
+        c.execute();
+        if c.reg.pc == 0x0000 { break }
+    }
+}
