@@ -570,8 +570,8 @@ impl CPU {
         // Interrupt requested in interrupt mode 2 ? Push PC onto the stack, build jump address and jump to that address
         if self.iff1 && self.int.is_some() && self.im == 2 {
             self.interrupt_stack_push();
-            let addr = ((self.im as u16) << 8) & (self.int.unwrap() as u16);
-            self.reg.pc = addr;
+            let addr = ((self.reg.i as u16) << 8) | (self.int.unwrap() as u16);
+            self.reg.pc = self.bus.read_word(addr);
             self.int = None;
         };
 
@@ -1013,12 +1013,12 @@ impl CPU {
             },
 
             _ => {
-                if self.debug.unknw_instr { self.debug.string = format!("{:#10x}", opcode) };
+                if self.debug.unknw_instr { self.debug.string = format!("{:#10X}", opcode) };
                 cycles = 0xFF;
                 }
         }
         self.reg.pc += 4;
-        if self.debug.opcode == true { self.debug.string = format!("{:#10x}", opcode) }
+        if self.debug.opcode == true { self.debug.string = format!("{:#10X}", opcode) }
         cycles
     }
 
@@ -2679,7 +2679,7 @@ impl CPU {
             },
             
             _ => {
-                if self.debug.unknw_instr { self.debug.string = format!("{:#06x}", opcode); }
+                if self.debug.unknw_instr { self.debug.string = format!("{:#06X}", opcode); }
                 cycles = 0xFF;
             }
         }
@@ -2703,7 +2703,7 @@ impl CPU {
             _ => self.reg.pc +=2,
         }
 
-        if self.debug.opcode == true { self.debug.string = format!("{:#06x}", opcode) }
+        if self.debug.opcode == true { self.debug.string = format!("{:#06X}", opcode) }
 
         cycles
     }
@@ -3651,7 +3651,7 @@ impl CPU {
             _ => self.reg.pc +=1,
         }
 
-        if self.debug.opcode == true { self.debug.string = format!("{:#04x}", opcode) }
+        if self.debug.opcode == true { self.debug.string = format!("{:#04X}", opcode) }
 
         cycles
     }

@@ -19,8 +19,9 @@ start   .org    0x0050
         JP  NZ,@loop
         RET
 
+// Jump table
 .org    0x0102
-.byte   06
+.word   0x0106
 
 .org 0x0106
     LD  B,A
