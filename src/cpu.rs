@@ -11,6 +11,7 @@ pub struct CPU {
     pub halt: bool,
     pub debug: Debug,
     int: Option<u8>,
+    nmi: bool,
     im: u8,
     iff1: bool,
     iff2: bool,
@@ -25,6 +26,7 @@ impl CPU {
             halt: false,
             debug: Debug::new(),
             int: None,
+            nmi: false,
             im: 0,
             iff1: false,
             iff2: false,
@@ -33,6 +35,10 @@ impl CPU {
 
     pub fn int_request(&mut self, instruction: u8) {
         self.int = Some(instruction);
+    }
+
+    pub fn nmi_request(&mut self) {
+        self.nmi = true;
     }
 
     pub fn flags(&self) -> u8 {
@@ -509,7 +515,7 @@ impl CPU {
         self.reg.flags.n = false;
     }
 
-    // Bit test
+    // Bit set
     fn set(&mut self, operand: u8) {
         let bit = ((operand & 0x38) >> 3) as usize;
         let register = operand & 0x07;
@@ -526,7 +532,7 @@ impl CPU {
         };
     }
 
-    // Bit test
+    // Bit reset
     fn reset(&mut self, operand: u8) {
         let bit = ((operand & 0x38) >> 3) as usize;
         let register = operand & 0x07;
@@ -563,6 +569,15 @@ impl CPU {
 
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 4 };
+
+        // Non maskable interrupt requested ?
+        if self.nmi {
+            self.iff2 = self.iff1;
+            self.iff1 = false;
+            self.interrupt_stack_push();
+            self.reg.pc = 0x0066;
+            self.nmi = false;
+        }
 
         // Interrupt requested in interrupt mode 1 ? Restart at address 0038h (opcode 0xFF)
         if self.iff1 && self.int.is_some() && self.im == 1 { self.int = Some(0xFF) };
@@ -1711,6 +1726,15 @@ impl CPU {
                 self.neg();
             },
 
+            // RETI
+            0xED4D => self.call_stack_pop(),
+
+            // RETN
+            0xED45 => {
+                self.iff1 = self.iff2;
+                self.call_stack_pop();
+            },
+
             // Interrput modes
             0xED46 => self.im = 0,
             0xED56 => self.im = 1,
@@ -2161,9 +2185,6 @@ impl CPU {
 
             // JP (IY)
             0xFDE9 => { self.reg.pc = self.reg.get_iy(); },
-
-            // Call and Return Group
-            // TODO : RETI & RETN
 
             // Undocumented instructions
             // ADD A,IXH
@@ -2685,7 +2706,7 @@ impl CPU {
         }
 
         match opcode {
-            0xDDE9 | 0xFDE9 => {},
+            0xDDE9 | 0xFDE9 | 0xED4D | 0xED45 => {},
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 |
             0xDD5E | 0xFD5E | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E |
             0xDD7E | 0xFD7E |

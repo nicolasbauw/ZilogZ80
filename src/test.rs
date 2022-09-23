@@ -4014,3 +4014,18 @@ fn int_im2() {
         if c.reg.pc == 0x0000 { break }
     }
 }
+
+#[test]
+fn nmi() {
+    let mut c = CPU::new();
+    c.bus.load_bin("bin/nmi.bin", 0).unwrap();
+    for _ in 0..5 {
+        c.execute();
+    }
+    c.nmi_request();
+    c.execute(); assert_eq!(c.reg.pc, 0x0067); assert_eq!(c.reg.b, 0x0F);
+    loop {
+        c.execute();
+        if c.reg.pc == 0x0000 { break }
+    }
+}
