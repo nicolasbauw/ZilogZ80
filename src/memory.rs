@@ -66,3 +66,17 @@ impl AddressBus {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn r_le_dword() {
+        let mut b = AddressBus::new();
+        b.write_byte(0x0000, 0xCC);
+        b.write_byte(0x0001, 0xDD);
+        b.write_byte(0x0002, 0xEE);
+        b.write_byte(0x0003, 0xFF);
+        assert_eq!(b.read_le_dword(0x00), 0xCCDDEEFF);
+    }
+}
