@@ -2,7 +2,7 @@ use crate::registers::Registers;
 use crate::memory::AddressBus;
 use crate::bit;
 use crate::cycles::{ CYCLES, CYCLES_CB, CYCLES_ED, CYCLES_DD_FD };
-
+use std::{time::Duration, time::SystemTime};
 
 pub struct CPU {
     pub reg: Registers,
@@ -15,6 +15,12 @@ pub struct CPU {
     im: u8,
     iff1: bool,
     iff2: bool,
+    slice_duration: u32,
+    /// Defaults to 35000 cycles per 16ms slice (2.1 Mhz).
+    /// cycles = clock speed in Hz / required frames-per-second
+    slice_max_cycles: u32,
+    slice_current_cycles: u32,
+    slice_start_time: SystemTime,
 }
 
 impl CPU {
@@ -30,6 +36,10 @@ impl CPU {
             im: 0,
             iff1: false,
             iff2: false,
+            slice_duration: 16,
+            slice_max_cycles: 35000,
+            slice_current_cycles: 0,
+            slice_start_time: SystemTime::now(),
         }
     }
 
@@ -608,6 +618,30 @@ impl CPU {
         self.int = None;
         cycles
 
+    }
+
+    /// Fetches and executes one instruction from (pc), limiting speed to 2,1 Mhz by default. Returns the number of consumed clock cycles.
+    pub fn execute_slice(&mut self) -> u32 {
+        if self.slice_current_cycles > self.slice_max_cycles {
+            self.slice_current_cycles = 0;
+            // d = time taken to execute the slice_max_cycles
+            if let Ok(d) = self.slice_start_time.elapsed() {
+                let sleep_time = self.slice_duration.saturating_sub(d.as_millis() as u32);
+                /*println!("Execution time : {:?}", d);
+                println!("Sleep time : {:?}", sleep_time);*/
+
+                #[cfg(windows)]
+                spin_sleep::sleep(Duration::from_millis(u64::from(sleep_time)));
+
+                #[cfg(not(windows))]
+                std::thread::sleep(Duration::from_millis(u64::from(sleep_time)));
+
+                self.slice_start_time = SystemTime::now();
+            }
+        }
+        let cycles = self.execute();
+        self.slice_current_cycles += cycles;
+        cycles
     }
 
     // DDCB FDCB
