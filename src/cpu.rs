@@ -2732,7 +2732,26 @@ impl CPU {
                 let r = self.sll(self.reg.a);
                 self.reg.a = r;
             },
+
+            // Input and Output Group
+            // IN B,(C)
+            0xED40 => self.reg.b = self.bus.get_io(self.reg.c),
             
+            // IN C,(C)
+            0xED48 => self.reg.c = self.bus.get_io(self.reg.c),
+
+            // IN D,(C)
+            0xED50 => self.reg.d = self.bus.get_io(self.reg.c),
+
+            // IN E,(C)
+            0xED58 => self.reg.e = self.bus.get_io(self.reg.c),
+
+            // IN H,(C)
+            0xED60 => self.reg.h = self.bus.get_io(self.reg.c),
+
+            // IN B,(C)
+            0xED68 => self.reg.l = self.bus.get_io(self.reg.c),
+
             _ => {
                 if self.debug.unknw_instr { self.debug.string = format!("{:#06X}", opcode); }
                 cycles = 0xFF;
@@ -3684,6 +3703,13 @@ impl CPU {
                     None => { self.reg.pc +=1; self.interrupt_stack_push(); }
                 }
                 self.reg.pc = 0x0038;
+            },
+
+            // Input and Output Group
+            // IN A,(n)
+            0xDB => {
+                let port = self.bus.read_byte(self.reg.pc + 1);
+                self.reg.a = self.bus.get_io(port);
             },
 
             _ => {

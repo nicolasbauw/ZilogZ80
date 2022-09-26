@@ -3,6 +3,7 @@ use std::{fs::File, io::prelude::*,};
 pub struct AddressBus {
     address_space: Vec<u8>,
     pub rom_space: Option<ROMSpace>,
+    io: Vec<u8>,
 }
 
 /// Start and end addresses of read-only (ROM) area.
@@ -16,6 +17,7 @@ impl AddressBus {
         AddressBus {
             address_space: vec![0; 65536],
             rom_space: None,
+            io: vec![0; 256],
         }
     }
 
@@ -65,6 +67,11 @@ impl AddressBus {
         self.address_space[org as usize..(buf.len() + org as usize)].clone_from_slice(&buf[..]);
         Ok(())
     }
+
+    pub fn get_io(&mut self, n: u8) -> u8 {
+        self.io[n as usize]
+    }
+
 }
 
 #[cfg(test)]
