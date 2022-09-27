@@ -577,6 +577,17 @@ impl CPU {
         self.bus.write_word(self.reg.sp , self.reg.pc);
     }
 
+    // IN r,(C)
+    fn inrc(&mut self) -> u8 {
+        let r = self.bus.get_io(self.reg.c);
+        self.reg.flags.z = r == 0x00;
+        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
+        self.reg.flags.h = false;
+        self.reg.flags.n = false;
+        r
+    }
+
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 4 };
 
@@ -2735,22 +2746,22 @@ impl CPU {
 
             // Input and Output Group
             // IN B,(C)
-            0xED40 => self.reg.b = self.bus.get_io(self.reg.c),
+            0xED40 => self.reg.b = self.inrc(),
             
             // IN C,(C)
-            0xED48 => self.reg.c = self.bus.get_io(self.reg.c),
+            0xED48 => self.reg.c = self.inrc(),
 
             // IN D,(C)
-            0xED50 => self.reg.d = self.bus.get_io(self.reg.c),
+            0xED50 => self.reg.d = self.inrc(),
 
             // IN E,(C)
-            0xED58 => self.reg.e = self.bus.get_io(self.reg.c),
+            0xED58 => self.reg.e = self.inrc(),
 
             // IN H,(C)
-            0xED60 => self.reg.h = self.bus.get_io(self.reg.c),
+            0xED60 => self.reg.h = self.inrc(),
 
             // IN B,(C)
-            0xED68 => self.reg.l = self.bus.get_io(self.reg.c),
+            0xED68 => self.reg.l = self.inrc(),
 
             _ => {
                 if self.debug.unknw_instr { self.debug.string = format!("{:#06X}", opcode); }
