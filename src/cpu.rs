@@ -592,7 +592,7 @@ impl CPU {
 
     fn get_io(&mut self, port: u8) -> u8 {
         if let Ok((device, data)) = self.io.1.try_recv() {
-            println!("Received {:#04X} from device {:#04X}", data, device);
+            if self.debug.io { println!("Received {:#04X} from device {:#04X}", data, device) }
             if device == port { return data }
         }
         return 0
@@ -3781,6 +3781,7 @@ pub fn signed_to_abs(n: u8) -> u8 {
 pub struct Debug {
     pub unknw_instr: bool,
     pub opcode: bool,
+    pub io: bool,
     pub string: String
 }
 
@@ -3789,6 +3790,7 @@ impl Debug {
         Debug {
             unknw_instr: false,
             opcode: false,
+            io: false,
             string: String::new(),
         }
     }

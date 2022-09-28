@@ -10,7 +10,7 @@ fn main() {
 
 fn load_execute() -> Result<(), Box<dyn Error>> {
     let mut c = CPU::new();
-    c.debug.opcode = false;
+    c.debug.io = true;
 
     // Loads assembled program into memory
     c.bus.load_bin("bin/in_a.bin", 0)?;
