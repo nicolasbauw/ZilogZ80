@@ -590,12 +590,18 @@ impl CPU {
         r
     }
 
+    // IN : from peripherals to CPU
     fn get_io(&mut self, port: u8) -> u8 {
         if let Ok((device, data)) = self.io.1.try_recv() {
             if self.debug.io { println!("Message {:#04X} from device {:#04X}", data, device) }
             if device == port { return data }
         }
         return 0
+    }
+
+    // OUT : from CPU to peripherals
+    fn set_io(&mut self, port: u8, data: u8) {
+        self.io.0.send((port,data)).unwrap();
     }
 
     pub fn execute(&mut self) -> u32 {
@@ -3734,6 +3740,12 @@ impl CPU {
                 if self.debug.instr_in { println!("IN {:#04X} from device {:#04X}", self.reg.a, port) }
             },
 
+            // OUT (n),A
+            0xD3 => {
+                let port = self.bus.read_byte(self.reg.pc + 1);
+                self.set_io(port, self.reg.a);
+            },
+
             _ => {
                 if self.debug.unknw_instr { self.debug.string = format!("{:#04X}", opcode); }
                 cycles = 0xFF;
@@ -3749,7 +3761,7 @@ impl CPU {
             0xE7 | 0xEF | 0xF7 | 0xFF | 0x76 => {},
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
             0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE | 0xFE |
-            0x18 | 0x38 | 0x30 | 0x28 | 0x20 | 0x10 | 0xDB => self.reg.pc += 2,
+            0x18 | 0x38 | 0x30 | 0x28 | 0x20 | 0x10 | 0xDB | 0xD3 => self.reg.pc += 2,
             0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 | 0x3A => self.reg.pc += 3,
             _ => self.reg.pc +=1,
         }
