@@ -8,7 +8,7 @@ pub struct CPU {
     pub reg: Registers,
     pub alt: Registers,
     pub bus: AddressBus,
-    pub halt: bool,
+    halt: bool,
     pub debug: Debug,
     int: Option<u8>,
     nmi: bool,

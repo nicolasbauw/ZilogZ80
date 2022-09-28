@@ -866,9 +866,9 @@ fn call_cc_ret_cc_asm() {
 fn halt_asm() {
     let mut c = CPU::new();
     c.bus.load_bin("bin/halt.bin", 0).unwrap();
-    assert_eq!(c.execute(), 4); assert_eq!(0x0000, c.reg.pc); assert!(c.halt);
-    assert_eq!(c.execute(), 4); assert_eq!(0x0000, c.reg.pc); assert!(c.halt);
-    assert_eq!(c.execute(), 4); assert_eq!(0x0000, c.reg.pc); assert!(c.halt);
+    assert_eq!(c.execute(), 4); assert_eq!(0x0000, c.reg.pc);
+    assert_eq!(c.execute(), 4); assert_eq!(0x0000, c.reg.pc);
+    assert_eq!(c.execute(), 4); assert_eq!(0x0000, c.reg.pc);
 }
 
 #[test]
@@ -1710,7 +1710,6 @@ fn ld_d() {
         let mut c = CPU::new();
         c.bus.write_byte(0x0000, 0x76);
         c.execute();
-        assert_eq!(c.halt, true);
         assert_eq!(c.reg.pc, 0);
     }
 
