@@ -581,7 +581,7 @@ impl CPU {
 
     // IN r,(C)
     fn inrc(&mut self) -> u8 {
-        let r = self.bus.get_io(self.reg.c);
+        let r = self.get_io(self.reg.c);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = (r as i8) < 0;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
@@ -590,14 +590,16 @@ impl CPU {
         r
     }
 
+    fn get_io(&mut self, port: u8) -> u8 {
+        if let Ok((device, data)) = self.io.1.try_recv() {
+            println!("Received {:#04X} from device {:#04X}", data, device);
+            if device == port { return data }
+        }
+        return 0
+    }
+
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 4 };
-
-        // Receiving data from an IO device ?
-        if let Ok((device, data)) = self.io.1.try_recv() {
-            self.bus.io[device as usize] = data;
-            println!("Received {:#04X} from device {:#04X}", data, device);
-        }
 
         // Non maskable interrupt requested ?
         if self.nmi {
@@ -3728,7 +3730,7 @@ impl CPU {
             // IN A,(n)
             0xDB => {
                 let port = self.bus.read_byte(self.reg.pc + 1);
-                self.reg.a = self.bus.get_io(port);
+                self.reg.a = self.get_io(port);
             },
 
             _ => {
