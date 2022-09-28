@@ -3731,6 +3731,7 @@ impl CPU {
             0xDB => {
                 let port = self.bus.read_byte(self.reg.pc + 1);
                 self.reg.a = self.get_io(port);
+                if self.debug.instr_in { println!("IN {:#04X} from device {:#04X}", self.reg.a, port) }
             },
 
             _ => {
@@ -3781,7 +3782,10 @@ pub fn signed_to_abs(n: u8) -> u8 {
 pub struct Debug {
     pub unknw_instr: bool,
     pub opcode: bool,
+    // IO MPSC Messages
     pub io: bool,
+    // Data read by IN instruction
+    pub instr_in: bool,
     pub string: String
 }
 
@@ -3791,6 +3795,7 @@ impl Debug {
             unknw_instr: false,
             opcode: false,
             io: false,
+            instr_in: false,
             string: String::new(),
         }
     }
