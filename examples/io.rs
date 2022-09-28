@@ -11,6 +11,7 @@ fn main() {
 fn load_execute() -> Result<(), Box<dyn Error>> {
     let mut c = CPU::new();
     c.debug.io = true;
+    c.debug.instr_in = true;
 
     // Loads assembled program into memory
     c.bus.load_bin("bin/in_a.bin", 0)?;
@@ -35,7 +36,7 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
 // Demonstration peripheral 0x07 sends 0xDE on the data bus after 5 seconds
 fn periph(tx: std::sync::mpsc::Sender<(u8, u8)>) {
     loop {
-        std::thread::sleep(Duration::from_secs(5));
+        std::thread::sleep(Duration::from_secs(1));
         println!("The 0x07 peripheral puts 0xDE on the data bus");
         tx.send((0x07, 0xDE)).unwrap();
     }
