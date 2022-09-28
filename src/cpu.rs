@@ -45,8 +45,8 @@ impl CPU {
         }
     }
 
-    pub fn int_request(&mut self, instruction: u8) {
-        self.int = Some(instruction);
+    pub fn int_request(&mut self, byte: u8) {
+        self.int = Some(byte);
     }
 
     pub fn nmi_request(&mut self) {
