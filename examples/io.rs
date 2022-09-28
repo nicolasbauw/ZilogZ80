@@ -36,7 +36,7 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
 fn periph(tx: std::sync::mpsc::Sender<(u8, u8)>) {
     loop {
         std::thread::sleep(Duration::from_secs(5));
-        println!("The 0x07 peripheral sends 0xDE to the CPU");
+        println!("The 0x07 peripheral puts 0xDE on the data bus");
         tx.send((0x07, 0xDE)).unwrap();
     }
 }

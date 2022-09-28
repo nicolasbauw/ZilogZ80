@@ -592,7 +592,7 @@ impl CPU {
 
     fn get_io(&mut self, port: u8) -> u8 {
         if let Ok((device, data)) = self.io.1.try_recv() {
-            if self.debug.io { println!("Received {:#04X} from device {:#04X}", data, device) }
+            if self.debug.io { println!("Reading {:#04X} from device {:#04X}", data, device) }
             if device == port { return data }
         }
         return 0
