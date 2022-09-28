@@ -3,7 +3,7 @@ use std::{fs::File, io::prelude::*,};
 pub struct AddressBus {
     address_space: Vec<u8>,
     pub rom_space: Option<ROMSpace>,
-    io: Vec<u8>,
+    pub io: Vec<u8>,
 }
 
 /// Start and end addresses of read-only (ROM) area.

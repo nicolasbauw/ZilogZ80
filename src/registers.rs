@@ -35,7 +35,7 @@ impl Registers {
             iyl: 0,
             i: 0,
             r: 0,
-            sp: 0,
+            sp: 0xFFFF,
             pc: 0,
             flags: Flags::new()
         }

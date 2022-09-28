@@ -21,6 +21,7 @@ pub struct CPU {
     slice_max_cycles: u32,
     slice_current_cycles: u32,
     slice_start_time: SystemTime,
+    pub io: (std::sync::mpsc::Sender<(u8, u8)>, std::sync::mpsc::Receiver<(u8, u8)>)
 }
 
 impl CPU {
@@ -40,6 +41,7 @@ impl CPU {
             slice_max_cycles: 35000,
             slice_current_cycles: 0,
             slice_start_time: SystemTime::now(),
+            io: std::sync::mpsc::channel(),
         }
     }
 
@@ -590,6 +592,12 @@ impl CPU {
 
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 4 };
+
+        // Receiving data from an IO device ?
+        if let Ok((device, data)) = self.io.1.try_recv() {
+            self.bus.io[device as usize] = data;
+            println!("Received {:#04X} from device {:#04X}", data, device);
+        }
 
         // Non maskable interrupt requested ?
         if self.nmi {
@@ -3738,7 +3746,7 @@ impl CPU {
             0xE7 | 0xEF | 0xF7 | 0xFF | 0x76 => {},
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
             0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE | 0xFE |
-            0x18 | 0x38 | 0x30 | 0x28 | 0x20 | 0x10 => self.reg.pc += 2,
+            0x18 | 0x38 | 0x30 | 0x28 | 0x20 | 0x10 | 0xDB => self.reg.pc += 2,
             0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 | 0x3A => self.reg.pc += 3,
             _ => self.reg.pc +=1,
         }
