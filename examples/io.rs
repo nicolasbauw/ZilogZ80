@@ -33,7 +33,7 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-// Demonstration peripheral 0x07 sends 0xDE on the data bus after 5 seconds
+// Demonstration peripheral 0x07 sends 0xDE on the data bus after 1 second
 fn periph(tx: std::sync::mpsc::Sender<(u8, u8)>) {
     loop {
         std::thread::sleep(Duration::from_secs(1));
