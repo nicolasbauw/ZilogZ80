@@ -25,7 +25,7 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
 
     // A single loop which waits for the 0xDE byte to be sent by the 0x07 peripheral
     loop {
-        c.execute();
+        c.execute_slice();
         if c.debug.opcode { print!("{}\n", c.debug.string); }
         if c.reg.pc == 0x0000 { break }
     }
