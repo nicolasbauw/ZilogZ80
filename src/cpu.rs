@@ -41,7 +41,7 @@ impl CPU {
             slice_max_cycles: 35000,
             slice_current_cycles: 0,
             slice_start_time: SystemTime::now(),
-            io: crossbeam_channel::bounded(1),
+            io: crossbeam_channel::unbounded(),
         }
     }
 
