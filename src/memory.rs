@@ -1,5 +1,6 @@
 use std::{fs::File, io::prelude::*,};
 
+/// The AddressBus struct is hosting the Z80 memory map.
 pub struct AddressBus {
     address_space: Vec<u8>,
     pub rom_space: Option<ROMSpace>,
@@ -36,12 +37,12 @@ impl AddressBus {
         u16::from(self.address_space[usize::from(address)]) | (u16::from(self.address_space[usize::from(address + 1)]) << 8)
     }
 
-    // Reads a word stored in memory in little endian byte order, returns this word in LE byte order
+    /// Reads a word stored in memory in little endian byte order, returns this word in LE byte order
     pub fn read_le_word(&self, address: u16) -> u16 {
         u16::from(self.address_space[usize::from(address)]) << 8 | (u16::from(self.address_space[usize::from(address + 1)]))
     }
 
-    // Reads a dword stored in memory in little endian byte order, returns this dword in LE byte order
+    /// Reads a dword stored in memory in little endian byte order, returns this dword in LE byte order
     pub fn read_le_dword(&self, address: u16) -> u32 {
         u32::from(self.address_space[usize::from(address)]) << 24 |
         u32::from(self.address_space[usize::from(address + 1)]) << 16 |

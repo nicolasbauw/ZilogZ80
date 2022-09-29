@@ -25,6 +25,7 @@ pub struct CPU {
 }
 
 impl CPU {
+    /// Creates a new CPU instance and its 16 bits address bus.
     pub fn new() -> CPU {
         CPU {
             reg: Registers::new(),
@@ -45,14 +46,17 @@ impl CPU {
         }
     }
 
+    /// Creates a maskable interrupt request
     pub fn int_request(&mut self, byte: u8) {
         self.int = Some(byte);
     }
 
+    /// Creates a non-maskable interrupt request
     pub fn nmi_request(&mut self) {
         self.nmi = true;
     }
 
+    /// Shortcut to reg.flags.to_byte()
     pub fn flags(&self) -> u8 {
         self.reg.flags.to_byte()
     }
@@ -605,6 +609,7 @@ impl CPU {
         self.io.0.send((port,data)).unwrap();
     }
 
+    /// Fetches and executes one instruction from (pc). Returns consumed clock cycles.
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 4 };
 
@@ -648,7 +653,7 @@ impl CPU {
 
     }
 
-    /// Fetches and executes one instruction from (pc), limiting speed to 2,1 Mhz by default. Returns the number of consumed clock cycles.
+    /// Fetches and executes instructions, until cycles limit is reached (2,1 Mhz / 35000 cycles by default). Returns the total number of consumed clock cycles.
     pub fn execute_slice(&mut self) -> u32 {
         if self.slice_current_cycles > self.slice_max_cycles {
             self.slice_current_cycles = 0;
@@ -3789,7 +3794,7 @@ fn check_sub_overflow(n1: u8, n2: u8) -> bool {
 }
 
 // Converts a signed byte to its absolute value
-pub fn signed_to_abs(n: u8) -> u8 {
+fn signed_to_abs(n: u8) -> u8 {
     !n +1
 }
 
