@@ -601,6 +601,7 @@ impl CPU {
 
     // OUT : from CPU to peripherals
     fn set_io(&mut self, port: u8, data: u8) {
+        if self.debug.io { println!("Message {:#04X} sent to device {:#04X}", data, port) }
         self.io.0.send((port,data)).unwrap();
     }
 
@@ -3744,6 +3745,7 @@ impl CPU {
             0xD3 => {
                 let port = self.bus.read_byte(self.reg.pc + 1);
                 self.set_io(port, self.reg.a);
+                if self.debug.instr_in { println!("OUT {:#04X} sent to device {:#04X}", self.reg.a, port) }
             },
 
             _ => {
