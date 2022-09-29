@@ -21,7 +21,7 @@ pub struct CPU {
     slice_max_cycles: u32,
     slice_current_cycles: u32,
     slice_start_time: SystemTime,
-    pub io: (std::sync::mpsc::Sender<(u8, u8)>, std::sync::mpsc::Receiver<(u8, u8)>)
+    pub io: (crossbeam_channel::Sender<(u8, u8)>, crossbeam_channel::Receiver<(u8, u8)>)
 }
 
 impl CPU {
@@ -41,7 +41,7 @@ impl CPU {
             slice_max_cycles: 35000,
             slice_current_cycles: 0,
             slice_start_time: SystemTime::now(),
-            io: std::sync::mpsc::channel(),
+            io: crossbeam_channel::bounded(1),
         }
     }
 

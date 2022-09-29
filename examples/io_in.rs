@@ -34,7 +34,7 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
 }
 
 // Demonstration peripheral 0x07 sends 0xDE on the data bus after 1 second
-fn periph(tx: std::sync::mpsc::Sender<(u8, u8)>) {
+fn periph(tx: crossbeam_channel::Sender<(u8, u8)>) {
     loop {
         std::thread::sleep(Duration::from_secs(1));
         println!("The 0x07 peripheral puts 0xDE on the data bus");
