@@ -9,6 +9,7 @@ categories = ["emulators"]
 license = "MIT"
 repository = "https://github.com/nicolasbauw/ZilogZ80"
 readme = "README.md"
+exclude = ["zexdoc_results.txt"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
