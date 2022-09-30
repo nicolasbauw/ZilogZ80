@@ -1,4 +1,4 @@
-use std::{ error::Error, process, thread };
+use std::{ error::Error, process, thread, time::Duration };
 use zilog_z80::cpu::CPU;
 
 fn main() {
@@ -28,7 +28,7 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     loop {
         c.execute_slice();
         if c.debug.opcode { print!("{}\n", c.debug.string); }
-        if c.reg.pc == 0x0000 { break }
+        if c.reg.pc == 0x0000 { thread::sleep(Duration::from_millis(500)); break }
     }
     Ok(())
 }
