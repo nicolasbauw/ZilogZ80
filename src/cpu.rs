@@ -719,6 +719,17 @@ impl CPU {
         cycles
     }
 
+    /// Sets CPU frequency (MHz)
+    /// ```rust
+    /// use zilog_z80::cpu::CPU;
+    /// let mut c = CPU::new();
+    /// c.set_freq(1.7);            // CPU will run at 1.7 Mhz
+    /// ```
+    pub fn set_freq(&mut self, f: f32) {
+        let cycles = (f * 1000000 as f32) / (1000/self.slice_duration) as f32;
+        self.slice_max_cycles = cycles as u32;
+    }
+
     // DDCB FDCB
     fn execute_4bytes(&mut self) -> u32 {
         let opcode = self.bus.read_le_dword(self.reg.pc);
