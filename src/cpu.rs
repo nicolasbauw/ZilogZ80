@@ -2785,6 +2785,24 @@ impl CPU {
             // IN B,(C)
             0xED68 => self.reg.l = self.inrc(),
 
+            // OUT (C),C
+            0xED41 => self.set_io(self.reg.c, self.reg.c),
+
+            // OUT (C),B
+            0xED49 => self.set_io(self.reg.c, self.reg.b),
+
+            // OUT (C),D
+            0xED51 => self.set_io(self.reg.c, self.reg.d),
+
+            // OUT (C),E
+            0xED59 => self.set_io(self.reg.c, self.reg.e),
+
+            // OUT (C),H
+            0xED61 => self.set_io(self.reg.c, self.reg.h),
+
+            // OUT (C),L
+            0xED69 => self.set_io(self.reg.c, self.reg.l),
+
             _ => {
                 if self.debug.unknw_instr { self.debug.string = format!("{:#06X}", opcode); }
                 cycles = 0xFF;
