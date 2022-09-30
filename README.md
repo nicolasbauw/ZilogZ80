@@ -1,5 +1,9 @@
 # zilog_z80
 
+[![Current Crates.io Version](https://img.shields.io/crates/v/zilog_z80.svg)](https://crates.io/crates/zilog_z80)
+[![Current docs Version](https://docs.rs/zilog_z80/badge.svg)](https://docs.rs/zilog_z80)
+[![Downloads badge](https://img.shields.io/crates/d/zilog_z80.svg)](https://crates.io/crates/zilog_z80)
+
 This is a Z80 emulator. It passes all but two zexdoc tests.
 It implements some (not all yet) undocumented instructions.
 It handles interrupts and I/O (see the examples directory).
