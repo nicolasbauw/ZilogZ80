@@ -2847,6 +2847,18 @@ impl CPU {
             // OUT (C),L
             0xED69 => self.set_io(self.reg.c, self.reg.l),
 
+            // INI
+            0xEDA2 => self.ini(),
+
+            // INIR
+            0xEDB2 => {
+                while self.reg.get_bc() !=0 {
+                    self.ini();
+                }
+                self.reg.flags.z = true;
+                self.reg.flags.n = true;
+            },
+
             _ => {
                 if self.debug.unknw_instr { self.debug.string = format!("{:#06X}", opcode); }
                 cycles = 0xFF;
