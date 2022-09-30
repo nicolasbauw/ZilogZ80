@@ -33,7 +33,7 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-// Demonstration peripheral 0x07 listens data sent b the CPU
+// Demonstration peripheral 0x07 listens data sent by the CPU
 fn periph(rx: crossbeam_channel::Receiver<(u8, u8)>) {
     loop {
         if let Ok((device, data)) = rx.try_recv() {
