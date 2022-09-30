@@ -3,11 +3,11 @@ use std::{fs::File, io::prelude::*,};
 /// The AddressBus struct is hosting the Z80 memory map.
 pub struct AddressBus {
     address_space: Vec<u8>,
-    pub rom_space: Option<ROMSpace>,
+    rom_space: Option<ROMSpace>,
 }
 
 /// Start and end addresses of read-only (ROM) area.
-pub struct ROMSpace {
+struct ROMSpace {
     pub start: u16,
     pub end: u16,
 }
@@ -18,6 +18,16 @@ impl AddressBus {
             address_space: vec![0; 65536],
             rom_space: None,
         }
+    }
+
+    /// Sets a ROM space. Write operations will be ineffective in this address range.
+    /// ```rust
+    /// use zilog_z80::cpu::CPU;
+    /// let mut c = CPU::new();
+    /// c.bus.set_romspace(0xF000, 0xFFFF);
+    /// ```
+    pub fn set_romspace(&mut self, start: u16, end: u16) {
+        self.rom_space = Some(ROMSpace{start, end});
     }
 
     /// Reads a byte from memory
