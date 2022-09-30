@@ -16,8 +16,8 @@ pub struct CPU {
     iff1: bool,
     iff2: bool,
     slice_duration: u32,
-    /// Defaults to 35000 cycles per 16ms slice (2.1 Mhz).
-    /// cycles = clock speed in Hz / required frames-per-second
+    // Defaults to 35000 cycles per 16ms slice (2.1 Mhz).
+    // cycles = clock speed in Hz / required frames-per-second
     slice_max_cycles: u32,
     slice_current_cycles: u32,
     slice_start_time: SystemTime,
@@ -704,8 +704,6 @@ impl CPU {
             // d = time taken to execute the slice_max_cycles
             if let Ok(d) = self.slice_start_time.elapsed() {
                 let sleep_time = self.slice_duration.saturating_sub(d.as_millis() as u32);
-                /*println!("Execution time : {:?}", d);
-                println!("Sleep time : {:?}", sleep_time);*/
 
                 #[cfg(windows)]
                 spin_sleep::sleep(Duration::from_millis(u64::from(sleep_time)));
