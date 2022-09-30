@@ -2852,12 +2852,48 @@ impl CPU {
 
             // INIR
             0xEDB2 => {
-                while self.reg.get_bc() !=0 {
+                while self.reg.b !=0 {
                     self.ini();
                 }
                 self.reg.flags.z = true;
                 self.reg.flags.n = true;
             },
+
+            // IND
+            0xEDAA => self.ind(),
+
+            // INDR
+            0xEDBA => {
+                while self.reg.b !=0 {
+                    self.ind();
+                }
+                self.reg.flags.z = true;
+                self.reg.flags.n = true;
+            },
+
+            // OUTI
+            0xEDA3 => self.outi(),
+
+            // OTIR
+            0xEDB3 => {
+                while self.reg.b !=0 {
+                    self.outi();
+                }
+                self.reg.flags.z = true;
+                self.reg.flags.n = true;
+            },
+
+            // OUTD
+            0xEDAB => self.outd(),
+
+            // OTDR
+            0xEDBB => {
+                while self.reg.b !=0 {
+                    self.outd();
+                }
+                self.reg.flags.z = true;
+                self.reg.flags.n = true;
+            }
 
             _ => {
                 if self.debug.unknw_instr { self.debug.string = format!("{:#06X}", opcode); }
