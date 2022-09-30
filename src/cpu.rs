@@ -597,7 +597,7 @@ impl CPU {
     // IN : from peripherals to CPU
     fn get_io(&mut self, port: u8) -> u8 {
         if let Ok((device, data)) = self.io.1.try_recv() {
-            if self.debug.io { println!("Message {:#04X} from device {:#04X}", data, device) }
+            if self.debug.io { println!("IO Message : data {:#04X} for device {:#04X}", data, device) }
             if device == port { return data }
         }
         return 0
@@ -605,7 +605,7 @@ impl CPU {
 
     // OUT : from CPU to peripherals
     fn set_io(&mut self, port: u8, data: u8) {
-        if self.debug.io { println!("Message {:#04X} sent to device {:#04X}", data, port) }
+        if self.debug.io { println!("IO Message : data {:#04X} for device {:#04X}", data, port) }
         self.io.0.send((port,data)).unwrap();
     }
 
@@ -3819,7 +3819,7 @@ fn signed_to_abs(n: u8) -> u8 {
 pub struct Debug {
     pub unknw_instr: bool,
     pub opcode: bool,
-    // IO MPSC Messages
+    // IO MPMC Messages
     pub io: bool,
     // Data read by IN instruction
     pub instr_in: bool,
