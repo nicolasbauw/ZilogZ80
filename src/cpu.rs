@@ -594,6 +594,50 @@ impl CPU {
         r
     }
 
+    // INI / INIR
+    fn ini(&mut self) {
+        let d = self.get_io(self.reg.c);
+        let hl = self.reg.get_hl();
+        self.bus.write_byte(hl, d);
+        self.reg.b = (self.reg.b).wrapping_sub(1);
+        self.reg.set_hl(hl.wrapping_add(1));
+        self.reg.flags.z = self.reg.b == 0x00;
+        self.reg.flags.n = true;
+    }
+
+    // IND / INDR
+    fn ind(&mut self) {
+        let d = self.get_io(self.reg.c);
+        let hl = self.reg.get_hl();
+        self.bus.write_byte(hl, d);
+        self.reg.b = (self.reg.b).wrapping_sub(1);
+        self.reg.set_hl(hl.wrapping_sub(1));
+        self.reg.flags.z = self.reg.b == 0x00;
+        self.reg.flags.n = true;
+    }
+
+    // OUTI / OTIR
+    fn outi(&mut self) {
+        let hl = self.reg.get_hl();
+        let d = self.bus.read_byte(hl);
+        self.set_io(self.reg.c, d);
+        self.reg.b = (self.reg.b).wrapping_sub(1);
+        self.reg.set_hl(hl.wrapping_add(1));
+        self.reg.flags.z = self.reg.b == 0x00;
+        self.reg.flags.n = true;
+    }
+
+    // OUTD / OTDR
+    fn outd(&mut self) {
+        let hl = self.reg.get_hl();
+        let d = self.bus.read_byte(hl);
+        self.set_io(self.reg.c, d);
+        self.reg.b = (self.reg.b).wrapping_sub(1);
+        self.reg.set_hl(hl.wrapping_sub(1));
+        self.reg.flags.z = self.reg.b == 0x00;
+        self.reg.flags.n = true;
+    }
+
     // IN : from peripherals to CPU
     fn get_io(&mut self, port: u8) -> u8 {
         if let Ok((device, data)) = self.io.1.try_recv() {
