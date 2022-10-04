@@ -36,7 +36,7 @@ impl AddressBus {
     pub fn channel_send(&self, start: usize, end: usize) {
         let mut d: Vec<u8> = Vec::new();
         for i in 0..end-start {
-            d.push(self.address_space[i]);
+            d.push(self.address_space[start + i]);
         }
         self.rw.0.send((start as u16, d)).unwrap();
     }
