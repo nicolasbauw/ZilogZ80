@@ -32,8 +32,17 @@ impl AddressBus {
         self.rom_space = Some(ROMSpace{start, end});
     }
 
+    /// Send a vec of bytes of the address space to rw channel
+    pub fn channel_send(&self, start: usize, end: usize) {
+        let mut d: Vec<u8> = Vec::new();
+        for i in 0..end-start {
+            d.push(self.address_space[i]);
+        }
+        self.rw.0.send((start as u16, d)).unwrap();
+    }
+
     /// Reads a slice of bytes
-    pub fn read_slice(&self, start: usize, end: usize) -> &[u8] {
+    pub fn read_mem_slice(&self, start: usize, end: usize) -> &[u8] {
         &self.address_space[start..end]
     }
 
