@@ -24,6 +24,7 @@
 pub mod cpu;
 pub mod registers;
 pub mod memory;
+pub use crossbeam_channel;
 mod flags;
 mod bit;
 mod cycles;
