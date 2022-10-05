@@ -42,8 +42,8 @@ impl AddressBus {
     }
 
     /// Reads a slice of bytes
-    pub fn read_mem_slice(&self, start: usize, end: usize) -> &[u8] {
-        &self.address_space[start..end]
+    pub fn read_mem_slice(&self, start: usize, end: usize) -> Vec<u8> {
+        self.address_space[start..end].to_vec()
     }
 
     /// Reads a byte from memory
