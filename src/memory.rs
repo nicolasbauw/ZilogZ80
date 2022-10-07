@@ -18,7 +18,7 @@ impl AddressBus {
         AddressBus {
             address_space: vec![0; 65536],
             rom_space: None,
-            rw: crossbeam_channel::bounded(1),
+            rw: crossbeam_channel::bounded(0),
         }
     }
 
