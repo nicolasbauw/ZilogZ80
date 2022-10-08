@@ -42,7 +42,7 @@ impl CPU {
             slice_max_cycles: 35000,
             slice_current_cycles: 0,
             slice_start_time: SystemTime::now(),
-            io: crossbeam_channel::bounded(0),
+            io: crossbeam_channel::bounded(1),
         }
     }
 
@@ -650,9 +650,8 @@ impl CPU {
     // OUT : from CPU to peripherals
     fn set_io(&mut self, port: u8, data: u8) {
         if self.debug.io { println!("IO Message : data {:#04X} for device {:#04X}", data, port) }
-        match self.io.0.try_send((port,data)) {
-            Ok(_) => (),
-            Err(_) => { eprintln!("No {:#04X} peripheral set to receive data !", port) }
+        if let Err(_) =  self.io.0.try_send((port,data)) {
+            eprintln!("No {:#04X} peripheral set to receive data !", port);
         }
     }
 
