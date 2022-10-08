@@ -18,7 +18,7 @@ impl AddressBus {
         AddressBus {
             address_space: vec![0; 65536],
             rom_space: None,
-            rw: crossbeam_channel::bounded(0),
+            rw: crossbeam_channel::bounded(1),
         }
     }
 
@@ -33,12 +33,13 @@ impl AddressBus {
     }
 
     /// Send a vec of bytes of the address space to rw channel
-    pub fn channel_send(&self, start: usize, end: usize) {
+    pub fn channel_send(&self, start: usize, end: usize) -> Result<(), crate::crossbeam_channel::TrySendError<(u16, Vec<u8>)>> {
         let mut d: Vec<u8> = Vec::new();
         for i in 0..end-start {
             d.push(self.address_space[start + i]);
         }
-        self.rw.0.send((start as u16, d)).unwrap();
+        self.rw.0.try_send((start as u16, d))?;
+        Ok(())
     }
 
     /// Reads a slice of bytes
