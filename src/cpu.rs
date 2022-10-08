@@ -650,8 +650,8 @@ impl CPU {
     // OUT : from CPU to peripherals
     fn set_io(&mut self, port: u8, data: u8) {
         if self.debug.io { println!("IO Message : data {:#04X} for device {:#04X}", data, port) }
-        if let Err(_) =  self.io.0.try_send((port,data)) {
-            eprintln!("No {:#04X} peripheral set to receive data !", port);
+        if let Err(_) =  self.io.0.send_timeout((port,data), Duration::from_nanos(500)) {
+            eprintln!("No peripheral set to receive data ! ({:#04X})", port);
         }
     }
 
