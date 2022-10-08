@@ -10,7 +10,7 @@ fn main() {
 
 fn load_execute() -> Result<(), Box<dyn Error>> {
     let  a: Vec<String> = env::args().collect();
-    let mut c = CPU::new();
+    let mut c = CPU::new(0xFFFF);
     // Loads assembled program into memory
     c.bus.load_bin(&a[1], 0x100)?;
     

@@ -26,11 +26,11 @@ pub struct CPU {
 
 impl CPU {
     /// Creates a new CPU instance and its 16 bits address bus.
-    pub fn new() -> CPU {
+    pub fn new(size: u16) -> CPU {
         CPU {
             reg: Registers::new(),
             alt: Registers::new(),
-            bus: AddressBus::new(),
+            bus: AddressBus::new(size),
             halt: false,
             debug: Debug::new(),
             int: None,

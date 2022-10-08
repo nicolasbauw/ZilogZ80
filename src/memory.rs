@@ -14,9 +14,9 @@ struct ROMSpace {
 }
 
 impl AddressBus {
-    pub fn new() -> AddressBus {
+    pub fn new(size: u16) -> AddressBus {
         AddressBus {
-            address_space: vec![0; 65536],
+            address_space: vec![0; size as usize],
             rom_space: None,
             rw: crossbeam_channel::bounded(1),
         }
@@ -100,7 +100,7 @@ mod tests {
     use super::*;
     #[test]
     fn r_le_dword() {
-        let mut b = AddressBus::new();
+        let mut b = AddressBus::new(0xFFFF);
         b.write_byte(0x0000, 0xCC);
         b.write_byte(0x0001, 0xDD);
         b.write_byte(0x0002, 0xEE);

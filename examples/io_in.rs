@@ -9,7 +9,7 @@ fn main() {
 }
 
 fn load_execute() -> Result<(), Box<dyn Error>> {
-    let mut c = CPU::new();
+    let mut c = CPU::new(0xFFFF);
     c.debug.io = false;
     c.debug.instr_in = false;
 
