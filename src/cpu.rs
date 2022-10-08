@@ -650,7 +650,10 @@ impl CPU {
     // OUT : from CPU to peripherals
     fn set_io(&mut self, port: u8, data: u8) {
         if self.debug.io { println!("IO Message : data {:#04X} for device {:#04X}", data, port) }
-        self.io.0.send((port,data)).unwrap();
+        match self.io.0.try_send((port,data)) {
+            Ok(_) => (),
+            Err(_) => { eprintln!("No {:#04X} peripheral set to receive data !", port) }
+        }
     }
 
     /// Fetches and executes one instruction from (pc). Returns consumed clock cycles.
