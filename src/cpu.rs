@@ -25,7 +25,7 @@ pub struct CPU {
 }
 
 impl CPU {
-    /// Creates a new CPU instance and its 16 bits address bus.
+    /// Creates a new CPU instance. 'Size' will be its top address.
     pub fn new(size: u16) -> CPU {
         CPU {
             reg: Registers::new(),
@@ -724,7 +724,7 @@ impl CPU {
     /// Sets CPU frequency (MHz)
     /// ```rust
     /// use zilog_z80::cpu::CPU;
-    /// let mut c = CPU::new();
+    /// let mut c = CPU::new(0xFFFF);
     /// c.set_freq(1.7);            // CPU will run at 1.7 Mhz
     /// ```
     pub fn set_freq(&mut self, f: f32) {
