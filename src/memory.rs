@@ -4,7 +4,7 @@ use std::{fs::File, io::prelude::*,};
 pub struct AddressBus {
     address_space: Vec<u8>,
     rom_space: Option<ROMSpace>,
-    pub rw: (crossbeam_channel::Sender<(u16, Vec<u8>)>, crossbeam_channel::Receiver<(u16, Vec<u8>)>),
+    pub mmio: (crossbeam_channel::Sender<(u16, Vec<u8>)>, crossbeam_channel::Receiver<(u16, Vec<u8>)>),
     pub io: (crossbeam_channel::Sender<(u8, u8)>, crossbeam_channel::Receiver<(u8, u8)>)
 }
 
@@ -19,7 +19,7 @@ impl AddressBus {
         AddressBus {
             address_space: vec![0; (size as usize) + 1],
             rom_space: None,
-            rw: crossbeam_channel::bounded(1),
+            mmio: crossbeam_channel::bounded(1),
             io: crossbeam_channel::bounded(1),
         }
     }
@@ -41,7 +41,7 @@ impl AddressBus {
         for i in 0..end-start {
             d.push(self.address_space[start + i]);
         }
-        self.rw.0.try_send((start as u16, d))?;
+        self.mmio.0.try_send((start as u16, d))?;
         Ok(())
     }
 
