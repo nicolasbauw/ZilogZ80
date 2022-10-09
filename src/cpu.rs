@@ -21,7 +21,6 @@ pub struct CPU {
     slice_max_cycles: u32,
     slice_current_cycles: u32,
     slice_start_time: SystemTime,
-    pub io: (crossbeam_channel::Sender<(u8, u8)>, crossbeam_channel::Receiver<(u8, u8)>)
 }
 
 impl CPU {
@@ -42,7 +41,6 @@ impl CPU {
             slice_max_cycles: 35000,
             slice_current_cycles: 0,
             slice_start_time: SystemTime::now(),
-            io: crossbeam_channel::bounded(1),
         }
     }
 
@@ -640,7 +638,7 @@ impl CPU {
 
     // IN : from peripherals to CPU
     fn get_io(&mut self, port: u8) -> u8 {
-        if let Ok((device, data)) = self.io.1.try_recv() {
+        if let Ok((device, data)) = self.bus.io.1.try_recv() {
             if self.debug.io { println!("IO Message : data {:#04X} for device {:#04X}", data, device) }
             if device == port { return data }
         }
@@ -650,7 +648,7 @@ impl CPU {
     // OUT : from CPU to peripherals
     fn set_io(&mut self, port: u8, data: u8) {
         if self.debug.io { println!("IO Message : data {:#04X} for device {:#04X}", data, port) }
-        if let Err(_) =  self.io.0.send_timeout((port,data), Duration::from_nanos(500)) {
+        if let Err(_) =  self.bus.io.0.send_timeout((port,data), Duration::from_nanos(500)) {
             eprintln!("No peripheral set to receive data ! ({:#04X})", port);
         }
     }

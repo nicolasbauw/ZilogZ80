@@ -4,7 +4,8 @@ use std::{fs::File, io::prelude::*,};
 pub struct AddressBus {
     address_space: Vec<u8>,
     rom_space: Option<ROMSpace>,
-    pub rw: (crossbeam_channel::Sender<(u16, Vec<u8>)>, crossbeam_channel::Receiver<(u16, Vec<u8>)>)
+    pub rw: (crossbeam_channel::Sender<(u16, Vec<u8>)>, crossbeam_channel::Receiver<(u16, Vec<u8>)>),
+    pub io: (crossbeam_channel::Sender<(u8, u8)>, crossbeam_channel::Receiver<(u8, u8)>)
 }
 
 /// Start and end addresses of read-only (ROM) area.
@@ -19,6 +20,7 @@ impl AddressBus {
             address_space: vec![0; (size as usize) + 1],
             rom_space: None,
             rw: crossbeam_channel::bounded(1),
+            io: crossbeam_channel::bounded(1),
         }
     }
 
