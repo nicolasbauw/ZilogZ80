@@ -4040,7 +4040,7 @@ fn mmio_in() {
     // By design choice, the data received by the channel is not checked automatically.
     // You choose where you want to place it in your loop.
     c.bus.mmio_receive();
-    c.execute();
+    c.execute();    // LD A,(0X000F)
     // Has data been written to that address ?
     assert_eq!(c.bus.read_byte(0x000F), 0x0FF);
 }
