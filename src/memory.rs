@@ -39,7 +39,7 @@ impl AddressBus {
         self.rom_space = Some(ROMSpace{start, end});
     }
 
-    /// Send a vec of bytes of the address space to rw channel
+    /// Send a vec of bytes of the address space via the read channel
     pub fn channel_send(&self, start: usize, end: usize) -> Result<(), crate::crossbeam_channel::TrySendError<(u16, Vec<u8>)>> {
         if end as usize > self.address_space.len() { panic!("Read operation after the end of address space !") }
         let mut d: Vec<u8> = Vec::new();
