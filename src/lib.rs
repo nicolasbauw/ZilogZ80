@@ -1,4 +1,5 @@
 //! This is a Z80 emulator.
+//! It handles interrupts and I/O.
 //! 
 //! Example for a small loop:
 //! ```rust
