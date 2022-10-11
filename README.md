@@ -4,15 +4,14 @@
 [![Current docs Version](https://docs.rs/zilog_z80/badge.svg)](https://docs.rs/zilog_z80)
 [![Downloads badge](https://img.shields.io/crates/d/zilog_z80.svg)](https://crates.io/crates/zilog_z80)
 
-This is a Z80 emulator. It passes all but two zexdoc tests.
-It implements some (not all yet) undocumented instructions.
-It handles interrupts and I/O (see the examples directory).
+This is a Z80 emulator.
+It handles interrupts and I/O.
 
 Example for a small loop:
 ```rust
 use zilog_z80::cpu::CPU;
 let mut c = CPU::new();
-c.reg.pc = 0x0100;                  // sets pc to $100
+c.reg.pc = 0x0100;                  // sets pc to 0x0100
 // Here we create a small machine code program for demo purpose.
 // Usually you will rather load an assembled code in memory with the load_bin function.
 c.bus.write_byte(0x0100, 0x3e);     // LD A,0x0F
@@ -26,5 +25,7 @@ loop {
     if c.reg.pc == 0x0000 { break }
 }
 ```
+
+ For IO examples see the examples directory. For MMIO examples see my [demonstration TRS-80 emulator.](https://github.com/nicolasbauw/TRS-80)
 
 License: MIT
