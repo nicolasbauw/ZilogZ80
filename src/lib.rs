@@ -1,6 +1,4 @@
-//! This is a Z80 emulator. It passes all but two zexdoc tests.
-//! It implements some (not all yet) undocumented instructions.
-//! It handles interrupts and I/O (see the examples directory).
+//! This is a Z80 emulator.
 //! 
 //! Example for a small loop:
 //! ```rust
