@@ -4,7 +4,11 @@ use std::{fs::File, io::prelude::*,};
 pub struct AddressBus {
     address_space: Vec<u8>,
     rom_space: Option<ROMSpace>,
-    pub mmio: (crossbeam_channel::Sender<(u16, Vec<u8>)>, crossbeam_channel::Receiver<(u16, Vec<u8>)>),
+    /// This channel is used for RAM reading by MMIO peripherals
+    pub mmio_read: (crossbeam_channel::Sender<(u16, Vec<u8>)>, crossbeam_channel::Receiver<(u16, Vec<u8>)>),
+    /// This channel is used for RAM writing by MMIO peripherals
+    pub mmio_write: (crossbeam_channel::Sender<(u16, u8)>, crossbeam_channel::Receiver<(u16, u8)>),
+    /// This channel is used for non memory-mapped IO
     pub io: (crossbeam_channel::Sender<(u8, u8)>, crossbeam_channel::Receiver<(u8, u8)>)
 }
 
@@ -19,7 +23,8 @@ impl AddressBus {
         AddressBus {
             address_space: vec![0; (size as usize) + 1],
             rom_space: None,
-            mmio: crossbeam_channel::bounded(1),
+            mmio_read: crossbeam_channel::bounded(1),
+            mmio_write: crossbeam_channel::bounded(1),
             io: crossbeam_channel::bounded(1),
         }
     }
@@ -41,7 +46,7 @@ impl AddressBus {
         for i in 0..end-start {
             d.push(self.address_space[start + i]);
         }
-        self.mmio.0.try_send((start as u16, d))?;
+        self.mmio_read.0.try_send((start as u16, d))?;
         Ok(())
     }
 
