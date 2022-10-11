@@ -120,9 +120,18 @@ mod tests {
     }
 
     #[test]
-    fn read_panic() {
+    fn read_invalid() {
         let mut b = AddressBus::new(0x7FFF);
         b.write_byte(0x8000, 0xFF);
         assert_eq!(b.read_byte(0x8000), 0);
+    }
+
+    #[test]
+    fn write_romspace() {
+        let mut b = AddressBus::new(0x7FFF);
+        b.write_byte(0x0000, 0xFF);
+        b.set_romspace(0x0000, 0x000F);
+        b.write_byte(0x0000, 0x00);
+        assert_eq!(b.read_byte(0x0000), 0xFF);
     }
 }
