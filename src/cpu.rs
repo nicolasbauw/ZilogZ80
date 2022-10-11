@@ -1,5 +1,5 @@
 use crate::registers::Registers;
-use crate::memory::AddressBus;
+use crate::bus::AddressBus;
 use crate::bit;
 use crate::cycles::{ CYCLES, CYCLES_CB, CYCLES_ED, CYCLES_DD_FD };
 use std::{time::Duration, time::SystemTime};
