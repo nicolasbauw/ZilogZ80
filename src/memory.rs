@@ -39,8 +39,8 @@ impl AddressBus {
         self.rom_space = Some(ROMSpace{start, end});
     }
 
-    /// Send a vec of bytes of the address space via the read channel
-    pub fn channel_send(&self, start: usize, end: usize) -> Result<(), crate::crossbeam_channel::TrySendError<(u16, Vec<u8>)>> {
+    /// Send a vec of bytes of the address space via the read channel. Typical use : transfer VRAM data.
+    pub fn mmio_send(&self, start: usize, end: usize) -> Result<(), crate::crossbeam_channel::TrySendError<(u16, Vec<u8>)>> {
         if end as usize > self.address_space.len() { panic!("Read operation after the end of address space !") }
         let mut d: Vec<u8> = Vec::new();
         for i in 0..end-start {
@@ -48,6 +48,16 @@ impl AddressBus {
         }
         self.mmio_read.0.try_send((start as u16, d))?;
         Ok(())
+    }
+
+    /// Stores a byte received via the write channel to memory.
+    /// By design choice, the data received by the channel is not checked automatically at each execute().
+    /// You can choose where you want to place it in your loop.
+    pub fn mmio_receive(&mut self) {
+        // Received data from a MMIO device ? Writing RAM
+        if let Ok((addr, data)) = self.mmio_write.1.try_recv() {
+            self.write_byte(addr, data);
+        }
     }
 
     /// Reads a slice of bytes from memory

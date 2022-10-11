@@ -657,11 +657,6 @@ impl CPU {
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 4 };
 
-        // Received data from a MMIO device ? Writing RAM
-        if let Ok((addr, data)) = self.bus.mmio_write.1.try_recv() {
-            self.bus.write_byte(addr, data);
-        }
-
         // Non maskable interrupt requested ?
         if self.nmi {
             self.iff2 = self.iff1;
