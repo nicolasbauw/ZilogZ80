@@ -1,4 +1,4 @@
-use std::{ error::Error, process, thread };
+use std::{ error::Error, process, thread, time::Duration };
 use zilog_z80::cpu::CPU;
 
 fn main() {
@@ -24,13 +24,16 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     thread::spawn(move || {
         // IN instruction automatically sends a request message to the peripheral through the io_req channel
         // So the peripheral knows he can send the message to the CPU via the io_in sender
-        if let Ok(device) = periph1_req_receiver.recv() {
-            // IN instruction for the 0x07 device ?
-            if device == 0x07 {
-                println!("The 0x07 peripheral puts 0xDE on the data bus");
-                // We send the data through the io_in channel
-                periph1_sender.send((0x07, 0xDE)).unwrap();
+        loop {
+            if let Ok(device) = periph1_req_receiver.recv() {
+                // IN instruction for the 0x07 device ?
+                if device == 0x07 {
+                    println!("The 0x07 peripheral puts 0xDE on the data bus");
+                    // We send the data through the io_in channel
+                    periph1_sender.send((0x07, 0xDE)).unwrap();
+                }
             }
+            thread::sleep(Duration::from_millis(500));
         }
     });
 
