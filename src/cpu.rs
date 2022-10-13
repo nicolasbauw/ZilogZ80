@@ -638,10 +638,11 @@ impl CPU {
 
     // IN : from peripherals to CPU
     fn get_io(&mut self, port: u8) -> u8 {
-        self.bus.io_req.0.send_timeout(port, Duration::from_millis(16)).unwrap();
-        if let Ok((device, data)) = self.bus.io_in.1.recv_timeout(Duration::from_millis(16)) {
-            if self.debug.io { println!("IO Message : data {:#04X} from device {:#04X}", data, device) }
-            if device == port { return data }
+        if let Ok(_) = self.bus.io_req.0.send_timeout(port, Duration::from_millis(16)) {
+            if let Ok((device, data)) = self.bus.io_in.1.recv_timeout(Duration::from_millis(16)) {
+                if self.debug.io { println!("IO Message : data {:#04X} from device {:#04X}", data, device) }
+                if device == port { return data }
+            }
         }
         return 0
     }
