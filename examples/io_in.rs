@@ -1,4 +1,4 @@
-use std::{ error::Error, process, thread, time::Duration };
+use std::{ error::Error, process, thread };
 use zilog_z80::cpu::CPU;
 
 fn main() {
@@ -33,7 +33,6 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
                     periph1_sender.send((0x07, 0xDE)).unwrap();
                 }
             }
-            thread::sleep(Duration::from_millis(500));
         }
     });
 
