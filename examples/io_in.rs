@@ -22,8 +22,8 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
 
     // Demonstration peripheral 0x07 sends the 0xDE message when a IN instruction occurs
     thread::spawn(move || {
-        // IN instruction automatically sends a request message to the peripheral through the io_req channel
-        // So the peripheral knows he can send the message to the CPU via the io_in sender
+        // IN instruction automatically sends a request message through the io_req channel
+        // So the peripheral knows when he can send the message to the CPU via the io_in sender
         loop {
             if let Ok(device) = periph1_req_receiver.recv() {
                 // IN instruction for the 0x07 device ?
