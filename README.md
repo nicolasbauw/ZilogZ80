@@ -10,7 +10,7 @@ It handles interrupts and I/O.
 Example for a small loop:
 ```rust
 use zilog_z80::cpu::CPU;
-let mut c = CPU::new();
+let mut c = CPU::new(0xFFFF);
 c.reg.pc = 0x0100;                  // sets pc to 0x0100
 // Here we create a small machine code program for demo purpose.
 // Usually you will rather load an assembled code in memory with the load_bin function.
@@ -26,6 +26,6 @@ loop {
 }
 ```
 
- For IO examples see the examples directory. For MMIO examples see my [demonstration TRS-80 emulator.](https://github.com/nicolasbauw/TRS-80)
+ For IO examples see the examples directory or my [Altair 8800 / teletype emulator](https://github.com/nicolasbauw/teletype). For MMIO examples see my [demonstration TRS-80 emulator.](https://github.com/nicolasbauw/TRS-80)
 
 License: MIT
