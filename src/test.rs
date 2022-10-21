@@ -4037,9 +4037,6 @@ fn mmio_in() {
     c.bus.write_byte(0x0002, 0x00);
     // Peripheral writes 0xFF at address 0x000F
     c.bus.mmio_write.0.send((0x000F, 0xFF)).unwrap();
-    // By design choice, the data received by the channel is not checked automatically.
-    // You choose where you want to place it in your loop.
-    c.bus.mmio_receive();
     c.execute();    // LD A,(0X000F)
     // Has data been written to that address ?
     assert_eq!(c.bus.read_byte(0x000F), 0x0FF);

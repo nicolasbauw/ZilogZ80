@@ -59,20 +59,18 @@ impl AddressBus {
         Ok(())
     }
 
-    /// Stores a byte received via the write channel to memory.
-    /// By design choice, the data received by the channel is not checked automatically at each execute().
-    /// You can choose where you want to place it in your loop.
-    pub fn mmio_receive(&mut self) {
-        // Received data from a MMIO device ? Writing RAM
-        if let Ok((addr, data)) = self.mmio_write.1.try_recv() {
-            self.write_byte(addr, data);
-        }
-    }
-
     /// Reads a slice of bytes from memory
     pub fn read_mem_slice(&self, start: usize, end: usize) -> Vec<u8> {
         if end as usize > self.address_space.len() { panic!("Read operation after the end of address space !") }
         self.address_space[start..end].to_vec()
+    }
+
+    /// Clears a slice of bytes in memory
+    pub fn clear_mem_slice(&mut self, start: usize, end: usize) {
+        if end as usize > self.address_space.len() { panic!("Read operation after the end of address space !") }
+        for m in 0..=(end-start) {
+            self.address_space[m] = 0;
+        }
     }
 
     /// Reads a byte from memory
@@ -157,5 +155,16 @@ mod tests {
         b.set_romspace(0x0000, 0x000F);
         b.write_byte(0x0000, 0x00);
         assert_eq!(b.read_byte(0x0000), 0xFF);
+    }
+
+    #[test]
+    fn clear_slice() {
+        let mut b = AddressBus::new(0x000F);
+        for m in 0..=15 {
+            b.write_byte(m, 0xFF);
+        }
+        assert_eq!(b.read_byte(0x000F), 0xFF);
+        b.clear_mem_slice(0x0000, 0x000F);
+        assert_eq!(b.read_byte(0x000F), 0x00);
     }
 }
