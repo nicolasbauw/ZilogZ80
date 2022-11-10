@@ -3299,20 +3299,20 @@ impl CPU {
             },
 
             // SUB s
-            0x90 => self.sub(self.reg.b),                                     // SUB B
-            0x91 => self.sub(self.reg.c),                                     // SUB C
-            0x92 => self.sub(self.reg.d),                                     // SUB D
-            0x93 => self.sub(self.reg.e),                                     // SUB E
-            0x94 => self.sub(self.reg.h),                                     // SUB H
-            0x95 => self.sub(self.reg.l),                                     // SUB L
-            0x96 => {                                                         // SUB (HL)
+            0x90 => self.sub(self.reg.b),                                     // SUB A,B
+            0x91 => self.sub(self.reg.c),                                     // SUB A,C
+            0x92 => self.sub(self.reg.d),                                     // SUB A,D
+            0x93 => self.sub(self.reg.e),                                     // SUB A,E
+            0x94 => self.sub(self.reg.h),                                     // SUB A,H
+            0x95 => self.sub(self.reg.l),                                     // SUB A,L
+            0x96 => {                                                         // SUB A,(HL)
                 let addr = self.reg.get_hl();
                 let n = self.bus.read_byte(addr);
                 self.sub(n)
             },
-            0x97 => self.sub(self.reg.a),                                     // SUB A
+            0x97 => self.sub(self.reg.a),                                     // SUB A,A
 
-            0xD6 => {                                                         // SUB n
+            0xD6 => {                                                         // SUB A,n
                 let n = self.bus.read_byte(self.reg.pc + 1);
                 self.sub(n);
             },
