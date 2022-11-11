@@ -27,6 +27,7 @@ pub use crossbeam_channel;
 mod flags;
 mod bit;
 mod cycles;
+mod dasm;
 
 #[cfg(test)]
 mod test;
