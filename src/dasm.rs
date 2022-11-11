@@ -126,27 +126,27 @@ impl CPU {
             // LD r,n
             0x06 => {                                                               // LD B,n
                 let data = self.bus.read_byte(self.reg.pc + 1);
-                format!("06        LD B,{:02X}", data)
+                format!("06        LD B,${:02X}", data)
             },
             0x0E => {                                                               // LD C,n
                 let data = self.bus.read_byte(self.reg.pc + 1);
-                format!("0E        LD C,{:02X}", data)
+                format!("0E        LD C,${:02X}", data)
             },
             0x16 => {                                                               // LD D,n
                 let data = self.bus.read_byte(self.reg.pc + 1);
-                format!("16        LD D,{:02X}", data)
+                format!("16        LD D,${:02X}", data)
             },
             0x1E => {                                                               // LD E,n
                 let data = self.bus.read_byte(self.reg.pc + 1);
-                format!("1E        LD E,{:02X}", data)
+                format!("1E        LD E,${:02X}", data)
             },
             0x26 => {                                                               // LD H,n
                 let data = self.bus.read_byte(self.reg.pc + 1);
-                format!("26        LD H,{:02X}", data)
+                format!("26        LD H,${:02X}", data)
             },
             0x2E => {                                                               // LD L,n
                 let data = self.bus.read_byte(self.reg.pc + 1);
-                format!("2E        LD L,{:02X}", data)
+                format!("2E        LD L,${:02X}", data)
             },
             0x36 => {                                                               // LD (HL),n
                 let data = self.bus.read_byte(self.reg.pc + 1);
@@ -155,7 +155,7 @@ impl CPU {
             },
             0x3E => {                                                               // LD A,n
                 let data = self.bus.read_byte(self.reg.pc + 1);
-                format!("3E        LD A,{:02X}", data)
+                format!("3E        LD A,${:02X}", data)
             },
 
             // LD A,(BC)

@@ -2949,6 +2949,9 @@ impl CPU {
     fn execute_1byte(&mut self, opcode: u8) -> u32 {
         let mut cycles = CYCLES[opcode as usize].into();
 
+        // Saving current PC for debug output
+        let pc = self.reg.pc;
+
         match opcode {
             // 8-Bit Load Group
             // LD r,r'      LD r,(HL)
@@ -3891,6 +3894,8 @@ impl CPU {
 
         }
 
+        if self.debug.opcode { print!("{:#06X}\t{}\nSP : {:#06X}\tS : {}\tZ : {}\tH : {}\tP : {}\tC : {}\nB : {:#04X}\tC : {:#04X}\tD : {:#04x}\tE : {:#04X}\tH : {:#04X}\tL : {:#04X}\tA : {:#04X}\t(SP) : {:#06X}\n", pc, self.dasm_1byte(pc), self.reg.sp, self.reg.flags.s as i32, self.reg.flags.z as i32, self.reg.flags.h as i32, self.reg.flags.p as i32, self.reg.flags.c as i32, self.reg.b, self.reg.c, self.reg.d, self.reg.e, self.reg.h, self.reg.l, self.reg.a, self.bus.read_word(self.reg.sp)) }
+
         match opcode {
             0xC3 | 0xDA | 0xD2 | 0xCA | 0xC2 | 0xFA | 0xF2 | 0xEA |
             0xE2 | 0xE9 | 0xCD | 0xDC | 0xD4 | 0xCC | 0xC4 | 0xFC |
@@ -3903,8 +3908,6 @@ impl CPU {
             0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 | 0x3A => self.reg.pc += 3,
             _ => self.reg.pc +=1,
         }
-
-        if self.debug.opcode == true { self.debug.string = format!("{:#04X}", opcode) }
 
         cycles
     }
