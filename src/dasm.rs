@@ -125,36 +125,36 @@ impl CPU {
 
             // LD r,n
             0x06 => {                                                               // LD B,n
-                let data = self.bus.read_byte(self.reg.pc + 1);
+                let data = self.bus.read_byte(address + 1);
                 format!("06        LD B,${:02X}", data)
             },
             0x0E => {                                                               // LD C,n
-                let data = self.bus.read_byte(self.reg.pc + 1);
+                let data = self.bus.read_byte(address + 1);
                 format!("0E        LD C,${:02X}", data)
             },
             0x16 => {                                                               // LD D,n
-                let data = self.bus.read_byte(self.reg.pc + 1);
+                let data = self.bus.read_byte(address + 1);
                 format!("16        LD D,${:02X}", data)
             },
             0x1E => {                                                               // LD E,n
-                let data = self.bus.read_byte(self.reg.pc + 1);
+                let data = self.bus.read_byte(address + 1);
                 format!("1E        LD E,${:02X}", data)
             },
             0x26 => {                                                               // LD H,n
-                let data = self.bus.read_byte(self.reg.pc + 1);
+                let data = self.bus.read_byte(address + 1);
                 format!("26        LD H,${:02X}", data)
             },
             0x2E => {                                                               // LD L,n
-                let data = self.bus.read_byte(self.reg.pc + 1);
+                let data = self.bus.read_byte(address + 1);
                 format!("2E        LD L,${:02X}", data)
             },
             0x36 => {                                                               // LD (HL),n
-                let data = self.bus.read_byte(self.reg.pc + 1);
+                let data = self.bus.read_byte(address + 1);
                 let addr = self.reg.get_hl();
                 format!("36        LD (${:04X}),{:02X}", addr, data)
             },
             0x3E => {                                                               // LD A,n
-                let data = self.bus.read_byte(self.reg.pc + 1);
+                let data = self.bus.read_byte(address + 1);
                 format!("3E        LD A,${:02X}", data)
             },
 
@@ -172,7 +172,7 @@ impl CPU {
 
             // LD A,(nn)
             0x3A => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("3A        LD A,(${:04X})", addr)
             },
 
@@ -190,38 +190,38 @@ impl CPU {
 
             // LD (nn),A
             0x32 => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("32        LD (${:04X}),A", addr)
             },
 
             // 16-Bit Load Group
             // LD dd,nn
             0x01 => {                                                               // LD BC,nn
-                let d16 = self.bus.read_word(self.reg.pc + 1); 
+                let d16 = self.bus.read_word(address + 1); 
                 format!("01        LD BC,${:04X}", d16)
             },
             0x11 => {                                                               // LD DE,nn
-                let d16 = self.bus.read_word(self.reg.pc + 1); 
+                let d16 = self.bus.read_word(address + 1); 
                 format!("11        LD DE,${:04X}", d16)
             },
             0x21 => {                                                               // LD HL,nn
-                let d16 = self.bus.read_word(self.reg.pc + 1); 
+                let d16 = self.bus.read_word(address + 1); 
                 format!("21        LD HL,${:04X}", d16)
             },
             0x31 => {                                                               // LD SP,nn
-                let d16 = self.bus.read_word(self.reg.pc + 1); 
+                let d16 = self.bus.read_word(address + 1); 
                 format!("31        LD SP,${:04X}", d16)
             },
 
             // LD HL,(nn)
             0x2A => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("2A        LD HL,(${:04X})", addr)
             },
 
             // LD (nn),HL
             0x22 => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("22        LD (${:04X}),HL", addr)
             },
 
@@ -269,7 +269,7 @@ impl CPU {
 
             // ADD A,n
             0xC6 => {
-                let n = self.bus.read_byte(self.reg.pc + 1);
+                let n = self.bus.read_byte(address + 1);
                 format!("C6        ADD A,${:02X}", n)
             },
 
@@ -288,7 +288,7 @@ impl CPU {
 
             // ADC a,n
             0xCE => {                                                        // ADC A,(HL)
-                let n = self.bus.read_byte(self.reg.pc + 1);
+                let n = self.bus.read_byte(address + 1);
                 format!("CE        ADC A,${:02X}", n)
             },
 
@@ -306,7 +306,7 @@ impl CPU {
             0x97 => String::from("97        SUB A,A"),                       // SUB A,A
 
             0xD6 => {                                                        // SUB A,n
-                let n = self.bus.read_byte(self.reg.pc + 1);
+                let n = self.bus.read_byte(address + 1);
                 format!("D6        SUB A,${:02X}", n)
             },
 
@@ -324,7 +324,7 @@ impl CPU {
             0x9F => String::from("9F        SBC A,A"),                       // SBC A,A
 
             0xDE => {                                                        // SBC A,n
-                let n = self.bus.read_byte(self.reg.pc + 1);
+                let n = self.bus.read_byte(address + 1);
                 format!("DE        SBC A,${:02X}", n)
             },
 
@@ -342,7 +342,7 @@ impl CPU {
             0xA7 => String::from("A7        AND L"),                       // AND A
 
             0xE6 => {                                                      // AND n
-                let n = self.bus.read_byte(self.reg.pc + 1);
+                let n = self.bus.read_byte(address + 1);
                 format!("E6        AND ${:02X}", n)
             },
 
@@ -360,7 +360,7 @@ impl CPU {
             0xB7 => String::from("B7        OR A"),                       // OR A
 
             0xF6 => {                                                     // OR n
-                let n = self.bus.read_byte(self.reg.pc + 1);
+                let n = self.bus.read_byte(address + 1);
                 format!("F6        OR ${:02X}", n)
             },
 
@@ -378,7 +378,7 @@ impl CPU {
             0xAF => String::from("AF        XOR A"),                       // XOR A
 
             0xEE => {                                                      // XOR n
-                let n = self.bus.read_byte(self.reg.pc + 1);
+                let n = self.bus.read_byte(address + 1);
                 format!("EE        XOR ${:02X}", n)
             },
 
@@ -396,7 +396,7 @@ impl CPU {
             0xBF => String::from("BF        CP A"),                       // CP A
 
             0xFE => {                                                     // CP n
-                let n = self.bus.read_byte(self.reg.pc + 1);
+                let n = self.bus.read_byte(address + 1);
                 format!("FE        CP ${:02X}", n)
             },
 
@@ -486,104 +486,104 @@ impl CPU {
             // Jump group
             // JP nn
             0xC3 => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("C3        JP ${:04X}", addr)
             },
 
             // JP C,nn
             0xDA => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("DA        JP C,${:04X}", addr)
             },
 
             // JP NC,nn
             0xD2 => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("D2        JP NC,${:04X}", addr)
             },
 
             // JP Z,nn
             0xCA => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("CA        JP Z,${:04X}", addr)
             },
 
             // JP NZ,nn
             0xC2 => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("C2        JP NZ,${:04X}", addr)
             },
 
             // JP M,nn
             0xFA => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("FA        JP M,${:04X}", addr)
             },
 
             // JP P,nn
             0xF2 => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("F2        JP P,${:04X}", addr)
             },
 
             // JP PE,nn
             0xEA => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("EA        JP PE,${:04X}", addr)
             },
 
             // JP PO,nn
             0xE2 => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("E2        JP PO,${:04X}", addr)
             },
 
             // JR e
             0x18 => {
-                let displacement= self.bus.read_byte(self.reg.pc + 1);
+                let displacement= self.bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
-                    true => self.reg.pc - ( signed_to_abs(displacement) as u16 ),
-                    false => self.reg.pc + ( displacement as u16 )
+                    true => address - ( signed_to_abs(displacement) as u16 ),
+                    false => address + ( displacement as u16 )
                 };
                 format!("18        JR ${:04X}", addr)
             },
 
             // JR C,e
             0x38 => {
-                let displacement= self.bus.read_byte(self.reg.pc + 1);
+                let displacement= self.bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
-                    true => self.reg.pc - ( signed_to_abs(displacement) as u16 ),
-                    false => self.reg.pc + ( displacement as u16 )
+                    true => address - ( signed_to_abs(displacement) as u16 ),
+                    false => address + ( displacement as u16 )
                 };
                 format!("38        JR C,${:04X}", addr)
             },
 
             // JR NC,e
             0x30 => {
-                let displacement= self.bus.read_byte(self.reg.pc + 1);
+                let displacement= self.bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
-                    true => self.reg.pc - ( signed_to_abs(displacement) as u16 ),
-                    false => self.reg.pc + ( displacement as u16 )
+                    true => address - ( signed_to_abs(displacement) as u16 ),
+                    false => address + ( displacement as u16 )
                 };
                 format!("30        JR NC,${:04X}", addr)
             },
 
             // JR Z,e
             0x28 => {
-                let displacement= self.bus.read_byte(self.reg.pc + 1);
+                let displacement= self.bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
-                    true => self.reg.pc - ( signed_to_abs(displacement) as u16 ),
-                    false => self.reg.pc + ( displacement as u16 )
+                    true => address - ( signed_to_abs(displacement) as u16 ),
+                    false => address + ( displacement as u16 )
                 };
                 format!("28        JR Z,${:04X}", addr)
             },
 
             // JR NZ,e
             0x20 => {
-                let displacement= self.bus.read_byte(self.reg.pc + 1);
+                let displacement= self.bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
-                    true => self.reg.pc - ( signed_to_abs(displacement) as u16 ),
-                    false => self.reg.pc + ( displacement as u16 )
+                    true => address - ( signed_to_abs(displacement) as u16 ),
+                    false => address + ( displacement as u16 )
                 };
                 format!("20        JR NZ,${:04X}", addr)
             },
@@ -596,10 +596,10 @@ impl CPU {
 
             // DJNZ, e
             0x10 => {
-                let displacement= self.bus.read_byte(self.reg.pc + 1);
+                let displacement= self.bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
-                    true => self.reg.pc - ( signed_to_abs(displacement) as u16 ),
-                    false => self.reg.pc + ( displacement as u16 )
+                    true => address - ( signed_to_abs(displacement) as u16 ),
+                    false => address + ( displacement as u16 )
                 };
                 format!("10        DJNZ ${:04X}", addr)
             }
@@ -607,55 +607,55 @@ impl CPU {
             // Call and Return Group
             // CALL nn
             0xCD => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("CD        CALL ${:04X}", addr)
             },
 
             // CALL C,nn
             0xDC => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("DC        CALL C,${:04X}", addr)
             },
 
             // CALL NC,nn
             0xD4 => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("D4        CALL NC,${:04X}", addr)
             },
 
             // CALL Z,nn
             0xCC => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("CC        CALL Z,${:04X}", addr)
             },
 
             // CALL NZ,nn
             0xC4 => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("C4        CALL NZ,${:04X}", addr)
             },
 
             // CALL M,nn
             0xFC => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("FC        CALL M,${:04X}", addr)
             },
 
             // CALL P,nn
             0xF4 => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("F4        CALL P,${:04X}", addr)
             },
 
             // CALL PE,nn
             0xEC => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("EC        CALL PE,${:04X}", addr)
             },
 
             // CALL PO,nn
             0xE4 => {
-                let addr = self.bus.read_word(self.reg.pc + 1);
+                let addr = self.bus.read_word(address + 1);
                 format!("E4        CALL PO,${:04X}", addr)
             },
 
@@ -713,13 +713,13 @@ impl CPU {
             // Input and Output Group
             // IN A,(n)
             0xDB => {
-                let port = self.bus.read_byte(self.reg.pc + 1);
+                let port = self.bus.read_byte(address + 1);
                 format!("DB        IN A,(${:02X})", port)
             },
 
             // OUT (n),A
             0xD3 => {
-                let port = self.bus.read_byte(self.reg.pc + 1);
+                let port = self.bus.read_byte(address + 1);
                 format!("D3        OUT A,(${:02X})", port)
             },
 
