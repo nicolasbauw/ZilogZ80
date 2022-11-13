@@ -14,7 +14,7 @@ impl CPU {
             0x43 => String::from("43            LD B,E"),           // LD B,E
             0x44 => String::from("44            LD B,H"),           // LD B,H
             0x45 => String::from("45            LD B,L"),           // LD B,L
-            0x46 => {                                           // LD B,(HL)
+            0x46 => {                                               // LD B,(HL)
                 let addr = self.reg.get_hl();
                 format!("46         LD B,(${:04X})", addr)
             },
@@ -26,7 +26,7 @@ impl CPU {
             0x4B => String::from("4B            LD C,E"),           // LD C,E
             0x4C => String::from("4C            LD C,H"),           // LD C,H
             0x4D => String::from("4D            LD C,L"),           // LD C,L
-            0x4E => {                                           // LD C,(HL)
+            0x4E => {                                               // LD C,(HL)
                 let addr = self.reg.get_hl();
                 format!("4E            LD C,(${:04X})", addr)
             }
@@ -38,7 +38,7 @@ impl CPU {
             0x53 => String::from("53            LD D,E"),            // LD D,E
             0x54 => String::from("54            LD D,H"),            // LD D,H
             0x55 => String::from("55            LD D,L"),            // LD D,L
-            0x56 => {                                            // LD D,(HL)
+            0x56 => {                                                // LD D,(HL)
                 let addr = self.reg.get_hl();
                 format!("4E            LD D,(${:04X})", addr)
             }
@@ -50,7 +50,7 @@ impl CPU {
             0x5B => String::from("5B            LD E,E"),            // LD E,E
             0x5C => String::from("5C            LD E,H"),            // LD E,H
             0x5D => String::from("5D            LD E,L"),            // LD E,L
-            0x5E => {                                            // LD E,(HL)
+            0x5E => {                                                // LD E,(HL)
                 let addr = self.reg.get_hl();
                 format!("5E            LD E,(${:04X})", addr)
             }
@@ -62,7 +62,7 @@ impl CPU {
             0x63 => String::from("63            LD H,E"),            // LD H,E
             0x64 => String::from("64            LD H,H"),            // LD H,H
             0x65 => String::from("65            LD H,L"),            // LD H,L
-            0x66 => {                                            // LD H,(HL)
+            0x66 => {                                                // LD H,(HL)
                 let addr = self.reg.get_hl();
                 format!("66            LD H,(${:04X})", addr)
             }
@@ -74,7 +74,7 @@ impl CPU {
             0x6B => String::from("6B            LD L,E"),            // LD L,E
             0x6C => String::from("6C            LD L,H"),            // LD L,H
             0x6D => String::from("6D            LD L,L"),            // LD L,L
-            0x6E => {                                            // LD L,(HL)
+            0x6E => {                                                // LD L,(HL)
                 let addr = self.reg.get_hl();
                 format!("6E            LD L,(${:04X})", addr)
             }
@@ -86,39 +86,39 @@ impl CPU {
             0x7B => String::from("7B            LD A,E"),            // LD A,E
             0x7C => String::from("7C            LD A,H"),            // LD A,H
             0x7D => String::from("7D            LD A,L"),            // LD A,L
-            0x7E => {                                            // LD A,(HL)
+            0x7E => {                                                // LD A,(HL)
                 let addr = self.reg.get_hl();
                 format!("7E            LD A,(${:04X})", addr)
             }
             0x7F => String::from("7F            LD A,A"),            // LD A,A
 
             // LD (HL),r
-            0x70 => {                                            // LD (HL), B
+            0x70 => {                                                // LD (HL), B
                 let addr = self.reg.get_hl();
                 format!("70            LD (${:04X}),B", addr)
             },
-            0x71 => {                                            // LD (HL), C
+            0x71 => {                                                // LD (HL), C
                 let addr = self.reg.get_hl();
                 format!("71            LD (${:04X}),C", addr)
             },
-            0x72 => {                                            // LD (HL), D
+            0x72 => {                                                // LD (HL), D
                 let addr = self.reg.get_hl();
                 format!("72            LD (${:04X}),D", addr)
             },
-            0x73 => {                                            // LD (HL), E
+            0x73 => {                                                // LD (HL), E
                 let addr = self.reg.get_hl();
                 format!("73            LD (${:04X}),E", addr)
             },
-            0x74 => {                                            // LD (HL), H
+            0x74 => {                                                // LD (HL), H
                 let addr = self.reg.get_hl();
                 format!("74            LD (${:04X}),H", addr)
             },
-            0x75 => {                                            // LD (HL), L
+            0x75 => {                                                // LD (HL), L
                 let addr = self.reg.get_hl();
                 format!("75            LD (${:04X}),L", addr)
             },
 
-            0x77 => {                                            // LD (HL), A
+            0x77 => {                                                // LD (HL), A
                 let addr = self.reg.get_hl();
                 format!("77            LD (${:04X}),A", addr)
             },
@@ -275,7 +275,7 @@ impl CPU {
             0x83 => String::from("83            ADD A,E"),                      // ADD A,E
             0x84 => String::from("84            ADD A,H"),                      // ADD A,H
             0x85 => String::from("85            ADD A,L"),                      // ADD A,L
-            0x86 => {                                                       // ADD A,(HL)
+            0x86 => {                                                           // ADD A,(HL)
                 let addr = self.reg.get_hl();
                 format!("86            ADD A,(${:04X})", addr)
             },
@@ -294,14 +294,14 @@ impl CPU {
             0x8B => String::from("8B            ADC A,E"),                       // ADC A,E
             0x8C => String::from("8C            ADC A,H"),                       // ADC A,H
             0x8D => String::from("8D            ADC A,L"),                       // ADC A,L
-            0x8E => {                                                        // ADC A,(HL)
+            0x8E => {                                                            // ADC A,(HL)
                 let addr = self.reg.get_hl();
                 format!("8E        ADC A,(${:04X})", addr)
             },
             0x8F => String::from("8F            ADC A,A"),                       // ADC A,A
 
             // ADC a,n
-            0xCE => {                                                        // ADC A,(HL)
+            0xCE => {                                                            // ADC A,(HL)
                 let n = self.bus.read_byte(address + 1);
                 format!("CE {:02X}         ADC A,${:02X}", n, n)
             },
@@ -313,13 +313,13 @@ impl CPU {
             0x93 => String::from("93            SUB A,E"),                       // SUB A,E
             0x94 => String::from("94            SUB A,H"),                       // SUB A,H
             0x95 => String::from("95            SUB A,L"),                       // SUB A,L
-            0x96 => {                                                        // SUB A,(HL)
+            0x96 => {                                                            // SUB A,(HL)
                 let addr = self.reg.get_hl();
                 format!("96            SUB A,(${:04X})", addr)
             },
             0x97 => String::from("97            SUB A,A"),                       // SUB A,A
 
-            0xD6 => {                                                        // SUB A,n
+            0xD6 => {                                                            // SUB A,n
                 let n = self.bus.read_byte(address + 1);
                 format!("D6 {:02X}         SUB A,${:02X}", n, n)
             },
@@ -331,13 +331,13 @@ impl CPU {
             0x9B => String::from("9B            SBC A,E"),                       // SBC A,E
             0x9C => String::from("9C            SBC A,H"),                       // SBC A,H
             0x9D => String::from("9D            SBC A,L"),                       // SBC A,L
-            0x9E => {                                                        // SBC A,(HL)
+            0x9E => {                                                            // SBC A,(HL)
                 let addr = self.reg.get_hl();
                 format!("9E            SBC A,(${:04X})", addr)
             },
-            0x9F => String::from("9F        SBC A,A"),                       // SBC A,A
+            0x9F => String::from("9F        SBC A,A"),                           // SBC A,A
 
-            0xDE => {                                                        // SBC A,n
+            0xDE => {                                                            // SBC A,n
                 let n = self.bus.read_byte(address + 1);
                 format!("DE {:02X}         SBC A,${:02X}", n, n)
             },
@@ -349,13 +349,13 @@ impl CPU {
             0xA3 => String::from("A3            AND E"),                       // AND E
             0xA4 => String::from("A4            AND H"),                       // AND H
             0xA5 => String::from("A5            AND L"),                       // AND L
-            0xA6 => {                                                      // AND (HL)
+            0xA6 => {                                                          // AND (HL)
                 let addr = self.reg.get_hl();
                 format!("A6            AND (${:04X})", addr)
             },
             0xA7 => String::from("A7            AND L"),                       // AND A
 
-            0xE6 => {                                                      // AND n
+            0xE6 => {                                                          // AND n
                 let n = self.bus.read_byte(address + 1);
                 format!("E6 {:02X}         AND ${:02X}", n, n)
             },
@@ -367,13 +367,13 @@ impl CPU {
             0xB3 => String::from("B3            OR E"),                       // OR E
             0xB4 => String::from("B4            OR H"),                       // OR H
             0xB5 => String::from("B5            OR L"),                       // OR L
-            0xB6 => {                                                     // OR (HL)
+            0xB6 => {                                                         // OR (HL)
                 let addr = self.reg.get_hl();
                 format!("B6            OR (${:04X})", addr)
             },
             0xB7 => String::from("B7            OR A"),                       // OR A
 
-            0xF6 => {                                                     // OR n
+            0xF6 => {                                                         // OR n
                 let n = self.bus.read_byte(address + 1);
                 format!("F6 {:02X}         OR ${:02X}", n, n)
             },
