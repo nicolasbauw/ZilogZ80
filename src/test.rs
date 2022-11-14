@@ -4041,3 +4041,17 @@ fn mmio_in() {
     // Has data been written to that address ?
     assert_eq!(c.bus.read_byte(0x000F), 0x0FF);
 }
+
+#[test]
+fn jr_nz_neg() {
+    let mut c = CPU::new(0xFFFF);
+    c.reg.pc = 0x0274;
+    c.bus.write_byte(0x0274, 0x0E);
+    c.bus.write_byte(0x0275, 0x08);
+    c.bus.write_byte(0x0276, 0x0D);
+    c.bus.write_byte(0x0277, 0x20);
+    c.bus.write_byte(0x0278, 0xF2);
+    c.execute();    // JR NZ,$F2
+    // Has data been written to that address ?
+    assert_eq!(c.reg.pc, 0x0269);
+}
