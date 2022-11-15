@@ -574,8 +574,8 @@ impl CPU {
             0x18 => {
                 let displacement= self.bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
-                    true => address - ( signed_to_abs(displacement) as u16 ),
-                    false => address + ( displacement as u16 )
+                    true => address + 2 - ( signed_to_abs(displacement) as u16 ),
+                    false => address + 2 + ( displacement as u16 )
                 };
                 format!("18 {:02X}         JR ${:04X}", displacement, addr)
             },
@@ -584,8 +584,8 @@ impl CPU {
             0x38 => {
                 let displacement= self.bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
-                    true => address - ( signed_to_abs(displacement) as u16 ),
-                    false => address + ( displacement as u16 )
+                    true => address + 2 - ( signed_to_abs(displacement) as u16 ),
+                    false => address + 2 + ( displacement as u16 )
                 };
                 format!("38 {:02X}         JR C,${:04X}", displacement, addr)
             },
@@ -594,8 +594,8 @@ impl CPU {
             0x30 => {
                 let displacement= self.bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
-                    true => address - ( signed_to_abs(displacement) as u16 ),
-                    false => address + ( displacement as u16 )
+                    true => address + 2 - ( signed_to_abs(displacement) as u16 ),
+                    false => address + 2 + ( displacement as u16 )
                 };
                 format!("30 {:02X}         JR NC,${:04X}", displacement, addr)
             },
@@ -604,8 +604,8 @@ impl CPU {
             0x28 => {
                 let displacement= self.bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
-                    true => address - ( signed_to_abs(displacement) as u16 ),
-                    false => address + ( displacement as u16 )
+                    true => address + 2 - ( signed_to_abs(displacement) as u16 ),
+                    false => address + 2 + ( displacement as u16 )
                 };
                 format!("28 {:02X}         JR Z,${:04X}", displacement, addr)
             },
@@ -614,8 +614,8 @@ impl CPU {
             0x20 => {
                 let displacement= self.bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
-                    true => address - ( signed_to_abs(displacement) as u16 ),
-                    false => address + ( displacement as u16 )
+                    true => address + 2 - ( signed_to_abs(displacement) as u16 ),
+                    false => address + 2 + ( displacement as u16 )
                 };
                 format!("20 {:02X}         JR NZ,${:04X}", displacement, addr)
             },
@@ -632,8 +632,8 @@ impl CPU {
             0x10 => {
                 let displacement= self.bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
-                    true => address - ( signed_to_abs(displacement) as u16 ),
-                    false => address + ( displacement as u16 )
+                    true => address + 2 - ( signed_to_abs(displacement) as u16 ),
+                    false => address + 2 + ( displacement as u16 )
                 };
                 format!("10 {:02X}         DJNZ ${:04X}", displacement, addr)
             }

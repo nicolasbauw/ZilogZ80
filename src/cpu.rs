@@ -3622,18 +3622,18 @@ impl CPU {
             // JR e
             0x18 => {
                 let displacement= self.bus.read_byte(self.reg.pc + 1);
-                if bit::get(displacement, 7) { self.reg.pc = self.reg.pc - ( signed_to_abs(displacement) as u16 ) }
-                else { self.reg.pc = self.reg.pc + ( displacement as u16 ) }
+                if bit::get(displacement, 7) { self.reg.pc = self.reg.pc +2 - ( signed_to_abs(displacement) as u16 ) }
+                else { self.reg.pc = self.reg.pc + ( displacement as u16 ) + 2}
             },
 
             // JR C,e
             0x38 => {
                 if self.reg.flags.c {
                     let displacement= self.bus.read_byte(self.reg.pc + 1);
-                    if bit::get(displacement, 7) { self.reg.pc = self.reg.pc - ( signed_to_abs(displacement) as u16 ) }
-                    else { self.reg.pc = self.reg.pc + ( displacement as u16 ) }
+                    if bit::get(displacement, 7) { self.reg.pc = self.reg.pc +2 - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.reg.pc = self.reg.pc + ( displacement as u16 ) + 2 }
                     cycles += 5;
-                }
+                } else { self.reg.pc += 2 }
                 cycles += 7;
             },
 
@@ -3641,10 +3641,10 @@ impl CPU {
             0x30 => {
                 if !self.reg.flags.c {
                     let displacement= self.bus.read_byte(self.reg.pc + 1);
-                    if bit::get(displacement, 7) { self.reg.pc = self.reg.pc - ( signed_to_abs(displacement) as u16 ) }
-                    else { self.reg.pc = self.reg.pc + ( displacement as u16 ) }
+                    if bit::get(displacement, 7) { self.reg.pc = self.reg.pc +2 - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.reg.pc = self.reg.pc + ( displacement as u16 ) + 2}
                     cycles += 5;
-                }
+                } else { self.reg.pc += 2 }
                 cycles += 7;
             },
 
@@ -3652,10 +3652,10 @@ impl CPU {
             0x28 => {
                 if self.reg.flags.z {
                     let displacement= self.bus.read_byte(self.reg.pc + 1);
-                    if bit::get(displacement, 7) { self.reg.pc = self.reg.pc - ( signed_to_abs(displacement) as u16 ) }
-                    else { self.reg.pc = self.reg.pc + ( displacement as u16 ) }
+                    if bit::get(displacement, 7) { self.reg.pc = self.reg.pc +2 - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.reg.pc = self.reg.pc + ( displacement as u16 ) + 2 }
                     cycles += 5;
-                }
+                } else { self.reg.pc += 2 }
                 cycles += 7;
             },
 
@@ -3663,10 +3663,10 @@ impl CPU {
             0x20 => {
                 if !self.reg.flags.z {
                     let displacement= self.bus.read_byte(self.reg.pc + 1);
-                    if bit::get(displacement, 7) { self.reg.pc = self.reg.pc - ( signed_to_abs(displacement) as u16 ) }
-                    else { self.reg.pc = self.reg.pc + ( displacement as u16 ) }
+                    if bit::get(displacement, 7) { self.reg.pc = self.reg.pc +2 - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.reg.pc = self.reg.pc + ( displacement as u16 ) + 2 }
                     cycles += 5;
-                }
+                } else { self.reg.pc += 2 }
                 cycles += 7;
             },
 
@@ -3678,10 +3678,10 @@ impl CPU {
                 self.reg.b = (self.reg.b).wrapping_sub(1);
                 if self.reg.b != 0 {
                     let displacement= self.bus.read_byte(self.reg.pc + 1);
-                    if bit::get(displacement, 7) { self.reg.pc = self.reg.pc - ( signed_to_abs(displacement) as u16 ) }
-                    else { self.reg.pc = self.reg.pc + ( displacement as u16 ) }
+                    if bit::get(displacement, 7) { self.reg.pc = self.reg.pc +2 - ( signed_to_abs(displacement) as u16 ) }
+                    else { self.reg.pc = self.reg.pc + ( displacement as u16 ) + 2 }
                     cycles += 5;
-                }
+                }  else { self.reg.pc += 2 }
                 cycles += 8;
             }
 
@@ -3901,10 +3901,11 @@ impl CPU {
             0xE2 | 0xE9 | 0xCD | 0xDC | 0xD4 | 0xCC | 0xC4 | 0xFC |
             0xF4 | 0xEC | 0xE4 | 0xC9 | 0xD8 | 0xD0 | 0xC8 | 0xC0 |
             0xF8 | 0xF0 | 0xE8 | 0xE0 | 0xC7 | 0xCF | 0xD7 | 0xDF |
-            0xE7 | 0xEF | 0xF7 | 0xFF | 0x76 => {},
+            0xE7 | 0xEF | 0xF7 | 0xFF | 0x76 |
+            0x18 | 0x38 | 0x30 | 0x28 | 0x20 | 0x10 => {},
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
             0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE | 0xFE |
-            0x18 | 0x38 | 0x30 | 0x28 | 0x20 | 0x10 | 0xDB | 0xD3 => self.reg.pc += 2,
+            0xDB | 0xD3 => self.reg.pc += 2,
             0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 | 0x3A => self.reg.pc += 3,
             _ => self.reg.pc +=1,
         }

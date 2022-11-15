@@ -4046,12 +4046,28 @@ fn mmio_in() {
 fn jr_nz_neg() {
     let mut c = CPU::new(0xFFFF);
     c.reg.pc = 0x0274;
-    c.bus.write_byte(0x0274, 0x0E);
+    c.bus.write_byte(0x0274, 0x0E);     // LD C,$08
     c.bus.write_byte(0x0275, 0x08);
-    c.bus.write_byte(0x0276, 0x0D);
-    c.bus.write_byte(0x0277, 0x20);
+    c.bus.write_byte(0x0276, 0x0D);     // DEC C
+    c.bus.write_byte(0x0277, 0x20);     // JR NZ,$F2
     c.bus.write_byte(0x0278, 0xF2);
-    c.execute();    // JR NZ,$F2
-    // Has data been written to that address ?
-    assert_eq!(c.reg.pc, 0x0269);
+    for _ in 0..3 {
+        c.execute();
+    }
+    assert_eq!(c.reg.pc, 0x026B);
+}
+
+#[test]
+fn jr_nz_neg_false() {
+    let mut c = CPU::new(0xFFFF);
+    c.reg.pc = 0x0274;
+    c.bus.write_byte(0x0274, 0x0E);     // LD C,$08
+    c.bus.write_byte(0x0275, 0x01);
+    c.bus.write_byte(0x0276, 0x0D);     // DEC C
+    c.bus.write_byte(0x0277, 0x20);     // JR NZ,$F2
+    c.bus.write_byte(0x0278, 0xF2);
+    for _ in 0..3 {
+        c.execute();
+    }
+    assert_eq!(c.reg.pc, 0x0279);
 }
