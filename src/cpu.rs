@@ -709,7 +709,7 @@ impl CPU {
 
     }
 
-    /// Fetches and executes instructions, until cycles limit is reached (2,1 Mhz / 35000 cycles by default). Returns the total number of consumed clock cycles.
+    /// Fetches and executes one instruction from (pc), limiting speed to 2,1 Mhz by default. Returns the number of consumed clock cycles.
     pub fn execute_slice(&mut self) -> u32 {
         if self.slice_current_cycles > self.slice_max_cycles {
             self.slice_current_cycles = 0;
