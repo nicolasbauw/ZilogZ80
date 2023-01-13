@@ -30,7 +30,9 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
 
     // A basic program which waits a moment then sends the 0xBB byte to the 0x07 peripheral
     loop {
-        c.execute_slice();
+        if let Some(sleep_time) = c.execute_timed() {
+            std::thread::sleep(Duration::from_millis(u64::from(sleep_time)));
+        }
         if c.debug.opcode { print!("{}\n", c.debug.string); }
         if c.reg.pc == 0x0000 { thread::sleep(Duration::from_millis(500)); break }
     }

@@ -1,6 +1,6 @@
 [package]
 name = "zilog_z80"
-version = "0.10.0"
+version = "0.11.0"
 edition = "2021"
 authors = ["Nicolas BAUW <nbauw@hotmail.com>"]
 description = "Zilog Z80 Emulator."
@@ -15,6 +15,3 @@ exclude = ["zexdoc_results.txt"]
 
 [dependencies]
 crossbeam-channel = "0.5.6"
-
-[target.'cfg(windows)'.dependencies]
-spin_sleep = "1.0.0"
