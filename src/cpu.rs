@@ -736,6 +736,11 @@ impl CPU {
         self.slice_max_cycles = cycles as u32;
     }
 
+    /// Sets slice duration (in milliseconds) for timed execution. Typically 16 for 60 Hz, 20 for 50 Hz screen refresh.
+    pub fn set_slice_duration(&mut self, slice_duration: u32) {
+        self.slice_duration = slice_duration;
+    }
+
     // DDCB FDCB
     fn execute_4bytes(&mut self) -> u32 {
         let opcode = self.bus.read_le_dword(self.reg.pc);
