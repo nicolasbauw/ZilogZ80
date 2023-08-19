@@ -259,12 +259,10 @@ impl CPU {
 
         if self.reg.flags.n && !self.reg.flags.h {
             self.reg.flags.h = false
+        } else if self.reg.flags.n && self.reg.flags.h {
+            self.reg.flags.h = lsb < 6;
         } else {
-            if self.reg.flags.n && self.reg.flags.h {
-                self.reg.flags.h = lsb < 6;
-            } else {
-                self.reg.flags.h = lsb >= 0x0A;
-            }
+            self.reg.flags.h = lsb >= 0x0A;
         }
 
         match t {
@@ -354,7 +352,7 @@ impl CPU {
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = (r as i16) < 0;
         self.reg.flags.h = (h & 0x0fff) < (n & 0x0fff) + c;
-        self.reg.flags.c = u16::from(h) < u16::from(n) + u16::from(c);
+        self.reg.flags.c = h < n + c;
         self.reg.flags.n = true;
         self.reg.flags.p = {
             let r = (h as i16).overflowing_sub((n + c) as i16);
@@ -538,7 +536,7 @@ impl CPU {
             7 => bit::get(self.reg.a, bit),
             _ => false,
         };
-        self.reg.flags.z = r == false;
+        self.reg.flags.z = !r;
         self.reg.flags.h = true;
         self.reg.flags.n = false;
     }
@@ -641,7 +639,7 @@ impl CPU {
             // interrupts enabled : is there a pending interrupt ?
             true => match self.int {
                 None => self.bus.borrow().read_byte(self.reg.pc),
-                Some(o) => o as u8,
+                Some(o) => o,
             },
         };
 
@@ -677,7 +675,7 @@ impl CPU {
     /// c.set_freq(1.7);            // CPU will run at 1.7 Mhz
     /// ```
     pub fn set_freq(&mut self, f: f32) {
-        let cycles = (f * 1000000 as f32) / (1000 / self.slice_duration) as f32;
+        let cycles = (f * 1000000_f32) / (1000 / self.slice_duration) as f32;
         self.slice_max_cycles = cycles as u32;
     }
 
@@ -940,14 +938,14 @@ impl CPU {
                     let m = self.reg.get_ix() - (signed_to_abs(displacement) as u16);
                     let d = self.bus.borrow().read_byte(m);
                     let r = bit::get(d, bit);
-                    self.reg.flags.z = r == false;
+                    self.reg.flags.z = !r;
                     self.reg.flags.h = true;
                     self.reg.flags.n = false;
                 } else {
                     let m = self.reg.get_ix() + (displacement as u16);
                     let d = self.bus.borrow().read_byte(m);
                     let r = bit::get(d, bit);
-                    self.reg.flags.z = r == false;
+                    self.reg.flags.z = !r;
                     self.reg.flags.h = true;
                     self.reg.flags.n = false;
                 }
@@ -964,14 +962,14 @@ impl CPU {
                     let m = self.reg.get_iy() - (signed_to_abs(displacement) as u16);
                     let d = self.bus.borrow().read_byte(m);
                     let r = bit::get(d, bit);
-                    self.reg.flags.z = r == false;
+                    self.reg.flags.z = !r;
                     self.reg.flags.h = true;
                     self.reg.flags.n = false;
                 } else {
                     let m = self.reg.get_iy() + (displacement as u16);
                     let d = self.bus.borrow().read_byte(m);
                     let r = bit::get(d, bit);
-                    self.reg.flags.z = r == false;
+                    self.reg.flags.z = !r;
                     self.reg.flags.h = true;
                     self.reg.flags.n = false;
                 }
@@ -1101,7 +1099,7 @@ impl CPU {
             }
         }
         self.reg.pc += 4;
-        if self.debug.opcode == true {
+        if self.debug.opcode {
             self.debug.string = format!("{:#10X}", opcode)
         }
         cycles
@@ -3357,7 +3355,7 @@ impl CPU {
             _ => self.reg.pc += 2,
         }
 
-        if self.debug.opcode == true {
+        if self.debug.opcode {
             self.debug.string = format!("{:#06X}", opcode)
         }
 

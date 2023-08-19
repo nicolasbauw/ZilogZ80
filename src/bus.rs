@@ -32,7 +32,7 @@ impl Bus {
 
     /// Reads a slice of bytes from memory
     pub fn read_mem_slice(&self, start: usize, end: usize) -> Vec<u8> {
-        if end as usize > self.address_space.len() {
+        if end > self.address_space.len() {
             panic!("Read operation after the end of address space !")
         }
         self.address_space[start..end].to_vec()
@@ -40,7 +40,7 @@ impl Bus {
 
     /// Clears a slice of bytes in memory
     pub fn clear_mem_slice(&mut self, start: usize, end: usize) {
-        if end as usize > self.address_space.len() {
+        if end > self.address_space.len() {
             panic!("Read operation after the end of address space !")
         }
         for m in 0..=(end - start) {
