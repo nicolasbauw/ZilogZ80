@@ -2,7 +2,7 @@
 //!
 //! Example for a small loop:
 //! ```rust
-//! use zilog_z80::cpu::CPU;
+//! use zilog_z80::{bus::Bus, cpu::CPU};
 //! let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
 //! let mut c = CPU::new(bus.clone());
 //! c.reg.pc = 0x0100;                  // sets pc to 0x0100
@@ -20,7 +20,7 @@
 //! }
 //! ```
 //!
-//! Bus has the Rc<RefCell<Bus>> type, so it can be shared between all the components of your emulated machine.
+//! Bus has the `Rc<RefCell<Bus>>` type, so it can be shared between all the components of your emulated machine.
 
 pub mod bus;
 pub mod cpu;
