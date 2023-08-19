@@ -65,9 +65,7 @@ impl CPU {
         let de = self.reg.get_de();
         let hl = self.reg.get_hl();
         let d = self.bus.borrow().read_byte(hl);
-        self.bus
-            .borrow_mut()
-            .write_byte(de, d);
+        self.bus.borrow_mut().write_byte(de, d);
         self.reg.set_de(de.wrapping_add(1));
         self.reg.set_hl(hl.wrapping_add(1));
         self.reg.set_bc(bc.wrapping_sub(1));
@@ -78,9 +76,7 @@ impl CPU {
         let de = self.reg.get_de();
         let hl = self.reg.get_hl();
         let d = self.bus.borrow().read_byte(hl);
-        self.bus
-            .borrow_mut()
-            .write_byte(de, d);
+        self.bus.borrow_mut().write_byte(de, d);
         self.reg.set_de(de.wrapping_sub(1));
         self.reg.set_hl(hl.wrapping_sub(1));
         self.reg.set_bc(bc.wrapping_sub(1));
@@ -558,10 +554,12 @@ impl CPU {
             3 => self.reg.e = bit::set(self.reg.e, bit),
             4 => self.reg.h = bit::set(self.reg.h, bit),
             5 => self.reg.l = bit::set(self.reg.l, bit),
-            6 => self.bus.borrow_mut().write_byte(
-                self.reg.get_hl(),
-                bit::set(self.bus.borrow().read_byte(self.reg.get_hl()), bit),
-            ),
+            6 => {
+                let byte = self.bus.borrow().read_byte(self.reg.get_hl());
+                self.bus
+                    .borrow_mut()
+                    .write_byte(self.reg.get_hl(), bit::set(byte, bit))
+            }
             7 => self.reg.a = bit::set(self.reg.a, bit),
             _ => {}
         };
@@ -578,10 +576,12 @@ impl CPU {
             3 => self.reg.e = bit::reset(self.reg.e, bit),
             4 => self.reg.h = bit::reset(self.reg.h, bit),
             5 => self.reg.l = bit::reset(self.reg.l, bit),
-            6 => self.bus.borrow_mut().write_byte(
-                self.reg.get_hl(),
-                bit::reset(self.bus.borrow().read_byte(self.reg.get_hl()), bit),
-            ),
+            6 => {
+                let byte = self.bus.borrow().read_byte(self.reg.get_hl());
+                self.bus
+                    .borrow_mut()
+                    .write_byte(self.reg.get_hl(), bit::reset(byte, bit))
+            }
             7 => self.reg.a = bit::reset(self.reg.a, bit),
             _ => {}
         };
