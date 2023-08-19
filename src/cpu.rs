@@ -659,16 +659,6 @@ impl CPU {
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 4 };
 
-        // Stores a byte received via the write channel to memory.
-        if let Ok((addr, data)) = self.bus.mmio_write.1.try_recv() {
-            self.bus.write_byte(addr, data);
-        }
-
-        // A MMIO peripheral requests a memory slice ?
-        if let Ok((addr, len)) = self.bus.mmio_req.1.try_recv() {
-            self.bus.mmio_send(addr, len).unwrap_or_default();
-        }
-
         // Non maskable interrupt requested ?
         if self.nmi {
             self.iff2 = self.iff1;
