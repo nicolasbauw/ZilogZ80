@@ -64,9 +64,10 @@ impl CPU {
         let bc = self.reg.get_bc();
         let de = self.reg.get_de();
         let hl = self.reg.get_hl();
+        let d = self.bus.borrow().read_byte(hl);
         self.bus
             .borrow_mut()
-            .write_byte(de, self.bus.borrow().read_byte(hl));
+            .write_byte(de, d);
         self.reg.set_de(de.wrapping_add(1));
         self.reg.set_hl(hl.wrapping_add(1));
         self.reg.set_bc(bc.wrapping_sub(1));
@@ -76,9 +77,10 @@ impl CPU {
         let bc = self.reg.get_bc();
         let de = self.reg.get_de();
         let hl = self.reg.get_hl();
+        let d = self.bus.borrow().read_byte(hl);
         self.bus
             .borrow_mut()
-            .write_byte(de, self.bus.borrow().read_byte(hl));
+            .write_byte(de, d);
         self.reg.set_de(de.wrapping_sub(1));
         self.reg.set_hl(hl.wrapping_sub(1));
         self.reg.set_bc(bc.wrapping_sub(1));
