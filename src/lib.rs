@@ -22,13 +22,13 @@
 //!
 //! Bus has the `Rc<RefCell<Bus>>` type, so it can be shared between all the components of your emulated machine.
 
+mod bit;
 pub mod bus;
 pub mod cpu;
-pub mod registers;
-mod bit;
 mod cycles;
 mod dasm;
 mod flags;
+pub mod registers;
 
 #[cfg(test)]
 mod test;
