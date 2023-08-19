@@ -1,13 +1,13 @@
 // Status Indicator Flags
 pub struct Flags {
-    pub s: bool,                // sign                 : bit 7
-    pub z: bool,                // zero                 : bit 6
-    pub b5: bool,               // unused
-    pub h: bool,                // auxiliary carry      : bit 4
-    pub b3: bool,               // unused
-    pub p: bool,                // parity / overflow    : bit 2
-    pub n: bool,                // substract            : bit 1
-    pub c: bool                 // carry                : bit 0
+    pub s: bool,  // sign                 : bit 7
+    pub z: bool,  // zero                 : bit 6
+    pub b5: bool, // unused
+    pub h: bool,  // auxiliary carry      : bit 4
+    pub b3: bool, // unused
+    pub p: bool,  // parity / overflow    : bit 2
+    pub n: bool,  // substract            : bit 1
+    pub c: bool,  // carry                : bit 0
 }
 
 impl Flags {
@@ -20,7 +20,7 @@ impl Flags {
             b3: false,
             p: false,
             n: false,
-            c: false
+            c: false,
         }
     }
 
@@ -33,8 +33,8 @@ impl Flags {
         let b3 = if self.b3 { 1 << 3 } else { 0 };
         let p = if self.p { 1 << 2 } else { 0 };
         let n = if self.n { 1 << 1 } else { 0 };
-        let c = if self.c { 1 } else { 0  };
-        s | z | b5| h | b3 | p | n | c
+        let c = if self.c { 1 } else { 0 };
+        s | z | b5 | h | b3 | p | n | c
     }
 
     /// Retrieves Status Indicator Flags from a byte.

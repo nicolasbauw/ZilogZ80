@@ -1,6 +1,6 @@
 //! This is a Z80 emulator.
 //! It handles interrupts and I/O.
-//! 
+//!
 //! Example for a small loop:
 //! ```rust
 //! use zilog_z80::cpu::CPU;
@@ -20,14 +20,14 @@
 //! }
 //! ```
 
+pub mod bus;
 pub mod cpu;
 pub mod registers;
-pub mod bus;
 pub use crossbeam_channel;
-mod flags;
 mod bit;
 mod cycles;
 mod dasm;
+mod flags;
 
 #[cfg(test)]
 mod test;

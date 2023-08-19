@@ -16,7 +16,7 @@ pub struct Registers {
     pub r: u8,
     pub sp: u16,
     pub pc: u16,
-    pub flags: Flags
+    pub flags: Flags,
 }
 
 impl Registers {
@@ -37,7 +37,7 @@ impl Registers {
             r: 0,
             sp: 0x0000,
             pc: 0,
-            flags: Flags::new()
+            flags: Flags::new(),
         }
     }
 
