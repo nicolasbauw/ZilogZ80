@@ -1,10 +1,10 @@
 //! This is a Z80 emulator.
-//! It handles interrupts and I/O.
 //!
 //! Example for a small loop:
 //! ```rust
 //! use zilog_z80::cpu::CPU;
-//! let mut c = CPU::new(0xFFFF);
+//! let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
+//! let mut c = CPU::new(bus);
 //! c.reg.pc = 0x0100;                  // sets pc to 0x0100
 //! // Here we create a small machine code program for demo purpose.
 //! // Usually you will rather load an assembled code in memory with the load_bin function.
