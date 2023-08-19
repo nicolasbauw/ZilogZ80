@@ -1,4 +1,4 @@
-use crate::{bus::AddressBus, cpu::CPU};
+use crate::{bus::Bus, cpu::CPU};
 
 // carry flag
 const CF: u8 = 1 << 0;
@@ -29,7 +29,7 @@ const SF: u8 = 1 << 7;
 
 #[test]
 fn ld_r_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/ld_r_r.bin", 0).unwrap();
     c.reg.a = 0x12;
@@ -64,7 +64,7 @@ fn ld_r_r_asm() {
 
 #[test]
 fn ld_hl_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -89,7 +89,7 @@ fn ld_hl_asm() {
 
 #[test]
 fn ld_hl_n_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/ld_hl_n.bin", 0).unwrap();
     assert_eq!(c.execute(), 10);
@@ -104,7 +104,7 @@ fn ld_hl_n_asm() {
 
 #[test]
 fn ld_ix_iy_n_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -126,7 +126,7 @@ fn ld_ix_iy_n_asm() {
 
 #[test]
 fn ld_hl_dd_ix_iy_inn_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x01);
     c.bus.borrow_mut().write_byte(0x1001, 0x02);
@@ -158,7 +158,7 @@ fn ld_hl_dd_ix_iy_inn_asm() {
 
 #[test]
 fn ld_ix_iy_nn_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -180,7 +180,7 @@ fn ld_ix_iy_nn_asm() {
 
 #[test]
 fn ld_sp_hl_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -202,7 +202,7 @@ fn ld_sp_hl_ix_iy_asm() {
 
 #[test]
 fn ld_r_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x01);
     c.bus.borrow_mut().write_byte(0x1001, 0x02);
@@ -252,7 +252,7 @@ fn ld_r_ix_iy_asm() {
 
 #[test]
 fn ld_ix_iy_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -322,7 +322,7 @@ fn ld_ix_iy_r_asm() {
 
 #[test]
 fn push_pop_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/push_pop.bin", 0).unwrap();
     assert_eq!(c.execute(), 10);
@@ -379,7 +379,7 @@ fn push_pop_asm() {
 
 #[test]
 fn add_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/add_r.bin", 0).unwrap();
     assert_eq!(c.execute(), 7);
@@ -427,7 +427,7 @@ fn add_r_asm() {
 
 #[test]
 fn add_i_hl_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x41);
     c.bus.borrow_mut().write_byte(0x1001, 0x61);
@@ -457,7 +457,7 @@ fn add_i_hl_ix_iy_asm() {
 
 #[test]
 fn add_ixh_ixl_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -483,7 +483,7 @@ fn add_ixh_ixl_asm() {
 
 #[test]
 fn add_a_iyh_iyl_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -509,7 +509,7 @@ fn add_a_iyh_iyl_asm() {
 
 #[test]
 fn adc_a_ixh_ixl_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -532,7 +532,7 @@ fn adc_a_ixh_ixl_asm() {
 
 #[test]
 fn adc_a_iyh_iyl_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -555,7 +555,7 @@ fn adc_a_iyh_iyl_asm() {
 
 #[test]
 fn adc_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/adc_r.bin", 0).unwrap();
     assert_eq!(c.execute(), 7);
@@ -607,7 +607,7 @@ fn adc_r_asm() {
 
 #[test]
 fn adc_i_hl_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x41);
     c.bus.borrow_mut().write_byte(0x1001, 0x61);
@@ -641,7 +641,7 @@ fn adc_i_hl_ix_iy_asm() {
 
 #[test]
 fn sub_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/sub_r.bin", 0).unwrap();
     assert_eq!(c.execute(), 7);
@@ -689,7 +689,7 @@ fn sub_r_asm() {
 
 #[test]
 fn sub_ixh_ixl_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -712,7 +712,7 @@ fn sub_ixh_ixl_asm() {
 
 #[test]
 fn sub_iyh_iyl_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -735,7 +735,7 @@ fn sub_iyh_iyl_asm() {
 
 #[test]
 fn cp_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/cp_r.bin", 0).unwrap();
     assert_eq!(c.execute(), 7);
@@ -780,7 +780,7 @@ fn cp_r_asm() {
 
 #[test]
 fn sub_i_hl_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x41);
     c.bus.borrow_mut().write_byte(0x1001, 0x61);
@@ -810,7 +810,7 @@ fn sub_i_hl_ix_iy_asm() {
 
 #[test]
 fn cp_i_hl_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x41);
     c.bus.borrow_mut().write_byte(0x1001, 0x61);
@@ -840,7 +840,7 @@ fn cp_i_hl_ix_iy_asm() {
 
 #[test]
 fn sbc_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/sbc_r.bin", 0).unwrap();
     for _ in 0..7 {
@@ -884,7 +884,7 @@ fn sbc_r_asm() {
 
 #[test]
 fn sbc_ixyh_ixyl_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -916,7 +916,7 @@ fn sbc_ixyh_ixyl_asm() {
 
 #[test]
 fn sbc_i_hl_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x41);
     c.bus.borrow_mut().write_byte(0x1001, 0x61);
@@ -946,7 +946,7 @@ fn sbc_i_hl_ix_iy_asm() {
 
 #[test]
 fn or_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/or_r.bin", 0).unwrap();
     for _ in 0..7 {
@@ -983,7 +983,7 @@ fn or_r_asm() {
 
 #[test]
 fn xor_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/xor_r.bin", 0).unwrap();
     for _ in 0..7 {
@@ -1020,7 +1020,7 @@ fn xor_r_asm() {
 
 #[test]
 fn or_xor_i_hl_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x41);
     c.bus.borrow_mut().write_byte(0x1001, 0x62);
@@ -1054,7 +1054,7 @@ fn or_xor_i_hl_ix_iy_asm() {
 
 #[test]
 fn and_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/and_r.bin", 0).unwrap();
     for _ in 0..7 {
@@ -1109,7 +1109,7 @@ fn and_r_asm() {
 
 #[test]
 fn and_i_hl_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0xFE);
     c.bus.borrow_mut().write_byte(0x1001, 0xAA);
@@ -1134,7 +1134,7 @@ fn and_i_hl_ix_iy_asm() {
 
 #[test]
 fn inc_dec_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/inc_dec_r.bin", 0).unwrap();
     for _ in 0..7 {
@@ -1189,7 +1189,7 @@ fn inc_dec_r_asm() {
 
 #[test]
 fn inc_dec_i_hl_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x00);
     c.bus.borrow_mut().write_byte(0x1001, 0x3F);
@@ -1223,7 +1223,7 @@ fn inc_dec_i_hl_ix_iy_asm() {
 
 #[test]
 fn inc_dec_ss_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -1260,7 +1260,7 @@ fn inc_dec_ss_ix_iy_asm() {
 
 #[test]
 fn djnz_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/djnz.bin", 0x0204).unwrap();
     c.reg.pc = 0x0204;
@@ -1287,7 +1287,7 @@ fn djnz_asm() {
 
 #[test]
 fn jr_cc_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -1316,7 +1316,7 @@ fn jr_cc_asm() {
 
 #[test]
 fn ld_i_hl_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/ld_i_hl_r.bin", 0).unwrap();
     assert_eq!(c.execute(), 10);
@@ -1349,7 +1349,7 @@ fn ld_i_hl_r_asm() {
 
 #[test]
 fn ld_a_i_bc_de_nn_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -1372,7 +1372,7 @@ fn ld_a_i_bc_de_nn_asm() {
 
 #[test]
 fn inc_dec_ss_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -1401,7 +1401,7 @@ fn inc_dec_ss_asm() {
 
 #[test]
 fn ld_i_bc_de_nn_a_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -1423,7 +1423,7 @@ fn ld_i_bc_de_nn_a_asm() {
 
 #[test]
 fn rlca_rla_rrca_rra_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -1452,7 +1452,7 @@ fn rlca_rla_rrca_rra_asm() {
 
 #[test]
 fn daa_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/daa.bin", 0).unwrap();
     assert_eq!(c.execute(), 7);
@@ -1493,7 +1493,7 @@ fn daa_asm() {
 
 #[test]
 fn cpl_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/cpl.bin", 0).unwrap();
     assert_eq!(c.execute(), 4);
@@ -1518,7 +1518,7 @@ fn cpl_asm() {
 
 #[test]
 fn ccf_scf_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/ccf_scf.bin", 0).unwrap();
     assert_eq!(c.execute(), 4);
@@ -1543,7 +1543,7 @@ fn ccf_scf_asm() {
 
 #[test]
 fn call_ret_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -1568,7 +1568,7 @@ fn call_ret_asm() {
 
 #[test]
 fn call_cc_ret_cc_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -1628,7 +1628,7 @@ fn call_cc_ret_cc_asm() {
 
 #[test]
 fn halt_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/halt.bin", 0).unwrap();
     assert_eq!(c.execute(), 4);
@@ -1641,7 +1641,7 @@ fn halt_asm() {
 
 #[test]
 fn ex_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/ex.bin", 0).unwrap();
     assert_eq!(c.execute(), 10);
@@ -1706,7 +1706,7 @@ fn ex_asm() {
 
 #[test]
 fn jp_cc_nn_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -1747,7 +1747,7 @@ fn jp_cc_nn_asm() {
 
 #[test]
 fn jp_jr_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -1780,7 +1780,7 @@ fn jp_jr_asm() {
 
 #[test]
 fn ldi_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x01);
     c.bus.borrow_mut().write_byte(0x1001, 0x02);
@@ -1811,7 +1811,7 @@ fn ldi_asm() {
 
 #[test]
 fn ldir_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x01);
     c.bus.borrow_mut().write_byte(0x1001, 0x02);
@@ -1832,7 +1832,7 @@ fn ldir_asm() {
 
 #[test]
 fn ldd_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x01);
     c.bus.borrow_mut().write_byte(0x1001, 0x02);
@@ -1863,7 +1863,7 @@ fn ldd_asm() {
 
 #[test]
 fn lddr_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x01);
     c.bus.borrow_mut().write_byte(0x1001, 0x02);
@@ -1884,7 +1884,7 @@ fn lddr_asm() {
 
 #[test]
 fn cpi_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x01);
     c.bus.borrow_mut().write_byte(0x1001, 0x02);
@@ -1916,7 +1916,7 @@ fn cpi_asm() {
 
 #[test]
 fn cpir_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x01);
     c.bus.borrow_mut().write_byte(0x1001, 0x02);
@@ -1940,7 +1940,7 @@ fn cpir_asm() {
 
 #[test]
 fn cpd_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x01);
     c.bus.borrow_mut().write_byte(0x1001, 0x02);
@@ -1970,7 +1970,7 @@ fn cpd_asm() {
 
 #[test]
 fn add_adc_sbc_16_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -2044,7 +2044,7 @@ fn add_adc_sbc_16_asm() {
 
 #[test]
 fn ld_inn_hl_dd_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -2082,7 +2082,7 @@ fn ld_inn_hl_dd_ix_iy_asm() {
 
 #[test]
 fn ld_a_ir_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/ld_a_ir.bin", 0).unwrap();
     c.reg.r = 0x34;
@@ -2102,7 +2102,7 @@ fn ld_a_ir_asm() {
 
 #[test]
 fn ld_ir_a_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/ld_ir_a.bin", 0).unwrap();
     assert_eq!(c.execute(), 7);
@@ -2115,7 +2115,7 @@ fn ld_ir_a_asm() {
 
 #[test]
 fn rlc_rl_rrc_rr_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus
         .borrow_mut()
@@ -2212,7 +2212,7 @@ fn rlc_rl_rrc_rr_r_asm() {
 
 #[test]
 fn rrc_rlc_rr_rl_i_hl_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x01);
     c.bus.borrow_mut().write_byte(0x1001, 0xFF);
@@ -2288,7 +2288,7 @@ fn rrc_rlc_rr_rl_i_hl_ix_iy_asm() {
 
 #[test]
 fn sla_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/sla_r.bin", 0).unwrap();
     for _ in 0..7 {
@@ -2319,7 +2319,7 @@ fn sla_r_asm() {
 
 #[test]
 fn sra_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/sra_r.bin", 0).unwrap();
     for _ in 0..7 {
@@ -2350,7 +2350,7 @@ fn sra_r_asm() {
 
 #[test]
 fn srl_r_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/srl_r.bin", 0).unwrap();
     for _ in 0..7 {
@@ -2381,7 +2381,7 @@ fn srl_r_asm() {
 
 #[test]
 fn sla_i_hl_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x01);
     c.bus.borrow_mut().write_byte(0x1001, 0x80);
@@ -2412,7 +2412,7 @@ fn sla_i_hl_ix_iy_asm() {
 
 #[test]
 fn sra_i_hl_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x01);
     c.bus.borrow_mut().write_byte(0x1001, 0x80);
@@ -2443,7 +2443,7 @@ fn sra_i_hl_ix_iy_asm() {
 
 #[test]
 fn srl_i_hl_ix_iy_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x1000, 0x01);
     c.bus.borrow_mut().write_byte(0x1001, 0x80);
@@ -2474,7 +2474,7 @@ fn srl_i_hl_ix_iy_asm() {
 
 #[test]
 fn rld_rrd_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/rld_rrd.bin", 0).unwrap();
     assert_eq!(c.execute(), 7);
@@ -2524,7 +2524,7 @@ fn rld_rrd_asm() {
 
 #[test]
 fn ld_inn_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x63);
@@ -2537,7 +2537,7 @@ fn ld_inn_hl() {
 
 #[test]
 fn ld_b() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
@@ -2576,7 +2576,7 @@ fn ld_b() {
 
 #[test]
 fn ld_c() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
@@ -2615,7 +2615,7 @@ fn ld_c() {
 
 #[test]
 fn ld_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
@@ -2654,7 +2654,7 @@ fn ld_d() {
 
 #[test]
 fn ld_e() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
@@ -2693,7 +2693,7 @@ fn ld_e() {
 
 #[test]
 fn ld_h() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
@@ -2732,7 +2732,7 @@ fn ld_h() {
 
 #[test]
 fn ld_l() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
@@ -2771,7 +2771,7 @@ fn ld_l() {
 
 #[test]
 fn ld_hl_r() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
@@ -2807,7 +2807,7 @@ fn ld_hl_r() {
 
 #[test]
 fn ld_a() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
@@ -2846,7 +2846,7 @@ fn ld_a() {
 
 #[test]
 fn hlt() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x76);
     c.execute();
@@ -2855,7 +2855,7 @@ fn hlt() {
 
 #[test]
 fn ld_b_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.set_ix(0x25AF);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
@@ -2869,7 +2869,7 @@ fn ld_b_ix_d() {
 
 #[test]
 fn ld_b_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.set_iy(0x25AF);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
@@ -2883,7 +2883,7 @@ fn ld_b_iy_d() {
 
 #[test]
 fn ld_ix_d_c() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.c = 0x1C;
     c.reg.set_ix(0x3100);
@@ -2897,7 +2897,7 @@ fn ld_ix_d_c() {
 
 #[test]
 fn ld_ix_d_n() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.set_ix(0x219A);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
@@ -2911,7 +2911,7 @@ fn ld_ix_d_n() {
 
 #[test]
 fn ld_a_bc() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x0a);
     c.bus.borrow_mut().write_byte(0x100, 0x65);
@@ -2923,7 +2923,7 @@ fn ld_a_bc() {
 
 #[test]
 fn ld_a_de() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x1a);
     c.bus.borrow_mut().write_byte(0x100, 0x65);
@@ -2935,7 +2935,7 @@ fn ld_a_de() {
 
 #[test]
 fn ld_nn_a() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x32);
     c.bus.borrow_mut().write_byte(0x0001, 0x00);
@@ -2948,7 +2948,7 @@ fn ld_nn_a() {
 
 #[test]
 fn ld_a_r() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x5F);
@@ -2960,7 +2960,7 @@ fn ld_a_r() {
 
 #[test]
 fn ld_dd_nn() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x21);
     c.bus.borrow_mut().write_byte(0x0001, 0x00);
@@ -2972,7 +2972,7 @@ fn ld_dd_nn() {
 
 #[test]
 fn ld_ix_nn() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0x21);
@@ -2985,7 +2985,7 @@ fn ld_ix_nn() {
 
 #[test]
 fn ld_hl_nn() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x2A);
     c.bus.borrow_mut().write_byte(0x0001, 0x45);
@@ -2999,7 +2999,7 @@ fn ld_hl_nn() {
 
 #[test]
 fn ld_bc_cnn() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x4B);
@@ -3014,7 +3014,7 @@ fn ld_bc_cnn() {
 
 #[test]
 fn ld_de_cnn() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x5B);
@@ -3029,7 +3029,7 @@ fn ld_de_cnn() {
 
 #[test]
 fn ld_hl_cnn() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x6B);
@@ -3044,7 +3044,7 @@ fn ld_hl_cnn() {
 
 #[test]
 fn ld_sp_cnn() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x7B);
@@ -3059,7 +3059,7 @@ fn ld_sp_cnn() {
 
 #[test]
 fn ld_ix_cnn() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0x2A);
@@ -3074,7 +3074,7 @@ fn ld_ix_cnn() {
 
 #[test]
 fn ld_iy_cnn() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0x2A);
@@ -3089,7 +3089,7 @@ fn ld_iy_cnn() {
 
 #[test]
 fn ld_cnn_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x22);
     c.bus.borrow_mut().write_byte(0x0001, 0x29);
@@ -3103,7 +3103,7 @@ fn ld_cnn_hl() {
 
 #[test]
 fn ld_ann_bc() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x43);
@@ -3118,7 +3118,7 @@ fn ld_ann_bc() {
 
 #[test]
 fn ld_ann_de() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x53);
@@ -3133,7 +3133,7 @@ fn ld_ann_de() {
 
 #[test]
 fn ld_ann_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x63);
@@ -3148,7 +3148,7 @@ fn ld_ann_hl() {
 
 #[test]
 fn ld_ann_sp() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x73);
@@ -3163,7 +3163,7 @@ fn ld_ann_sp() {
 
 #[test]
 fn ld_ann_ix() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0x22);
@@ -3178,7 +3178,7 @@ fn ld_ann_ix() {
 
 #[test]
 fn ld_ann_iy() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0x22);
@@ -3193,7 +3193,7 @@ fn ld_ann_iy() {
 
 #[test]
 fn ld_sp_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xF9);
     c.reg.h = 0x50;
@@ -3205,7 +3205,7 @@ fn ld_sp_hl() {
 
 #[test]
 fn ld_sp_ix() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xF9);
@@ -3217,7 +3217,7 @@ fn ld_sp_ix() {
 
 #[test]
 fn ld_sp_iy() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xF9);
@@ -3229,7 +3229,7 @@ fn ld_sp_iy() {
 
 #[test]
 fn push_af() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xF5);
     c.reg.a = 0x22;
@@ -3246,7 +3246,7 @@ fn push_af() {
 
 #[test]
 fn push_ix() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xE5);
@@ -3261,7 +3261,7 @@ fn push_ix() {
 
 #[test]
 fn push_iy() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xE5);
@@ -3276,7 +3276,7 @@ fn push_iy() {
 
 #[test]
 fn pop_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xE1);
     c.bus.borrow_mut().write_byte(0x1000, 0x55);
@@ -3290,7 +3290,7 @@ fn pop_hl() {
 
 #[test]
 fn pop_ix() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xE1);
@@ -3305,7 +3305,7 @@ fn pop_ix() {
 
 #[test]
 fn pop_iy() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xE1);
@@ -3320,7 +3320,7 @@ fn pop_iy() {
 
 #[test]
 fn ex_de_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xEB);
     c.reg.set_de(0x2822);
@@ -3333,7 +3333,7 @@ fn ex_de_hl() {
 
 #[test]
 fn ex_af_afp() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x08);
     c.reg.set_af(0x9900);
@@ -3347,7 +3347,7 @@ fn ex_af_afp() {
 
 #[test]
 fn exx() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xD9);
     c.reg.set_bc(0x445A);
@@ -3368,7 +3368,7 @@ fn exx() {
 
 #[test]
 fn ex_sp_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xE3);
     c.reg.set_hl(0x7012);
@@ -3385,7 +3385,7 @@ fn ex_sp_hl() {
 
 #[test]
 fn ex_sp_ix() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xE3);
@@ -3403,7 +3403,7 @@ fn ex_sp_ix() {
 
 #[test]
 fn ex_sp_iy() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xE3);
@@ -3421,7 +3421,7 @@ fn ex_sp_iy() {
 
 #[test]
 fn ldi() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0xA0);
@@ -3441,7 +3441,7 @@ fn ldi() {
 
 #[test]
 fn ldir() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0xB0);
@@ -3469,7 +3469,7 @@ fn ldir() {
 
 #[test]
 fn ldd() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0xA8);
@@ -3489,7 +3489,7 @@ fn ldd() {
 
 #[test]
 fn lddr() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0xB8);
@@ -3517,7 +3517,7 @@ fn lddr() {
 
 #[test]
 fn cpi() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0xA1);
@@ -3535,7 +3535,7 @@ fn cpi() {
 
 #[test]
 fn cpir() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0xB1);
@@ -3555,7 +3555,7 @@ fn cpir() {
 
 #[test]
 fn cpd() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0xA9);
@@ -3573,7 +3573,7 @@ fn cpd() {
 
 #[test]
 fn cpdr() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0xB9);
@@ -3593,7 +3593,7 @@ fn cpdr() {
 
 #[test]
 fn add_a_r() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x81);
     c.reg.a = 0x44;
@@ -3605,7 +3605,7 @@ fn add_a_r() {
 
 #[test]
 fn add_a_n() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xC6);
     c.bus.borrow_mut().write_byte(0x0001, 0x33);
@@ -3617,7 +3617,7 @@ fn add_a_n() {
 
 #[test]
 fn add_a_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0x86);
@@ -3632,7 +3632,7 @@ fn add_a_ix_d() {
 
 #[test]
 fn add_a_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0x86);
@@ -3647,7 +3647,7 @@ fn add_a_iy_d() {
 
 #[test]
 fn addc_a_r() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x8E);
     c.bus.borrow_mut().write_byte(0x6666, 0x10);
@@ -3661,7 +3661,7 @@ fn addc_a_r() {
 
 #[test]
 fn addc_a_n() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xCE);
     c.bus.borrow_mut().write_byte(0x0001, 0x10);
@@ -3674,7 +3674,7 @@ fn addc_a_n() {
 
 #[test]
 fn sub_r() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x92);
     c.reg.a = 0x29;
@@ -3686,7 +3686,7 @@ fn sub_r() {
 
 #[test]
 fn sub_a_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0x96);
@@ -3701,7 +3701,7 @@ fn sub_a_ix_d() {
 
 #[test]
 fn sub_a_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0x96);
@@ -3716,7 +3716,7 @@ fn sub_a_iy_d() {
 
 #[test]
 fn sbc_a_r() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x9E);
     c.bus.borrow_mut().write_byte(0x3433, 0x05);
@@ -3730,7 +3730,7 @@ fn sbc_a_r() {
 
 #[test]
 fn sbc_a_r_ovf() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x9E);
     c.bus.borrow_mut().write_byte(0x3433, 0x01);
@@ -3745,7 +3745,7 @@ fn sbc_a_r_ovf() {
 
 #[test]
 fn sbc_a_n() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDE);
     c.bus.borrow_mut().write_byte(0x0001, 0x05);
@@ -3758,7 +3758,7 @@ fn sbc_a_n() {
 
 #[test]
 fn sbc_a_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0x9E);
@@ -3774,7 +3774,7 @@ fn sbc_a_ix_d() {
 
 #[test]
 fn sbc_a_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0x9E);
@@ -3790,7 +3790,7 @@ fn sbc_a_iy_d() {
 
 #[test]
 fn and_r() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xA0);
     c.reg.a = 0xC3;
@@ -3802,7 +3802,7 @@ fn and_r() {
 
 #[test]
 fn and_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xA6);
@@ -3817,7 +3817,7 @@ fn and_ix_d() {
 
 #[test]
 fn and_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xA6);
@@ -3832,7 +3832,7 @@ fn and_iy_d() {
 
 #[test]
 fn or_r() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xB4);
     c.reg.a = 0x12;
@@ -3844,7 +3844,7 @@ fn or_r() {
 
 #[test]
 fn or_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xB6);
@@ -3859,7 +3859,7 @@ fn or_ix_d() {
 
 #[test]
 fn or_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xB6);
@@ -3874,7 +3874,7 @@ fn or_iy_d() {
 
 #[test]
 fn xor_n() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xEE);
     c.bus.borrow_mut().write_byte(0x0001, 0x5D);
@@ -3886,7 +3886,7 @@ fn xor_n() {
 
 #[test]
 fn xor_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xAE);
@@ -3901,7 +3901,7 @@ fn xor_ix_d() {
 
 #[test]
 fn xor_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xAE);
@@ -3916,7 +3916,7 @@ fn xor_iy_d() {
 
 #[test]
 fn cp_r() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xBB);
     c.reg.a = 0x0A;
@@ -3929,7 +3929,7 @@ fn cp_r() {
 
 #[test]
 fn cp_n() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFE);
     c.bus.borrow_mut().write_byte(0x0001, 0x05);
@@ -3942,7 +3942,7 @@ fn cp_n() {
 
 #[test]
 fn cp_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xBE);
@@ -3957,7 +3957,7 @@ fn cp_ix_d() {
 
 #[test]
 fn cp_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xBE);
@@ -3972,7 +3972,7 @@ fn cp_iy_d() {
 
 #[test]
 fn inc_b() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x04);
     c.reg.b = 0xff;
@@ -3984,7 +3984,7 @@ fn inc_b() {
 
 #[test]
 fn inc_c() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x0C);
     c.reg.c = 0xff;
@@ -3996,7 +3996,7 @@ fn inc_c() {
 
 #[test]
 fn inc_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x14);
     c.reg.d = 0xff;
@@ -4008,7 +4008,7 @@ fn inc_d() {
 
 #[test]
 fn inc_e() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x1C);
     c.reg.e = 0xff;
@@ -4020,7 +4020,7 @@ fn inc_e() {
 
 #[test]
 fn inc_h() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x24);
     c.reg.h = 0xff;
@@ -4032,7 +4032,7 @@ fn inc_h() {
 
 #[test]
 fn inc_l() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x2C);
     c.reg.l = 0xff;
@@ -4044,7 +4044,7 @@ fn inc_l() {
 
 #[test]
 fn inc_c_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x34);
     c.bus.borrow_mut().write_byte(0x0001, 0x34);
@@ -4062,7 +4062,7 @@ fn inc_c_hl() {
 
 #[test]
 fn inc_a() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x3C);
     c.reg.a = 0x0f;
@@ -4075,7 +4075,7 @@ fn inc_a() {
 
 #[test]
 fn inc_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0x34);
@@ -4090,7 +4090,7 @@ fn inc_ix_d() {
 
 #[test]
 fn inc_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0x34);
@@ -4105,7 +4105,7 @@ fn inc_iy_d() {
 
 #[test]
 fn dcr_b() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x05);
     c.bus.borrow_mut().write_byte(0x0001, 0x05);
@@ -4122,7 +4122,7 @@ fn dcr_b() {
 
 #[test]
 fn dcr_c() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x0d);
     c.bus.borrow_mut().write_byte(0x0001, 0x0d);
@@ -4139,7 +4139,7 @@ fn dcr_c() {
 
 #[test]
 fn dcr_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x15);
     c.bus.borrow_mut().write_byte(0x0001, 0x15);
@@ -4156,7 +4156,7 @@ fn dcr_d() {
 
 #[test]
 fn dcr_e() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x1d);
     c.bus.borrow_mut().write_byte(0x0001, 0x1d);
@@ -4173,7 +4173,7 @@ fn dcr_e() {
 
 #[test]
 fn dcr_h() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x25);
     c.bus.borrow_mut().write_byte(0x0001, 0x25);
@@ -4190,7 +4190,7 @@ fn dcr_h() {
 
 #[test]
 fn dcr_l() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x2d);
     c.bus.borrow_mut().write_byte(0x0001, 0x2d);
@@ -4207,7 +4207,7 @@ fn dcr_l() {
 
 #[test]
 fn dcr_m() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x35);
     c.bus.borrow_mut().write_byte(0x0001, 0x35);
@@ -4225,7 +4225,7 @@ fn dcr_m() {
 
 #[test]
 fn dcr_a() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x3d);
     c.bus.borrow_mut().write_byte(0x0001, 0x3d);
@@ -4242,7 +4242,7 @@ fn dcr_a() {
 
 #[test]
 fn dec_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0x35);
@@ -4257,7 +4257,7 @@ fn dec_ix_d() {
 
 #[test]
 fn dec_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0x35);
@@ -4272,7 +4272,7 @@ fn dec_iy_d() {
 
 #[test]
 fn daa() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x27);
     c.reg.a = 0x9B;
@@ -4287,7 +4287,7 @@ fn daa() {
 
 #[test]
 fn neg_doc() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x44);
@@ -4299,7 +4299,7 @@ fn neg_doc() {
 
 #[test]
 fn neg_asm() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/neg.bin", 0).unwrap();
     assert_eq!(c.execute(), 7);
@@ -4329,7 +4329,7 @@ fn neg_asm() {
 
 #[test]
 fn ccf() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x3f);
     c.bus.borrow_mut().write_byte(0x0001, 0x3f);
@@ -4343,7 +4343,7 @@ fn ccf() {
 
 #[test]
 fn scf() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x37);
     c.bus.borrow_mut().write_byte(0x0001, 0x37);
@@ -4357,7 +4357,7 @@ fn scf() {
 
 #[test]
 fn add_hl_b() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x09);
     c.reg.set_bc(0x339F);
@@ -4371,7 +4371,7 @@ fn add_hl_b() {
 
 #[test]
 fn add_hl_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x19);
     c.reg.set_de(0x339F);
@@ -4385,7 +4385,7 @@ fn add_hl_d() {
 
 #[test]
 fn add_hl_h() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x29);
     c.reg.set_hl(0x339F);
@@ -4398,7 +4398,7 @@ fn add_hl_h() {
 
 #[test]
 fn add_hl_sp() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x39);
     c.reg.sp = 0x339F;
@@ -4412,7 +4412,7 @@ fn add_hl_sp() {
 
 #[test]
 fn adc_hl_b() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x4A);
@@ -4427,7 +4427,7 @@ fn adc_hl_b() {
 
 #[test]
 fn adc_hl_d_ovf() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x5A);
@@ -4443,7 +4443,7 @@ fn adc_hl_d_ovf() {
 
 #[test]
 fn adc_hl_h_ovf() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x6A);
@@ -4458,7 +4458,7 @@ fn adc_hl_h_ovf() {
 
 #[test]
 fn adc_hl_sp_ovf() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x7A);
@@ -4474,7 +4474,7 @@ fn adc_hl_sp_ovf() {
 
 #[test]
 fn sbc_hl_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x52);
@@ -4489,7 +4489,7 @@ fn sbc_hl_d() {
 
 #[test]
 fn add_ix_bc() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0x09);
@@ -4502,7 +4502,7 @@ fn add_ix_bc() {
 
 #[test]
 fn add_iy_bc() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0x09);
@@ -4515,7 +4515,7 @@ fn add_iy_bc() {
 
 #[test]
 fn inc_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x23);
     c.reg.set_hl(0x1000);
@@ -4526,7 +4526,7 @@ fn inc_hl() {
 
 #[test]
 fn inc_ix() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0x23);
@@ -4538,7 +4538,7 @@ fn inc_ix() {
 
 #[test]
 fn inc_iy() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0x23);
@@ -4550,7 +4550,7 @@ fn inc_iy() {
 
 #[test]
 fn dec_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x2B);
     c.reg.set_hl(0x1001);
@@ -4561,7 +4561,7 @@ fn dec_hl() {
 
 #[test]
 fn dec_ix() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0x2B);
@@ -4573,7 +4573,7 @@ fn dec_ix() {
 
 #[test]
 fn dec_iy() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0x2B);
@@ -4585,7 +4585,7 @@ fn dec_iy() {
 
 #[test]
 fn rlca() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x07);
     c.reg.a = 0b10001000;
@@ -4597,7 +4597,7 @@ fn rlca() {
 
 #[test]
 fn rla() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x17);
     c.reg.a = 0b01110110;
@@ -4610,7 +4610,7 @@ fn rla() {
 
 #[test]
 fn rrca() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x0F);
     c.reg.a = 0b00010001;
@@ -4622,7 +4622,7 @@ fn rrca() {
 
 #[test]
 fn rra() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0x1F);
     c.reg.a = 0b11100001;
@@ -4635,7 +4635,7 @@ fn rra() {
 
 #[test]
 fn rlc_a() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xCB);
     c.bus.borrow_mut().write_byte(0x0001, 0x07);
@@ -4648,7 +4648,7 @@ fn rlc_a() {
 
 #[test]
 fn rlc_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xCB);
     c.bus.borrow_mut().write_byte(0x0001, 0x06);
@@ -4662,7 +4662,7 @@ fn rlc_hl() {
 
 #[test]
 fn rlc_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -4678,7 +4678,7 @@ fn rlc_ix_d() {
 
 #[test]
 fn rlc_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -4694,7 +4694,7 @@ fn rlc_iy_d() {
 
 #[test]
 fn rl_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xCB);
     c.bus.borrow_mut().write_byte(0x0001, 0x12);
@@ -4708,7 +4708,7 @@ fn rl_d() {
 
 #[test]
 fn rl_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -4725,7 +4725,7 @@ fn rl_ix_d() {
 
 #[test]
 fn rl_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -4742,7 +4742,7 @@ fn rl_iy_d() {
 
 #[test]
 fn read_le_dword() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -4753,7 +4753,7 @@ fn read_le_dword() {
 
 #[test]
 fn rrc_a() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xCB);
     c.bus.borrow_mut().write_byte(0x0001, 0x0F);
@@ -4766,7 +4766,7 @@ fn rrc_a() {
 
 #[test]
 fn rrc_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -4783,7 +4783,7 @@ fn rrc_ix_d() {
 
 #[test]
 fn rrc_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -4800,7 +4800,7 @@ fn rrc_iy_d() {
 
 #[test]
 fn rr_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xCB);
     c.bus.borrow_mut().write_byte(0x0001, 0x1E);
@@ -4814,7 +4814,7 @@ fn rr_hl() {
 
 #[test]
 fn rr_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -4831,7 +4831,7 @@ fn rr_ix_d() {
 
 #[test]
 fn rr_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -4848,7 +4848,7 @@ fn rr_iy_d() {
 
 #[test]
 fn sla_l() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xCB);
     c.bus.borrow_mut().write_byte(0x0001, 0x25);
@@ -4861,7 +4861,7 @@ fn sla_l() {
 
 #[test]
 fn sla_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -4878,7 +4878,7 @@ fn sla_ix_d() {
 
 #[test]
 fn sla_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -4895,7 +4895,7 @@ fn sla_iy_d() {
 
 #[test]
 fn sra_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -4912,7 +4912,7 @@ fn sra_ix_d() {
 
 #[test]
 fn srl_b() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xCB);
     c.bus.borrow_mut().write_byte(0x0001, 0x38);
@@ -4925,7 +4925,7 @@ fn srl_b() {
 
 #[test]
 fn rld() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x6F);
@@ -4940,7 +4940,7 @@ fn rld() {
 
 #[test]
 fn rrd() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xED);
     c.bus.borrow_mut().write_byte(0x0001, 0x67);
@@ -4955,7 +4955,7 @@ fn rrd() {
 
 #[test]
 fn bit_4_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xCB);
     c.bus.borrow_mut().write_byte(0x0001, 0x66);
@@ -4969,7 +4969,7 @@ fn bit_4_hl() {
 
 #[test]
 fn bit_6_ix_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -4985,7 +4985,7 @@ fn bit_6_ix_d() {
 
 #[test]
 fn bit_6_iy_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -5001,7 +5001,7 @@ fn bit_6_iy_d() {
 
 #[test]
 fn set_4_a() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xCB);
     c.bus.borrow_mut().write_byte(0x0001, 0xE7);
@@ -5012,7 +5012,7 @@ fn set_4_a() {
 
 #[test]
 fn set_4_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xCB);
     c.bus.borrow_mut().write_byte(0x0001, 0xE6);
@@ -5024,7 +5024,7 @@ fn set_4_hl() {
 
 #[test]
 fn set_0_ix() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -5038,7 +5038,7 @@ fn set_0_ix() {
 
 #[test]
 fn set_0_iy() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -5052,7 +5052,7 @@ fn set_0_iy() {
 
 #[test]
 fn res_6_d() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xCB);
     c.bus.borrow_mut().write_byte(0x0001, 0xB2);
@@ -5064,7 +5064,7 @@ fn res_6_d() {
 
 #[test]
 fn reset_0_ix() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -5079,7 +5079,7 @@ fn reset_0_ix() {
 
 #[test]
 fn reset_0_iy() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xFD);
     c.bus.borrow_mut().write_byte(0x0001, 0xCB);
@@ -5094,7 +5094,7 @@ fn reset_0_iy() {
 
 #[test]
 fn jp() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xC3);
     c.bus.borrow_mut().write_byte(0x0001, 0x00);
@@ -5105,7 +5105,7 @@ fn jp() {
 
 #[test]
 fn jr() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x0480;
     c.bus.borrow_mut().write_byte(0x0480, 0x18);
@@ -5116,7 +5116,7 @@ fn jr() {
 
 #[test]
 fn jr_neg() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x0480;
     c.bus.borrow_mut().write_byte(0x0480, 0x18);
@@ -5127,7 +5127,7 @@ fn jr_neg() {
 
 #[test]
 fn jr_c_e() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x0480;
     c.bus.borrow_mut().write_byte(0x0480, 0x38);
@@ -5139,7 +5139,7 @@ fn jr_c_e() {
 
 #[test]
 fn jr_nc_e() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x0480;
     c.bus.borrow_mut().write_byte(0x0480, 0x30);
@@ -5151,7 +5151,7 @@ fn jr_nc_e() {
 
 #[test]
 fn jr_z_e() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x0300;
     c.bus.borrow_mut().write_byte(0x0300, 0x28);
@@ -5163,7 +5163,7 @@ fn jr_z_e() {
 
 #[test]
 fn jr_nz_e() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x0480;
     c.bus.borrow_mut().write_byte(0x0480, 0x20);
@@ -5175,7 +5175,7 @@ fn jr_nz_e() {
 
 #[test]
 fn jp_hl() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x1000;
     c.bus.borrow_mut().write_byte(0x1000, 0xE9);
@@ -5186,7 +5186,7 @@ fn jp_hl() {
 
 #[test]
 fn jp_ix() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x1000;
     c.bus.borrow_mut().write_byte(0x1000, 0xDD);
@@ -5198,7 +5198,7 @@ fn jp_ix() {
 
 #[test]
 fn jp_iy() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x1000;
     c.bus.borrow_mut().write_byte(0x1000, 0xFD);
@@ -5210,7 +5210,7 @@ fn jp_iy() {
 
 #[test]
 fn call_nn() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x1A47;
     c.reg.sp = 0x3002;
@@ -5226,7 +5226,7 @@ fn call_nn() {
 
 #[test]
 fn call_cc_nn() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.flags.c = false;
     c.reg.pc = 0x1A47;
@@ -5243,7 +5243,7 @@ fn call_cc_nn() {
 
 #[test]
 fn ret() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x3535;
     c.reg.sp = 0x2000;
@@ -5257,7 +5257,7 @@ fn ret() {
 
 #[test]
 fn ret_cc() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.flags.s = true;
     c.reg.pc = 0x3535;
@@ -5272,7 +5272,7 @@ fn ret_cc() {
 
 #[test]
 fn rst() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x15B3;
     c.bus.borrow_mut().write_byte(0x15B3, 0xDF);
@@ -5282,7 +5282,7 @@ fn rst() {
 
 #[test]
 fn debug_unkn() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xDD);
     c.bus.borrow_mut().write_byte(0x0001, 0x00);
@@ -5294,7 +5294,7 @@ fn debug_unkn() {
 // if this test loops forever, interrupts are not working
 #[test]
 fn int() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/int.bin", 0).unwrap();
     for _ in 0..7 {
@@ -5312,7 +5312,7 @@ fn int() {
 // if this test loops forever, mode 1 interrupts are not working
 #[test]
 fn int_im1() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/int_im1.bin", 0).unwrap();
     for _ in 0..8 {
@@ -5330,7 +5330,7 @@ fn int_im1() {
 // if this test loops forever, mode 1 interrupts are not working
 #[test]
 fn int_im2() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/int_im2.bin", 0).unwrap();
     for _ in 0..9 {
@@ -5347,7 +5347,7 @@ fn int_im2() {
 
 #[test]
 fn nmi() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().load_bin("bin/nmi.bin", 0).unwrap();
     for _ in 0..5 {
@@ -5367,7 +5367,7 @@ fn nmi() {
 
 #[test]
 fn jr_nz_neg() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x0274;
     c.bus.borrow_mut().write_byte(0x0274, 0x0E); // LD C,$08
@@ -5383,7 +5383,7 @@ fn jr_nz_neg() {
 
 #[test]
 fn jr_nz_neg_false() {
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     c.reg.pc = 0x0274;
     c.bus.borrow_mut().write_byte(0x0274, 0x0E); // LD C,$08

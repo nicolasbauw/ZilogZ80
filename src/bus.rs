@@ -1,7 +1,7 @@
 use std::{fs::File, io::prelude::*};
 
-/// The AddressBus struct is hosting the Z80 memory map.
-pub struct AddressBus {
+/// The Bus struct is hosting the Z80 memory map.
+pub struct Bus {
     address_space: Vec<u8>,
     rom_space: Option<ROMSpace>,
     /// This channel is used for non memory-mapped IO (OUT : CPU -> peripherals)
@@ -27,9 +27,9 @@ struct ROMSpace {
     pub end: u16,
 }
 
-impl AddressBus {
-    pub fn new(size: u16) -> AddressBus {
-        AddressBus {
+impl Bus {
+    pub fn new(size: u16) -> Bus {
+        Bus {
             address_space: vec![0; (size as usize) + 1],
             rom_space: None,
             io_out: crossbeam_channel::bounded(1),
@@ -152,7 +152,7 @@ mod tests {
     use super::*;
     #[test]
     fn r_le_dword() {
-        let mut b = AddressBus::new(0xFFFF);
+        let mut b = Bus::new(0xFFFF);
         b.write_byte(0x0000, 0xCC);
         b.write_byte(0x0001, 0xDD);
         b.write_byte(0x0002, 0xEE);
@@ -162,14 +162,14 @@ mod tests {
 
     #[test]
     fn read_invalid() {
-        let mut b = AddressBus::new(0x7FFF);
+        let mut b = Bus::new(0x7FFF);
         b.write_byte(0x8000, 0xFF);
         assert_eq!(b.read_byte(0x8000), 0);
     }
 
     #[test]
     fn write_romspace() {
-        let mut b = AddressBus::new(0x7FFF);
+        let mut b = Bus::new(0x7FFF);
         b.write_byte(0x0000, 0xFF);
         b.set_romspace(0x0000, 0x000F);
         b.write_byte(0x0000, 0x00);
@@ -178,7 +178,7 @@ mod tests {
 
     #[test]
     fn clear_slice() {
-        let mut b = AddressBus::new(0x000F);
+        let mut b = Bus::new(0x000F);
         for m in 0..=15 {
             b.write_byte(m, 0xFF);
         }

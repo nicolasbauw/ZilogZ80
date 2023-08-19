@@ -1,5 +1,5 @@
 use std::{env, error::Error, process};
-use zilog_z80::{bus::AddressBus, cpu::CPU};
+use zilog_z80::{bus::Bus, cpu::CPU};
 
 fn main() {
     if let Err(e) = load_execute() {
@@ -10,7 +10,7 @@ fn main() {
 
 fn load_execute() -> Result<(), Box<dyn Error>> {
     let a: Vec<String> = env::args().collect();
-    let bus = std::rc::Rc::new(std::cell::RefCell::new(AddressBus::new(0xFFFF)));
+    let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     let mut c = CPU::new(bus);
     // Loads assembled program into memory
     c.bus.borrow_mut().load_bin(&a[1], 0x100)?;

@@ -1,5 +1,5 @@
 use crate::bit;
-use crate::bus::AddressBus;
+use crate::bus::Bus;
 use crate::cycles::{CYCLES, CYCLES_CB, CYCLES_DD_FD, CYCLES_ED};
 use crate::registers::Registers;
 use core::cell::RefCell;
@@ -8,7 +8,7 @@ use std::{rc::Rc, time::SystemTime};
 pub struct CPU {
     pub reg: Registers,
     pub alt: Registers,
-    pub bus: Rc<RefCell<AddressBus>>,
+    pub bus: Rc<RefCell<Bus>>,
     halt: bool,
     pub debug: Debug,
     int: Option<u8>,
@@ -26,7 +26,7 @@ pub struct CPU {
 
 impl CPU {
     /// Creates a new CPU instance. 'Size' will be its top address.
-    pub fn new(bus: Rc<RefCell<AddressBus>>) -> CPU {
+    pub fn new(bus: Rc<RefCell<Bus>>) -> CPU {
         CPU {
             reg: Registers::new(),
             alt: Registers::new(),
