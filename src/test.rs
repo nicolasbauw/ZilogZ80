@@ -30,8 +30,8 @@ const SF: u8 = 1 << 7;
 #[test]
 fn ld_r_r_asm() {
     let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
-    let mut c = CPU::new(bus);
-    c.bus.borrow_mut().load_bin("bin/ld_r_r.bin", 0).unwrap();
+    let mut c = CPU::new(bus.clone());
+    bus.borrow_mut().load_bin("bin/ld_r_r.bin", 0).unwrap();
     c.reg.a = 0x12;
     assert_eq!(c.execute(), 4);
     assert_eq!(c.reg.b, 0x12); // LD B,A
