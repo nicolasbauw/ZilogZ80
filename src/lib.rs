@@ -25,7 +25,6 @@
 pub mod bus;
 pub mod cpu;
 pub mod registers;
-pub use crossbeam_channel;
 mod bit;
 mod cycles;
 mod dasm;

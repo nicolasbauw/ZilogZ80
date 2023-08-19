@@ -4,21 +4,6 @@ use std::{fs::File, io::prelude::*};
 pub struct Bus {
     address_space: Vec<u8>,
     rom_space: Option<ROMSpace>,
-    /// This channel is used for non memory-mapped IO (OUT : CPU -> peripherals)
-    pub io_out: (
-        crossbeam_channel::Sender<(u8, u8)>,
-        crossbeam_channel::Receiver<(u8, u8)>,
-    ),
-    /// This channel is used for non memory-mapped IO (IN : peripherals -> CPU)
-    pub io_in: (
-        crossbeam_channel::Sender<(u8, u8)>,
-        crossbeam_channel::Receiver<(u8, u8)>,
-    ),
-    /// This channel is used by the IN instruction to ask a peripheral to send a message
-    pub io_req: (
-        crossbeam_channel::Sender<u8>,
-        crossbeam_channel::Receiver<u8>,
-    ),
 }
 
 /// Start and end addresses of read-only (ROM) area.
@@ -32,9 +17,6 @@ impl Bus {
         Bus {
             address_space: vec![0; (size as usize) + 1],
             rom_space: None,
-            io_out: crossbeam_channel::bounded(1),
-            io_in: crossbeam_channel::bounded(1),
-            io_req: crossbeam_channel::bounded(1),
         }
     }
 
