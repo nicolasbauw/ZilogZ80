@@ -38,7 +38,7 @@ impl Flags {
     }
 
     /// Sets Status Indicator Flags from a byte.
-    pub fn from_byte(&mut self, bflags: u8) {
+    pub fn bits_from_byte(&mut self, bflags: u8) {
         self.s = (bflags & 0x80) != 0;
         self.z = (bflags & 0x40) != 0;
         self.b5 = (bflags & 0x20) != 0;

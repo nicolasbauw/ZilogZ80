@@ -3677,7 +3677,7 @@ impl CPU {
                 // POP AF
                 self.reg.a = self.bus.borrow().read_byte((self.reg.sp) + 1);
                 let bflags = self.bus.borrow().read_byte(self.reg.sp);
-                self.reg.flags.from_byte(bflags);
+                self.reg.flags.bits_from_byte(bflags);
                 self.reg.sp = self.reg.sp.wrapping_add(2);
             }
 

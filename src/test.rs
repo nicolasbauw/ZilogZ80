@@ -1429,7 +1429,7 @@ fn rlca_rla_rrca_rra_asm() {
         .borrow_mut()
         .load_bin("bin/rlca_rla_rrca_rra.bin", 0)
         .unwrap();
-    c.reg.flags.from_byte(0xFF);
+    c.reg.flags.bits_from_byte(0xFF);
     assert_eq!(c.execute(), 7);
     assert_eq!(0xA0, c.reg.a); // LD A,0xA0
     assert_eq!(c.execute(), 4);
@@ -1899,7 +1899,7 @@ fn cpi_asm() {
     assert_eq!(0x0003, c.reg.get_bc());
     assert_eq!(c.flags(), PF | NF);
     let f = c.flags() | CF;
-    c.reg.flags.from_byte(f);
+    c.reg.flags.bits_from_byte(f);
     assert_eq!(c.execute(), 16);
     assert_eq!(0x1002, c.reg.get_hl());
     assert_eq!(0x0002, c.reg.get_bc());
@@ -2509,7 +2509,7 @@ fn rld_rrd_asm() {
     assert_eq!(0x01, c.reg.a);
     assert_eq!(c.execute(), 10);
     assert_eq!(0x00, c.bus.borrow().read_byte(0x1000));
-    c.reg.flags.from_byte(CF);
+    c.reg.flags.bits_from_byte(CF);
     assert_eq!(c.execute(), 18);
     assert_eq!(0x00, c.reg.a);
     assert_eq!(0x01, c.bus.borrow().read_byte(0x1000));
@@ -3233,7 +3233,7 @@ fn push_af() {
     let mut c = CPU::new(bus);
     c.bus.borrow_mut().write_byte(0x0000, 0xF5);
     c.reg.a = 0x22;
-    c.reg.flags.from_byte(0x33);
+    c.reg.flags.bits_from_byte(0x33);
     c.reg.sp = 0x1007;
     assert_eq!(c.flags(), 0b00110011);
     assert_eq!(c.execute(), 11);
