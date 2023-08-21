@@ -22,9 +22,10 @@ impl Bus {
 
     /// Sets a ROM space. Write operations will be ineffective in this address range.
     /// ```rust
-    /// use zilog_z80::cpu::CPU;
-    /// let mut c = CPU::new(0xFFFF);
-    /// c.bus.set_romspace(0xF000, 0xFFFF);
+    /// use zilog_z80::{bus::Bus, cpu::CPU};
+    /// let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
+    /// let mut c = CPU::new(bus.clone());
+    /// bus.borrow_mut().set_romspace(0xF000, 0xFFFF);
     /// ```
     pub fn set_romspace(&mut self, start: u16, end: u16) {
         self.rom_space = Some(ROMSpace { start, end });
