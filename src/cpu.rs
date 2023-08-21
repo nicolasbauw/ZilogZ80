@@ -4527,13 +4527,14 @@ impl CPU {
             0xDB => {
                 let port = self.bus.borrow().read_byte(self.reg.pc + 1);
                 self.reg.a = self.bus.borrow_mut().get_io(port);
+                self.bus.borrow_mut().clear_io();
                 if self.debug.instr_in { println!("IN {:#04X} from device {:#04X}", self.reg.a, port) }
             },
 
             // OUT (n),A
             0xD3 => {
                 let port = self.bus.borrow().read_byte(self.reg.pc + 1);
-                self.bus.borrow_mut().set_io(port, self.reg.a);
+                self.bus.borrow_mut().set_io_out(port, self.reg.a);
                 if self.debug.instr_in { println!("OUT {:#04X} sent to device {:#04X}", self.reg.a, port) }
             },
             _ => {

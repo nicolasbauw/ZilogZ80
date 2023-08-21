@@ -41,6 +41,7 @@ impl Bus {
         }
     }
 
+    // Function for CPU to get data from IO (IN)
     pub fn get_io(&mut self, device: u8) -> u8 {
         // Data from this device on the bus ? we return it and clear the pending IO
         if self.io.in_out == InOut::IN && self.io.device == device {
@@ -56,7 +57,17 @@ impl Bus {
         0
     }
 
-    pub fn set_io(&mut self, device: u8, data: u8) {
+    // Function for peripherals to send data to CPU (IO IN)
+    pub fn set_io_in(&mut self, device: u8, data: u8) {
+        self.io = Io {
+            device: device,
+            data: data,
+            in_out: InOut::IN
+        };
+    }
+
+    // Function for CPU to send data to peripheral (IO OUT)
+    pub fn set_io_out(&mut self, device: u8, data: u8) {
         self.io = Io {
             device: device,
             data: data,
