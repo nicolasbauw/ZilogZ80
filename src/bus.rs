@@ -91,14 +91,6 @@ impl Bus {
         };
     }
 
-    pub fn clear_io(&mut self) {
-        self.io = Io {
-            device: 0,
-            data: 0,
-            in_out: InOut::NONE
-        };
-    }
-
     /// Sets a ROM space. Write operations will be ineffective in this address range.
     /// ```rust
     /// use zilog_z80::{bus::Bus, cpu::CPU};
