@@ -4596,6 +4596,12 @@ pub struct Debug {
     pub string: String,
 }
 
+impl Default for Debug {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Debug {
     pub fn new() -> Debug {
         Debug {

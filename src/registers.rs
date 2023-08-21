@@ -19,6 +19,12 @@ pub struct Registers {
     pub flags: Flags,
 }
 
+impl Default for Registers {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Registers {
     pub fn new() -> Registers {
         Registers {

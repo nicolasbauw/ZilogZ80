@@ -10,6 +10,12 @@ pub struct Flags {
     pub c: bool,  // carry                : bit 0
 }
 
+impl Default for Flags {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Flags {
     pub fn new() -> Flags {
         Flags {
