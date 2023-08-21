@@ -19,7 +19,7 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     for _ in 0..9 {
         c.execute();
         if c.debug.opcode {
-            print!("{}\n", c.debug.string);
+            println!("{}", c.debug.string);
         }
     }
     c.int_request(0x02);
@@ -27,7 +27,7 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     loop {
         c.execute();
         if c.debug.opcode {
-            print!("{}\n", c.debug.string);
+            println!("{}", c.debug.string);
         }
         if c.reg.pc == 0x0000 {
             break;
