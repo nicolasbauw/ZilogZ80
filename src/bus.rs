@@ -42,9 +42,25 @@ impl Bus {
     }
 
     // Function for CPU to get data from IO (IN)
-    pub fn get_io(&mut self, device: u8) -> u8 {
-        // Data from this device on the bus ? we return it and clear the pending IO
+    pub fn get_io_in(&mut self, device: u8) -> u8 {
+        // Data from this device on the IO bus ? we return it and clear the pending IO
         if self.io.in_out == InOut::IN && self.io.device == device {
+            let r = self.io.data;
+            self.io = Io {
+                device: 0,
+                data: 0,
+                in_out: InOut::NONE,
+            };
+            return r;
+        }
+        // Otherwise we return 0
+        0
+    }
+
+    // Function for peripherals to get data from IO (OUT)
+    pub fn get_io_out(&mut self, device: u8) -> u8 {
+        // Data from the CPU on the IO bus ? we return it and clear the pending IO
+        if self.io.in_out == InOut::OUT && self.io.device == device {
             let r = self.io.data;
             self.io = Io {
                 device: 0,

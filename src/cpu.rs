@@ -4526,7 +4526,7 @@ impl CPU {
             // IN A,(n)
             0xDB => {
                 let port = self.bus.borrow().read_byte(self.reg.pc + 1);
-                self.reg.a = self.bus.borrow_mut().get_io(port);
+                self.reg.a = self.bus.borrow_mut().get_io_in(port);
                 self.bus.borrow_mut().clear_io();
                 if self.debug.instr_in { println!("IN {:#04X} from device {:#04X}", self.reg.a, port) }
             },
