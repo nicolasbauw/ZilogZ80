@@ -78,7 +78,7 @@ impl Bus {
         self.io = Io {
             device: device,
             data: data,
-            in_out: InOut::IN
+            in_out: InOut::IN,
         };
     }
 
@@ -87,7 +87,7 @@ impl Bus {
         self.io = Io {
             device: device,
             data: data,
-            in_out: InOut::OUT
+            in_out: InOut::OUT,
         };
     }
 

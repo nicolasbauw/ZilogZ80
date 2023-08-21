@@ -1,4 +1,4 @@
-use std::{ error::Error, process };
+use std::{error::Error, process};
 use zilog_z80::{bus::Bus, cpu::CPU};
 
 fn main() {
@@ -20,8 +20,12 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     loop {
         c.execute();
         let d = bus.borrow_mut().get_io_out(0x07);
-        if d !=0 { println!("The 0x07 peripheral received {:#04X} from the CPU", d) }
-        if c.reg.pc == 0x0000 { break }
+        if d != 0 {
+            println!("The 0x07 peripheral received {:#04X} from the CPU", d)
+        }
+        if c.reg.pc == 0x0000 {
+            break;
+        }
     }
     Ok(())
 }

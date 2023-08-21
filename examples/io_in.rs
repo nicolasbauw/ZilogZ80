@@ -1,4 +1,4 @@
-use std::{ error::Error, process };
+use std::{error::Error, process};
 use zilog_z80::{bus::Bus, cpu::CPU};
 
 fn main() {
@@ -20,7 +20,9 @@ fn load_execute() -> Result<(), Box<dyn Error>> {
     loop {
         c.execute();
         bus.borrow_mut().set_io_in(0x07, 0xDE);
-        if c.reg.pc == 0x0000 { break }
+        if c.reg.pc == 0x0000 {
+            break;
+        }
     }
     Ok(())
 }
