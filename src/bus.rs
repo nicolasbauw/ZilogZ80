@@ -4,6 +4,22 @@ use std::{fs::File, io::prelude::*};
 pub struct Bus {
     address_space: Vec<u8>,
     rom_space: Option<ROMSpace>,
+    // This is for pending IOs (IN/OUT)
+    io: Io,
+}
+
+// CPU I/O
+struct Io {
+    device: u8,
+    data: u8,
+    in_out: InOut,
+}
+
+#[derive(PartialEq)]
+enum InOut {
+    IN,
+    OUT,
+    NONE,
 }
 
 /// Start and end addresses of read-only (ROM) area.
@@ -17,7 +33,43 @@ impl Bus {
         Bus {
             address_space: vec![0; (size as usize) + 1],
             rom_space: None,
+            io: Io {
+                device: 0,
+                data: 0,
+                in_out: InOut::NONE,
+            },
         }
+    }
+
+    pub fn get_io(&mut self, device: u8) -> u8 {
+        // Data from this device on the bus ? we return it and clear the pending IO
+        if self.io.in_out == InOut::IN && self.io.device == device {
+            let r = self.io.data;
+            self.io = Io {
+                device: 0,
+                data: 0,
+                in_out: InOut::NONE,
+            };
+            return r;
+        }
+        // Otherwise we return 0
+        0
+    }
+
+    pub fn set_io(&mut self, device: u8, data: u8) {
+        self.io = Io {
+            device: device,
+            data: data,
+            in_out: InOut::OUT
+        };
+    }
+
+    pub fn clear_io(&mut self) {
+        self.io = Io {
+            device: 0,
+            data: 0,
+            in_out: InOut::NONE
+        };
     }
 
     /// Sets a ROM space. Write operations will be ineffective in this address range.

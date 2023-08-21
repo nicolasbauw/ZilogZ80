@@ -4524,18 +4524,18 @@ impl CPU {
 
             // Input and Output Group
             // IN A,(n)
-            /*0xDB => {
+            0xDB => {
                 let port = self.bus.borrow().read_byte(self.reg.pc + 1);
-                self.reg.a = self.get_io(port);
+                self.reg.a = self.bus.borrow_mut().get_io(port);
                 if self.debug.instr_in { println!("IN {:#04X} from device {:#04X}", self.reg.a, port) }
-            },*/
+            },
 
             // OUT (n),A
-            /*0xD3 => {
+            0xD3 => {
                 let port = self.bus.borrow().read_byte(self.reg.pc + 1);
-                self.set_io(port, self.reg.a);
+                self.bus.borrow_mut().set_io(port, self.reg.a);
                 if self.debug.instr_in { println!("OUT {:#04X} sent to device {:#04X}", self.reg.a, port) }
-            },*/
+            },
             _ => {
                 if self.debug.unknw_instr {
                     self.debug.string = format!("{:#04X}", opcode);
