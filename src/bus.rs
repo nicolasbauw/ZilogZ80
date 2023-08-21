@@ -17,9 +17,9 @@ struct Io {
 
 #[derive(PartialEq)]
 enum InOut {
-    IN,
-    OUT,
-    NONE,
+    In,
+    Out,
+    None,
 }
 
 /// Start and end addresses of read-only (ROM) area.
@@ -36,7 +36,7 @@ impl Bus {
             io: Io {
                 device: 0,
                 data: 0,
-                in_out: InOut::NONE,
+                in_out: InOut::None,
             },
         }
     }
@@ -44,12 +44,12 @@ impl Bus {
     // Function for CPU to get data from IO (IN)
     pub fn get_io_in(&mut self, device: u8) -> u8 {
         // Data from this device on the IO bus ? we return it and clear the pending IO
-        if self.io.in_out == InOut::IN && self.io.device == device {
+        if self.io.in_out == InOut::In && self.io.device == device {
             let r = self.io.data;
             self.io = Io {
                 device: 0,
                 data: 0,
-                in_out: InOut::NONE,
+                in_out: InOut::None,
             };
             return r;
         }
@@ -60,12 +60,12 @@ impl Bus {
     // Function for peripherals to get data from IO (OUT)
     pub fn get_io_out(&mut self, device: u8) -> u8 {
         // Data from the CPU on the IO bus ? we return it and clear the pending IO
-        if self.io.in_out == InOut::OUT && self.io.device == device {
+        if self.io.in_out == InOut::Out && self.io.device == device {
             let r = self.io.data;
             self.io = Io {
                 device: 0,
                 data: 0,
-                in_out: InOut::NONE,
+                in_out: InOut::None,
             };
             return r;
         }
@@ -76,18 +76,18 @@ impl Bus {
     // Function for peripherals to send data to CPU (IO IN)
     pub fn set_io_in(&mut self, device: u8, data: u8) {
         self.io = Io {
-            device: device,
-            data: data,
-            in_out: InOut::IN,
+            device,
+            data,
+            in_out: InOut::In,
         };
     }
 
     // Function for CPU to send data to peripheral (IO OUT)
     pub fn set_io_out(&mut self, device: u8, data: u8) {
         self.io = Io {
-            device: device,
-            data: data,
-            in_out: InOut::OUT,
+            device,
+            data,
+            in_out: InOut::Out,
         };
     }
 
