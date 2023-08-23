@@ -25,7 +25,7 @@ pub struct CPU {
 }
 
 impl CPU {
-    /// Creates a new CPU instance. 'Size' will be its top address.
+    /// Creates a new CPU instance.
     pub fn new(bus: Rc<RefCell<Bus>>) -> CPU {
         CPU {
             reg: Registers::new(),
@@ -4581,6 +4581,7 @@ fn check_sub_overflow(n1: u8, n2: u8) -> bool {
     r.1
 }
 
+#[doc(hidden)]
 // Converts a signed byte to its absolute value
 pub fn signed_to_abs(n: u8) -> u8 {
     !n + 1
