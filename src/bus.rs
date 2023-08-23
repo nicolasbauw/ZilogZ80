@@ -1,6 +1,6 @@
 use std::{fs::File, io::prelude::*};
 
-/// The Bus struct is hosting the Z80 memory map.
+/// The Bus struct is hosting the Z80 memory map and IO.
 pub struct Bus {
     address_space: Vec<u8>,
     rom_space: Option<ROMSpace>,
@@ -29,6 +29,7 @@ struct ROMSpace {
 }
 
 impl Bus {
+    /// To create a new bus with `size` max address.
     pub fn new(size: u16) -> Bus {
         Bus {
             address_space: vec![0; (size as usize) + 1],
@@ -41,6 +42,7 @@ impl Bus {
         }
     }
 
+    #[doc(hidden)]
     // Function for CPU to get data from IO (IN)
     pub fn get_io_in(&mut self, device: u8) -> u8 {
         // Data from this device on the IO bus ? we return it and clear the pending IO
@@ -57,7 +59,7 @@ impl Bus {
         0
     }
 
-    // Function for peripherals to get data from IO (OUT)
+    /// Function for peripherals to get data from CPU (OUT)
     pub fn get_io_out(&mut self, device: u8) -> u8 {
         // Data from the CPU on the IO bus ? we return it and clear the pending IO
         if self.io.in_out == InOut::Out && self.io.device == device {
@@ -73,7 +75,7 @@ impl Bus {
         0
     }
 
-    // Function for peripherals to send data to CPU (IO IN)
+    /// Function for peripherals to send data to CPU (IN)
     pub fn set_io_in(&mut self, device: u8, data: u8) {
         self.io = Io {
             device,
@@ -82,7 +84,8 @@ impl Bus {
         };
     }
 
-    // Function for CPU to send data to peripheral (IO OUT)
+    #[doc(hidden)]
+    // Function for CPU to send data to peripheral (OUT)
     pub fn set_io_out(&mut self, device: u8, data: u8) {
         self.io = Io {
             device,
@@ -93,9 +96,7 @@ impl Bus {
 
     /// Sets a ROM space. Write operations will be ineffective in this address range.
     /// ```rust
-    /// use zilog_z80::{bus::Bus, cpu::CPU};
     /// let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
-    /// let mut c = CPU::new(bus.clone());
     /// bus.borrow_mut().set_romspace(0xF000, 0xFFFF);
     /// ```
     pub fn set_romspace(&mut self, start: u16, end: u16) {
