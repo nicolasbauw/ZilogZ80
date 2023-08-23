@@ -96,6 +96,7 @@ impl Bus {
 
     /// Sets a ROM space. Write operations will be ineffective in this address range.
     /// ```rust
+    /// use zilog_z80::bus::Bus;
     /// let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
     /// bus.borrow_mut().set_romspace(0xF000, 0xFFFF);
     /// ```
