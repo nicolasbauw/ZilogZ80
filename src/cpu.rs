@@ -652,7 +652,7 @@ impl CPU {
         cycles
     }
 
-    /// Fetches and executes one instruction from (pc). Returns the sleep time when slice_max_cycles is reached.
+    /// Fetches and executes instructions from (pc). Returns the sleep time when slice_max_cycles is reached.
     pub fn execute_timed(&mut self) -> Option<u32> {
         let mut sleep_time: Option<u32> = None;
         if self.slice_current_cycles > self.slice_max_cycles {
