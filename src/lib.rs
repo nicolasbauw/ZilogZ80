@@ -3,7 +3,7 @@
 //! Example for a small loop:
 //! ```rust
 //! use zilog_z80::{bus::Bus, cpu::CPU};
-//! let bus = std::rc::Rc::new(std::cell::RefCell::new(Bus::new(0xFFFF)));
+//! let bus = std::rc::Rc::new(core::cell::RefCell::new(Bus::new(0xFFFF)));
 //! let mut c = CPU::new(bus.clone());
 //! c.reg.pc = 0x0100;                  // sets pc to 0x0100
 //! // Here we create a small machine code program for demo purpose.
