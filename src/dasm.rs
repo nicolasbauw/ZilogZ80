@@ -2,7 +2,7 @@ use crate::cpu::{CPU, signed_to_abs};
 use crate::bit;
 
 impl CPU {
-    /// Disassembles code at (address)
+    /// Disassembles 1-byte opcode at (address)
     pub fn dasm_1byte(&self, address: u16) -> String {
         let opcode = self.bus.read_byte(address);
         match opcode {

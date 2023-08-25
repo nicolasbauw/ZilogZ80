@@ -13,6 +13,7 @@ struct ROMSpace {
 }
 
 impl Bus {
+    /// Creates a new bus instance. 'Size' will be its top address.
     pub fn new(size: u16) -> Bus {
         Bus {
             address_space: vec![0; (size as usize) + 1],
