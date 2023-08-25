@@ -5,7 +5,6 @@
 [![Downloads badge](https://img.shields.io/crates/d/zilog_z80.svg)](https://crates.io/crates/zilog_z80)
 
 This is a Z80 emulator.
-It handles interrupts and I/O.
 
 Example for a small loop:
 ```rust
@@ -25,7 +24,5 @@ loop {
     if c.reg.pc == 0x0000 { break }
 }
 ```
-
- For IO examples see the examples directory or my [Altair 8800 / teletype emulator](https://github.com/nicolasbauw/teletype). For MMIO examples see my [demonstration TRS-80 emulator.](https://github.com/nicolasbauw/TRS-80)
 
 License: MIT
