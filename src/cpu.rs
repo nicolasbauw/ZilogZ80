@@ -1,5 +1,5 @@
 use crate::registers::Registers;
-use crate::bus::AddressBus;
+use crate::bus::Bus;
 use crate::bit;
 use crate::cycles::{ CYCLES, CYCLES_CB, CYCLES_ED, CYCLES_DD_FD };
 use std::time::SystemTime;
@@ -7,7 +7,7 @@ use std::time::SystemTime;
 pub struct CPU {
     pub reg: Registers,
     pub alt: Registers,
-    pub bus: AddressBus,
+    pub bus: Bus,
     halt: bool,
     pub debug: Debug,
     int: Option<u8>,
@@ -29,7 +29,7 @@ impl CPU {
         CPU {
             reg: Registers::new(),
             alt: Registers::new(),
-            bus: AddressBus::new(size),
+            bus: Bus::new(size),
             halt: false,
             debug: Debug::new(),
             int: None,
