@@ -2,7 +2,7 @@ use crate::registers::Registers;
 use crate::bus::AddressBus;
 use crate::bit;
 use crate::cycles::{ CYCLES, CYCLES_CB, CYCLES_ED, CYCLES_DD_FD };
-use std::{time::Duration, time::SystemTime};
+use std::time::SystemTime;
 
 pub struct CPU {
     pub reg: Registers,
@@ -581,93 +581,9 @@ impl CPU {
         self.bus.write_word(self.reg.sp , self.reg.pc);
     }
 
-    // IN r,(C)
-    fn inrc(&mut self) -> u8 {
-        let r = self.get_io(self.reg.c);
-        self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
-        self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
-        self.reg.flags.h = false;
-        self.reg.flags.n = false;
-        r
-    }
-
-    // INI / INIR
-    fn ini(&mut self) {
-        let d = self.get_io(self.reg.c);
-        let hl = self.reg.get_hl();
-        self.bus.write_byte(hl, d);
-        self.reg.b = (self.reg.b).wrapping_sub(1);
-        self.reg.set_hl(hl.wrapping_add(1));
-        self.reg.flags.z = self.reg.b == 0x00;
-        self.reg.flags.n = true;
-    }
-
-    // IND / INDR
-    fn ind(&mut self) {
-        let d = self.get_io(self.reg.c);
-        let hl = self.reg.get_hl();
-        self.bus.write_byte(hl, d);
-        self.reg.b = (self.reg.b).wrapping_sub(1);
-        self.reg.set_hl(hl.wrapping_sub(1));
-        self.reg.flags.z = self.reg.b == 0x00;
-        self.reg.flags.n = true;
-    }
-
-    // OUTI / OTIR
-    fn outi(&mut self) {
-        let hl = self.reg.get_hl();
-        let d = self.bus.read_byte(hl);
-        self.set_io(self.reg.c, d);
-        self.reg.b = (self.reg.b).wrapping_sub(1);
-        self.reg.set_hl(hl.wrapping_add(1));
-        self.reg.flags.z = self.reg.b == 0x00;
-        self.reg.flags.n = true;
-    }
-
-    // OUTD / OTDR
-    fn outd(&mut self) {
-        let hl = self.reg.get_hl();
-        let d = self.bus.read_byte(hl);
-        self.set_io(self.reg.c, d);
-        self.reg.b = (self.reg.b).wrapping_sub(1);
-        self.reg.set_hl(hl.wrapping_sub(1));
-        self.reg.flags.z = self.reg.b == 0x00;
-        self.reg.flags.n = true;
-    }
-
-    // IN : from peripherals to CPU
-    fn get_io(&mut self, port: u8) -> u8 {
-        if let Ok(_) = self.bus.io_req.0.send_timeout(port, Duration::from_millis(16)) {
-            if let Ok((device, data)) = self.bus.io_in.1.recv_timeout(Duration::from_millis(16)) {
-                if self.debug.io { println!("IO Message : data {:#04X} from device {:#04X}", data, device) }
-                if device == port { return data }
-            }
-        }
-        return 0
-    }
-
-    // OUT : from CPU to peripherals
-    fn set_io(&mut self, port: u8, data: u8) {
-        if self.debug.io { println!("IO Message : data {:#04X} for device {:#04X}", data, port) }
-        if let Err(_) =  self.bus.io_out.0.send_timeout((port,data), Duration::from_millis(16)) {
-            eprintln!("No peripheral set to receive data ! ({:#04X})", port);
-        }
-    }
-
     /// Fetches and executes one instruction from (pc). Returns consumed clock cycles.
     pub fn execute(&mut self) -> u32 {
         if self.halt { return 4 };
-
-        // Stores a byte received via the write channel to memory.
-        if let Ok((addr, data)) = self.bus.mmio_write.1.try_recv() {
-            self.bus.write_byte(addr, data);
-        }
-
-        // A MMIO peripheral requests a memory slice ?
-        if let Ok((addr, len)) = self.bus.mmio_req.1.try_recv() {
-            self.bus.mmio_send(addr, len).unwrap_or_default();
-        }
 
         // Non maskable interrupt requested ?
         if self.nmi {
@@ -2830,91 +2746,6 @@ impl CPU {
                 self.reg.a = r;
             },
 
-            // Input and Output Group
-            // IN B,(C)
-            0xED40 => self.reg.b = self.inrc(),
-            
-            // IN C,(C)
-            0xED48 => self.reg.c = self.inrc(),
-
-            // IN D,(C)
-            0xED50 => self.reg.d = self.inrc(),
-
-            // IN E,(C)
-            0xED58 => self.reg.e = self.inrc(),
-
-            // IN H,(C)
-            0xED60 => self.reg.h = self.inrc(),
-
-            // IN B,(C)
-            0xED68 => self.reg.l = self.inrc(),
-
-            // OUT (C),C
-            0xED41 => self.set_io(self.reg.c, self.reg.c),
-
-            // OUT (C),B
-            0xED49 => self.set_io(self.reg.c, self.reg.b),
-
-            // OUT (C),D
-            0xED51 => self.set_io(self.reg.c, self.reg.d),
-
-            // OUT (C),E
-            0xED59 => self.set_io(self.reg.c, self.reg.e),
-
-            // OUT (C),H
-            0xED61 => self.set_io(self.reg.c, self.reg.h),
-
-            // OUT (C),L
-            0xED69 => self.set_io(self.reg.c, self.reg.l),
-
-            // INI
-            0xEDA2 => self.ini(),
-
-            // INIR
-            0xEDB2 => {
-                while self.reg.b !=0 {
-                    self.ini();
-                }
-                self.reg.flags.z = true;
-                self.reg.flags.n = true;
-            },
-
-            // IND
-            0xEDAA => self.ind(),
-
-            // INDR
-            0xEDBA => {
-                while self.reg.b !=0 {
-                    self.ind();
-                }
-                self.reg.flags.z = true;
-                self.reg.flags.n = true;
-            },
-
-            // OUTI
-            0xEDA3 => self.outi(),
-
-            // OTIR
-            0xEDB3 => {
-                while self.reg.b !=0 {
-                    self.outi();
-                }
-                self.reg.flags.z = true;
-                self.reg.flags.n = true;
-            },
-
-            // OUTD
-            0xEDAB => self.outd(),
-
-            // OTDR
-            0xEDBB => {
-                while self.reg.b !=0 {
-                    self.outd();
-                }
-                self.reg.flags.z = true;
-                self.reg.flags.n = true;
-            }
-
             _ => {
                 if self.debug.unknw_instr { self.debug.string = format!("{:#06X}", opcode); }
                 cycles = 0xFF;
@@ -3869,21 +3700,6 @@ impl CPU {
                     None => { self.reg.pc +=1; self.interrupt_stack_push(); }
                 }
                 self.reg.pc = 0x0038;
-            },
-
-            // Input and Output Group
-            // IN A,(n)
-            0xDB => {
-                let port = self.bus.read_byte(self.reg.pc + 1);
-                self.reg.a = self.get_io(port);
-                if self.debug.instr_in { println!("IN {:#04X} from device {:#04X}", self.reg.a, port) }
-            },
-
-            // OUT (n),A
-            0xD3 => {
-                let port = self.bus.read_byte(self.reg.pc + 1);
-                self.set_io(port, self.reg.a);
-                if self.debug.instr_in { println!("OUT {:#04X} sent to device {:#04X}", self.reg.a, port) }
             },
 
             _ => {

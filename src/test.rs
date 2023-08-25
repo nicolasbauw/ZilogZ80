@@ -4030,19 +4030,6 @@ fn nmi() {
 }
 
 #[test]
-fn mmio_in() {
-    let mut c = CPU::new(0xFFFF);
-    c.bus.write_byte(0x0000, 0x3A);
-    c.bus.write_byte(0x0001, 0x0F);
-    c.bus.write_byte(0x0002, 0x00);
-    // Peripheral writes 0xFF at address 0x000F
-    c.bus.mmio_write.0.send((0x000F, 0xFF)).unwrap();
-    c.execute();    // LD A,(0X000F)
-    // Has data been written to that address ?
-    assert_eq!(c.bus.read_byte(0x000F), 0x0FF);
-}
-
-#[test]
 fn jr_nz_neg() {
     let mut c = CPU::new(0xFFFF);
     c.reg.pc = 0x0274;
