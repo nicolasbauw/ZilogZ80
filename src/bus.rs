@@ -4,22 +4,6 @@ use std::{fs::File, io::prelude::*};
 pub struct Bus {
     address_space: Vec<u8>,
     rom_space: Option<ROMSpace>,
-    // This is for pending IOs (IN/OUT)
-    io: Io,
-}
-
-// CPU I/O
-struct Io {
-    device: u8,
-    data: u8,
-    in_out: InOut,
-}
-
-#[derive(PartialEq)]
-enum InOut {
-    In,
-    Out,
-    None,
 }
 
 /// Start and end addresses of read-only (ROM) area.
@@ -34,64 +18,7 @@ impl Bus {
         Bus {
             address_space: vec![0; (size as usize) + 1],
             rom_space: None,
-            io: Io {
-                device: 0,
-                data: 0,
-                in_out: InOut::None,
-            },
         }
-    }
-
-    #[doc(hidden)]
-    // Function for CPU to get data from IO (IN)
-    pub fn get_io_in(&mut self, device: u8) -> u8 {
-        // Data from this device on the IO bus ? we return it and clear the pending IO
-        if self.io.in_out == InOut::In && self.io.device == device {
-            let r = self.io.data;
-            self.io = Io {
-                device: 0,
-                data: 0,
-                in_out: InOut::None,
-            };
-            return r;
-        }
-        // Otherwise we return 0
-        0
-    }
-
-    /// Function for peripherals to get data from CPU (OUT)
-    pub fn get_io_out(&mut self, device: u8) -> u8 {
-        // Data from the CPU on the IO bus ? we return it and clear the pending IO
-        if self.io.in_out == InOut::Out && self.io.device == device {
-            let r = self.io.data;
-            self.io = Io {
-                device: 0,
-                data: 0,
-                in_out: InOut::None,
-            };
-            return r;
-        }
-        // Otherwise we return 0
-        0
-    }
-
-    /// Function for peripherals to send data to CPU (IN)
-    pub fn set_io_in(&mut self, device: u8, data: u8) {
-        self.io = Io {
-            device,
-            data,
-            in_out: InOut::In,
-        };
-    }
-
-    #[doc(hidden)]
-    // Function for CPU to send data to peripheral (OUT)
-    pub fn set_io_out(&mut self, device: u8, data: u8) {
-        self.io = Io {
-            device,
-            data,
-            in_out: InOut::Out,
-        };
     }
 
     /// Sets a ROM space. Write operations will be ineffective in this address range.

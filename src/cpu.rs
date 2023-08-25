@@ -3249,90 +3249,6 @@ impl CPU {
                 self.reg.a = r;
             }
 
-            // Input and Output Group
-            // IN B,(C)
-            //0xED40 => self.reg.b = self.inrc(),
-
-            // IN C,(C)
-            //0xED48 => self.reg.c = self.inrc(),
-
-            // IN D,(C)
-            //0xED50 => self.reg.d = self.inrc(),
-
-            // IN E,(C)
-            //0xED58 => self.reg.e = self.inrc(),
-
-            // IN H,(C)
-            //0xED60 => self.reg.h = self.inrc(),
-
-            // IN B,(C)
-            //0xED68 => self.reg.l = self.inrc(),
-
-            // OUT (C),C
-            //0xED41 => self.set_io(self.reg.c, self.reg.c),
-
-            // OUT (C),B
-            //0xED49 => self.set_io(self.reg.c, self.reg.b),
-
-            // OUT (C),D
-            //0xED51 => self.set_io(self.reg.c, self.reg.d),
-
-            // OUT (C),E
-            //0xED59 => self.set_io(self.reg.c, self.reg.e),
-
-            // OUT (C),H
-            //0xED61 => self.set_io(self.reg.c, self.reg.h),
-
-            // OUT (C),L
-            //0xED69 => self.set_io(self.reg.c, self.reg.l),
-
-            // INI
-            //0xEDA2 => self.ini(),
-
-            // INIR
-            /*0xEDB2 => {
-                while self.reg.b !=0 {
-                    self.ini();
-                }
-                self.reg.flags.z = true;
-                self.reg.flags.n = true;
-            },*/
-
-            // IND
-            //0xEDAA => self.ind(),
-
-            // INDR
-            /*0xEDBA => {
-                while self.reg.b !=0 {
-                    self.ind();
-                }
-                self.reg.flags.z = true;
-                self.reg.flags.n = true;
-            },*/
-
-            // OUTI
-            //0xEDA3 => self.outi(),
-
-            // OTIR
-            /*0xEDB3 => {
-                while self.reg.b !=0 {
-                    self.outi();
-                }
-                self.reg.flags.z = true;
-                self.reg.flags.n = true;
-            },*/
-
-            // OUTD
-            //0xEDAB => self.outd(),
-
-            // OTDR
-            /*0xEDBB => {
-                while self.reg.b !=0 {
-                    self.outd();
-                }
-                self.reg.flags.z = true;
-                self.reg.flags.n = true;
-            }*/
             _ => {
                 if self.debug.unknw_instr {
                     self.debug.string = format!("{:#06X}", opcode);
@@ -4522,24 +4438,6 @@ impl CPU {
                 self.reg.pc = 0x0038;
             }
 
-            // Input and Output Group
-            // IN A,(n)
-            0xDB => {
-                let port = self.bus.borrow().read_byte(self.reg.pc + 1);
-                self.reg.a = self.bus.borrow_mut().get_io_in(port);
-                if self.debug.instr_in {
-                    println!("IN {:#04X} from device {:#04X}", self.reg.a, port)
-                }
-            }
-
-            // OUT (n),A
-            0xD3 => {
-                let port = self.bus.borrow().read_byte(self.reg.pc + 1);
-                self.bus.borrow_mut().set_io_out(port, self.reg.a);
-                if self.debug.instr_in {
-                    println!("OUT {:#04X} sent to device {:#04X}", self.reg.a, port)
-                }
-            }
             _ => {
                 if self.debug.unknw_instr {
                     self.debug.string = format!("{:#04X}", opcode);
