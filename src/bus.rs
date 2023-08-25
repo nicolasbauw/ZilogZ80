@@ -4,18 +4,6 @@ use std::{fs::File, io::prelude::*,};
 pub struct AddressBus {
     address_space: Vec<u8>,
     rom_space: Option<ROMSpace>,
-    /// This channel is used to ask the CPU to send data through the mmio_read channel
-    pub mmio_req: (crossbeam_channel::Sender<(u16, u16)>, crossbeam_channel::Receiver<(u16, u16)>),
-    /// This channel is used for RAM reading by MMIO peripherals
-    pub mmio_read: (crossbeam_channel::Sender<Vec<u8>>, crossbeam_channel::Receiver<Vec<u8>>),
-    /// This channel is used for RAM writing by MMIO peripherals
-    pub mmio_write: (crossbeam_channel::Sender<(u16, u8)>, crossbeam_channel::Receiver<(u16, u8)>),
-    /// This channel is used for non memory-mapped IO (OUT : CPU -> peripherals)
-    pub io_out: (crossbeam_channel::Sender<(u8, u8)>, crossbeam_channel::Receiver<(u8, u8)>),
-    /// This channel is used for non memory-mapped IO (IN : peripherals -> CPU)
-    pub io_in: (crossbeam_channel::Sender<(u8, u8)>, crossbeam_channel::Receiver<(u8, u8)>),
-    /// This channel is used by the IN instruction to ask a peripheral to send a message
-    pub io_req: (crossbeam_channel::Sender<u8>, crossbeam_channel::Receiver<u8>)
 }
 
 /// Start and end addresses of read-only (ROM) area.
@@ -29,12 +17,6 @@ impl AddressBus {
         AddressBus {
             address_space: vec![0; (size as usize) + 1],
             rom_space: None,
-            mmio_req: crossbeam_channel::bounded(1),
-            mmio_read: crossbeam_channel::bounded(1),
-            mmio_write: crossbeam_channel::bounded(1),
-            io_out: crossbeam_channel::bounded(1),
-            io_in: crossbeam_channel::bounded(1),
-            io_req: crossbeam_channel::bounded(1),
         }
     }
 
@@ -46,17 +28,6 @@ impl AddressBus {
     /// ```
     pub fn set_romspace(&mut self, start: u16, end: u16) {
         self.rom_space = Some(ROMSpace{start, end});
-    }
-
-    /// Send a vec of bytes of the address space via the read channel. Typical use : transfer VRAM data.
-    pub fn mmio_send(&self, start: u16, len: u16) -> Result<(), crate::crossbeam_channel::TrySendError<Vec<u8>>> {
-        if (start + len) as usize > self.address_space.len() { panic!("Read operation after the end of address space !") }
-        let mut d: Vec<u8> = Vec::new();
-        for i in 0..len {
-            d.push(self.address_space[usize::from(start + i)]);
-        }
-        self.mmio_read.0.try_send(d)?;
-        Ok(())
     }
 
     /// Reads a slice of bytes from memory
