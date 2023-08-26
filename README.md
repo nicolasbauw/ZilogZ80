@@ -25,4 +25,6 @@ loop {
 }
 ```
 
+For IO and MMIO examples see my [demonstration TRS-80 emulator.](https://github.com/nicolasbauw/TRS-80)
+
 License: MIT
