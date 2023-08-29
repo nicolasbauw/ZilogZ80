@@ -335,7 +335,7 @@ impl CPU {
                 let addr = self.reg.get_hl();
                 format!("9E            SBC A,(${:04X})", addr)
             },
-            0x9F => String::from("9F        SBC A,A"),                           // SBC A,A
+            0x9F => String::from("9F            SBC A,A"),                      // SBC A,A
 
             0xDE => {                                                            // SBC A,n
                 let n = self.bus.read_byte(address + 1);
