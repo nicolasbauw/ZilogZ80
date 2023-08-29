@@ -3,9 +3,9 @@ use crate::bit;
 
 impl CPU {
     /// Disassembles 1-byte opcode at (address)
-    pub fn dasm_1byte(&self, address: u16) -> String {
+    pub fn dasm_1byte(&self, address: u16) -> (String, u8) {
         let opcode = self.bus.read_byte(address);
-        match opcode {
+        let instr = match opcode {
             // 8-Bit Load Group
             // LD r,r'      LD r,(HL)
             0x40 => String::from("40            LD B,B"),           // LD B,B
@@ -776,6 +776,18 @@ impl CPU {
             },
 
             _ => String::new()
-        }
+        };
+        let instr_size = match opcode {
+            0xC3 | 0xDA | 0xD2 | 0xCA | 0xC2 | 0xFA | 0xF2 | 0xEA |
+            0xE2 | 0xCD | 0xDC | 0xD4 | 0xCC | 0xC4 | 0xFC |
+            0xF4 | 0xEC | 0xE4 |
+            0x18 | 0x38 | 0x30 | 0x28 | 0x20 => 3,
+            0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E |
+            0xC6 | 0xCE | 0xD6 | 0xDE | 0xE6  | 0xF6 | 0xEE | 0xFE |
+            0xDB | 0xD3 | 0x10=> 2,
+            0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 | 0x3A => 3,
+            _ => 1,
+        };
+        (instr, instr_size)
     }
 }
