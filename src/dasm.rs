@@ -411,7 +411,7 @@ impl CPU {
 
             0xFE => {                                                         // CP n
                 let n = self.bus.read_byte(address + 1);
-                format!("FE {:02X}        CP ${:02X}", n, n)
+                format!("FE {:02X}         CP ${:02X}", n, n)
             },
 
             // INC r
