@@ -1,5 +1,5 @@
 //! This is a Z80 emulator.
-//! 
+//!
 //! Example for a small loop:
 //! ```rust
 //! use zilog_z80::cpu::CPU;
@@ -19,13 +19,13 @@
 //! }
 //! ```
 
-pub mod cpu;
-pub mod registers;
-pub mod bus;
-mod flags;
 mod bit;
+pub mod bus;
+pub mod cpu;
 mod cycles;
 mod dasm;
+mod flags;
+pub mod registers;
 
 #[cfg(test)]
 mod test;
