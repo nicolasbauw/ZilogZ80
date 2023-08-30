@@ -714,11 +714,9 @@ impl CPU {
             // JP (HL)
             0xE9 => {
                 let addr = self.reg.get_hl();
-                let addr_low = (addr & 0x00FF) as i8;
-                let addr_high = (addr >> 8) as i8;
                 format!(
-                    "E9 {:02X} {:02X}      JP ${:04X}",
-                    addr_low, addr_high, addr
+                    "E9            JP ${:04X}",
+                    addr
                 )
             }
 
