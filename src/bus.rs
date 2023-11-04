@@ -36,7 +36,7 @@ impl Bus {
         if end > self.address_space.len() {
             panic!("Read operation after the end of address space !")
         }
-        self.address_space[start..end].to_vec()
+        self.address_space[start..=end].to_vec()
     }
 
     /// Clears a slice of bytes in memory
