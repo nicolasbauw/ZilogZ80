@@ -44,7 +44,7 @@ impl Bus {
         if end > self.address_space.len() {
             panic!("Write operation after the end of address space !")
         }
-        for m in start..end {
+        for m in start..=end {
             self.address_space[m] = 0;
         }
     }
