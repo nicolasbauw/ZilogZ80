@@ -1,4 +1,4 @@
-use std::{fs::File, io::prelude::*};
+use std::{fs::File, io::{prelude::*, self}};
 
 /// The Bus struct is hosting the Z80 memory map.
 pub struct Bus {
@@ -42,9 +42,9 @@ impl Bus {
     /// Clears a slice of bytes in memory
     pub fn clear_mem_slice(&mut self, start: usize, end: usize) {
         if end > self.address_space.len() {
-            panic!("Read operation after the end of address space !")
+            panic!("Write operation after the end of address space !")
         }
-        for m in 0..=(end - start) {
+        for m in start..end {
             self.address_space[m] = 0;
         }
     }
@@ -117,16 +117,16 @@ impl Bus {
         self.address_space[usize::from(address + 1)] = (data >> 8) as u8;
     }
 
-    /// Loads binary data from disk into memory at $0000 + offset
-    pub fn load_bin(&mut self, file: &str, org: u16) -> Result<(), std::io::Error> {
+    /// Loads binary data from disk into memory at $0000 + offset. Returns size of loaded file.
+    pub fn load_bin(&mut self, file: &str, org: u16) -> io::Result<usize> {
         if org as usize >= self.address_space.len() {
             panic!("Write operation after the end of address space !")
         }
         let mut f = File::open(file)?;
         let mut buf = Vec::new();
-        f.read_to_end(&mut buf)?;
+        let s = f.read_to_end(&mut buf)?;
         self.address_space[org as usize..(buf.len() + org as usize)].clone_from_slice(&buf[..]);
-        Ok(())
+        Ok(s)
     }
 }
 
