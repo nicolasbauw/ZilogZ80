@@ -5036,6 +5036,6 @@ fn dasm_cb() {
     c.bus.write_byte(0x0275, 0x00);
     c.bus.write_byte(0x0276, 0xCB); // BIT 1,B
     c.bus.write_byte(0x0277, 0x48);
-    assert_eq!(c.dasm(0x274), (String::from("RLC B"),2));
-    assert_eq!(c.dasm(0x276), (String::from("BIT 1,B"),2));
+    assert_eq!(c.dasm(0x274), (String::from("CB00          RLC B"),2));
+    assert_eq!(c.dasm(0x276), (String::from("CB48          BIT 1,B"),2));
 }

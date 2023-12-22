@@ -29,7 +29,8 @@ impl CPU {
                 // Reading the byte following the prefix
                 let oc = self.bus.read_byte(address+1);
                 // Reading corresponding disassembled string from the table
-                String::from(DASM_CB[oc as usize])
+                let dasm_str = String::from(DASM_CB[oc as usize]);
+                format!("CB{:02X}          {}", oc, dasm_str)
             },
             // 8-Bit Load Group
             // LD r,r'      LD r,(HL)
