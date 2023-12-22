@@ -5027,3 +5027,15 @@ fn jr_nz_neg_false() {
     }
     assert_eq!(c.reg.pc, 0x0279);
 }
+
+#[test]
+fn dasm_cb() {
+    let mut c = CPU::new(0xFFFF);
+    c.reg.pc = 0x0274;
+    c.bus.write_byte(0x0274, 0xCB); // RLC B
+    c.bus.write_byte(0x0275, 0x00);
+    c.bus.write_byte(0x0276, 0xCB); // BIT 1,B
+    c.bus.write_byte(0x0277, 0x48);
+    assert_eq!(c.dasm(0x274), (String::from("RLC B"),2));
+    assert_eq!(c.dasm(0x276), (String::from("BIT 1,B"),2));
+}
