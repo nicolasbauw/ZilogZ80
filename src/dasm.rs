@@ -3,7 +3,7 @@ use crate::cpu::{signed_to_abs, CPU};
 
 impl CPU {
     /// Disassembles 1-byte opcode at (address)
-    pub fn dasm_1byte(&self, address: u16) -> (String, u8) {
+    pub fn dasm_unprefixed(&self, address: u16) -> (String, u8) {
         let opcode = self.bus.read_byte(address);
         let instr = match opcode {
             // 8-Bit Load Group
