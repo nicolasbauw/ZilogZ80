@@ -3831,7 +3831,7 @@ impl CPU {
         self.reg.set_hl(hl.wrapping_add(1));
         self.reg.set_bc(bc.wrapping_sub(1));
 
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.z = self.reg.a == h;
         self.reg.flags.h = (self.reg.a as i8 & 0x0F) < (h as i8 & 0x0F);
         self.reg.flags.p = self.reg.get_bc() != 0;
@@ -3848,7 +3848,7 @@ impl CPU {
         self.reg.set_hl(hl.wrapping_sub(1));
         self.reg.set_bc(bc.wrapping_sub(1));
 
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.z = self.reg.a == h;
         self.reg.flags.h = (self.reg.a as i8 & 0x0F) < (h as i8 & 0x0F);
         self.reg.flags.p = self.reg.get_bc() != 0;
@@ -3860,7 +3860,7 @@ impl CPU {
         let a = self.reg.a;
         let r = a.wrapping_add(n);
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.p = check_add_overflow(self.reg.a, n);
         self.reg.flags.h = (a & 0x0f) + (n & 0x0f) > 0x0f;
         self.reg.flags.c = u16::from(a) + u16::from(n) > 0xff;
@@ -3877,7 +3877,7 @@ impl CPU {
         let a = self.reg.a;
         let r = a.wrapping_add(n).wrapping_add(c);
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.p = check_add_overflow(self.reg.a, n.wrapping_add(c));
         self.reg.flags.h = (a & 0x0f) + (n & 0x0f) + c > 0x0f;
         self.reg.flags.c = u16::from(a) + u16::from(n) + u16::from(c) > 0xff;
@@ -3890,7 +3890,7 @@ impl CPU {
         let a = self.reg.a;
         let r = a.wrapping_sub(n);
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.p = check_sub_overflow(self.reg.a, n);
         self.reg.flags.h = (a as i8 & 0x0f) < (n as i8 & 0x0f);
         self.reg.flags.c = u16::from(a) < u16::from(n);
@@ -3907,7 +3907,7 @@ impl CPU {
         let a = self.reg.a;
         let r = a.wrapping_sub(n.wrapping_add(c));
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.p = check_sub_overflow(self.reg.a, n.wrapping_add(c));
         self.reg.flags.h = (a as i8 & 0x0f) < (n as i8 & 0x0f).wrapping_add(c as i8);
         self.reg.flags.c = u16::from(a) < (u16::from(n) + u16::from(c));
@@ -3919,7 +3919,7 @@ impl CPU {
     fn and(&mut self, n: u8) {
         let r = self.reg.a & n;
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         self.reg.flags.h = true;
         self.reg.flags.c = false;
@@ -3931,7 +3931,7 @@ impl CPU {
     fn or(&mut self, n: u8) {
         let r = self.reg.a | n;
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         self.reg.flags.h = false;
         self.reg.flags.c = false;
@@ -3944,7 +3944,7 @@ impl CPU {
         let a = self.reg.a;
         let r = a ^ n;
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         self.reg.flags.h = false;
         self.reg.flags.c = false;
@@ -3963,7 +3963,7 @@ impl CPU {
     fn inc(&mut self, n: u8) -> u8 {
         let r = n.wrapping_add(1);
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.p = n == 0x7F;
         self.reg.flags.h = (n & 0x0f) + 0x01 > 0x0f;
         self.reg.flags.n = false;
@@ -3974,7 +3974,7 @@ impl CPU {
     fn dec(&mut self, n: u8) -> u8 {
         let r = n.wrapping_sub(1);
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.p = n == 0x80;
         self.reg.flags.h = ((n & 0x0f) as i8) < 1;
         self.reg.flags.n = true;
@@ -4044,7 +4044,7 @@ impl CPU {
         self.reg.flags.p = self.reg.a == 0x80;
         self.reg.flags.c = self.reg.a != 0;
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.h = 0 < (self.reg.a & 0x0F);
         self.reg.flags.n = true;
         self.reg.a = r;
@@ -4114,7 +4114,7 @@ impl CPU {
         self.reg.flags.c = bit::get(n, 7);
         let r = (n << 1) | u8::from(self.reg.flags.c);
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.h = false;
         self.reg.flags.n = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
@@ -4143,7 +4143,7 @@ impl CPU {
             n >> 1
         };
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.h = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         self.reg.flags.n = false;
@@ -4174,7 +4174,7 @@ impl CPU {
             false => n << 1,
         };
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         r
     }
@@ -4203,7 +4203,7 @@ impl CPU {
             false => n >> 1,
         };
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         r
     }
@@ -4211,7 +4211,7 @@ impl CPU {
     // Arithmetic shift left
     fn sla(&mut self, n: u8) -> u8 {
         let r = n << 1;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.z = r == 0x00;
         self.reg.flags.h = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
@@ -4223,7 +4223,7 @@ impl CPU {
     // Logical shift left
     fn sll(&mut self, n: u8) -> u8 {
         let r = (n << 1) | 0x01;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.z = r == 0x00;
         self.reg.flags.h = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
@@ -4237,7 +4237,7 @@ impl CPU {
         // https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators
         // *** Arithmetic right shift on signed integer types, logical right shift on unsigned integer types.
         let r = ((n as i8) >> 1) as u8;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.z = r == 0x00;
         self.reg.flags.h = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
@@ -4251,7 +4251,7 @@ impl CPU {
         // https://doc.rust-lang.org/reference/expressions/operator-expr.html#arithmetic-and-logical-binary-operators
         // *** Arithmetic right shift on signed integer types, logical right shift on unsigned integer types.
         let r = n >> 1;
-        self.reg.flags.s = (r as i8) < 0;
+        self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.z = r == 0x00;
         self.reg.flags.h = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
