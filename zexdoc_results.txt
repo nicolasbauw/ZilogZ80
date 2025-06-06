@@ -56,7 +56,7 @@ ldd<r> (2)....................  OK
 ldi<r> (1)....................  OK
 ldi<r> (2)....................  OK
 neg...........................  OK
-<rrd,rld>.....................  ERROR **** crc expected:955ba326 found:e2191d5f
+<rrd,rld>.....................  OK
 <rlca,rrca,rla,rra>...........  OK
 shf/rot (<ix,iy>+1)...........  OK
 shf/rot <b,c,d,e,h,l,(hl),a>..  OK

@@ -2787,11 +2787,11 @@ impl CPU {
                 let hl_contents = self.bus.read_byte(self.reg.get_hl());
                 let a_contents = self.reg.a;
 
-                let r = (self.reg.a & 0xF0) | ((((hl_contents & 0xF0) as i8) >> 4) as u8);
+                let r = (self.reg.a & 0xF0) | ((hl_contents & 0xF0) >> 4);
                 self.reg.a = r;
                 self.bus
                     .write_byte(self.reg.get_hl(), (hl_contents << 4) | (a_contents & 0x0F));
-                self.reg.flags.s = (r as i8) < 0;
+                self.reg.flags.s = r & 0x80 == 0x80;
                 self.reg.flags.z = r == 0x00;
                 self.reg.flags.h = false;
                 self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
@@ -2807,9 +2807,9 @@ impl CPU {
                 self.reg.a = r;
                 self.bus.write_byte(
                     self.reg.get_hl(),
-                    ((a_contents & 0x0F) << 4) | ((((hl_contents & 0xF0) as i8) >> 4) as u8),
+                    ((a_contents & 0x0F) << 4) | ((hl_contents & 0xF0) >> 4),
                 );
-                self.reg.flags.s = (r as i8) < 0;
+                self.reg.flags.s = r & 0x80 == 0x80;
                 self.reg.flags.z = r == 0x00;
                 self.reg.flags.h = false;
                 self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
