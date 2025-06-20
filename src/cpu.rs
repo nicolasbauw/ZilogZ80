@@ -1740,7 +1740,7 @@ impl CPU {
             // LD A,I
             0xED57 => {
                 self.reg.a = self.reg.i;
-                self.reg.flags.s = (self.reg.i as i8) < 0;
+                self.reg.flags.s = self.reg.i & 0x80 == 0x80;
                 self.reg.flags.z = self.reg.i == 0;
                 self.reg.flags.h = false;
                 self.reg.flags.p = self.iff2;
@@ -1752,7 +1752,7 @@ impl CPU {
             // LD A,R
             0xED5F => {
                 self.reg.a = self.reg.r;
-                self.reg.flags.s = (self.reg.r as i8) < 0;
+                self.reg.flags.s = self.reg.r & 0x80 == 0x80;
                 self.reg.flags.z = self.reg.r == 0;
                 self.reg.flags.h = false;
                 self.reg.flags.p = self.iff2;
@@ -4068,7 +4068,7 @@ impl CPU {
         let h = self.reg.get_hl();
         let r = h.wrapping_add(n).wrapping_add(c);
         self.reg.set_hl(r);
-        self.reg.flags.s = (r as i16) < 0;
+        self.reg.flags.s = r & 0x8000 == 0x8000;
         self.reg.flags.z = r == 0x00;
         self.reg.flags.c = u32::from(h) + u32::from(n) + c as u32 > 0xffff;
         self.reg.flags.h = (h & 0x0FFF) + (n & 0x0FFF) + c > 0x0FFF;
@@ -4089,7 +4089,7 @@ impl CPU {
         let r = h.wrapping_sub(n).wrapping_sub(c);
         self.reg.set_hl(r);
         self.reg.flags.z = r == 0x00;
-        self.reg.flags.s = (r as i16) < 0;
+        self.reg.flags.s = r & 0x8000 == 0x8000;
         self.reg.flags.h = (h & 0x0fff) < (n & 0x0fff) + c;
         self.reg.flags.c = h < n + c;
         self.reg.flags.n = true;
