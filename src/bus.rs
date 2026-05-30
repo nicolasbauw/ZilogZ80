@@ -1,4 +1,7 @@
-use std::{fs::File, io::{prelude::*, self}};
+use std::{
+    fs::File,
+    io::{self, prelude::*},
+};
 
 /// The Bus struct is hosting the Z80 memory map.
 pub struct Bus {
@@ -23,9 +26,9 @@ impl Bus {
 
     /// Sets a ROM space. Write operations will be ineffective in this address range.
     /// ```rust
-    /// use zilog_z80::cpu::CPU;
-    /// let mut c = CPU::new(0xFFFF);
-    /// c.bus.set_romspace(0xF000, 0xFFFF);
+    /// use zilog_z80::bus::Bus;
+    /// let mut b = Bus::new(0xFFFF);
+    /// b.set_romspace(0xF000, 0xFFFF);
     /// ```
     pub fn set_romspace(&mut self, start: u16, end: u16) {
         self.rom_space = Some(ROMSpace { start, end });

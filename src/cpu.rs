@@ -123,7 +123,7 @@ impl CPU {
     /// Sets CPU frequency (MHz)
     /// ```rust
     /// use zilog_z80::cpu::CPU;
-    /// let mut c = CPU::new(0xFFFF);
+    /// let mut c = CPU::new();
     /// c.set_freq(1.7);            // CPU will run at 1.7 Mhz
     /// ```
     pub fn set_freq(&mut self, f: f32) {
