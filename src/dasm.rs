@@ -1,37 +1,278 @@
 use crate::bit;
+use crate::bus::Bus;
 use crate::cpu::{signed_to_abs, CPU};
 
 pub const DASM_CB: [&str; 256] = [
-"RLC B", 	"RLC C", 	"RLC D", 	"RLC E", 	"RLC H", 	"RLC L", 	"RLC (HL)", 	"RLC A", 	"RRC B", 	"RRC C", 	"RRC D", 	"RRC E", 	"RRC H", 	"RRC L", 	"RRC (HL)", 	"RRC A",
-"RL B", 	"RL C", 	"RL D",  	"RL E", 	"RL H", 	"RL L", 	"RL (HL)",  	"RL A", 	"RR B", 	"RR C", 	"RR D", 	"RR E", 	"RR H", 	"RR L", 	"RR (HL)", 	    "RR A",
-"SLA B", 	"SLA C", 	"SLA D", 	"SLA E", 	"SLA H", 	"SLA L", 	"SLA (HL)", 	"SLA A", 	"SRA B", 	"SRA C", 	"SRA D", 	"SRA E", 	"SRA H", 	"SRA L", 	"SRA (HL)", 	"SRA A",
-"SLL B", 	"SLL C", 	"SLL D", 	"SLL E", 	"SLL H", 	"SLL L", 	"SLL (HL)", 	"SLL A", 	"SRL B", 	"SRL C", 	"SRL D", 	"SRL E", 	"SRL H", 	"SRL L", 	"SRL (HL)", 	"SRL A",
-"BIT 0,B", 	"BIT 0,C", 	"BIT 0,D", 	"BIT 0,E", 	"BIT 0,H", 	"BIT 0,L", 	"BIT 0,(HL)", 	"BIT 0,A", 	"BIT 1,B", 	"BIT 1,C", 	"BIT 1,D", 	"BIT 1,E", 	"BIT 1,H", 	"BIT 1,L", 	"BIT 1,(HL)", 	"BIT 1,A",
-"BIT 2,B", 	"BIT 2,C", 	"BIT 2,D", 	"BIT 2,E", 	"BIT 2,H", 	"BIT 2,L", 	"BIT 2,(HL)", 	"BIT 2,A", 	"BIT 3,B", 	"BIT 3,C", 	"BIT 3,D", 	"BIT 3,E", 	"BIT 3,H", 	"BIT 3,L", 	"BIT 3,(HL)", 	"BIT 3,A",
-"BIT 4,B", 	"BIT 4,C", 	"BIT 4,D", 	"BIT 4,E", 	"BIT 4,H", 	"BIT 4,L", 	"BIT 4,(HL)", 	"BIT 4,A", 	"BIT 5,B", 	"BIT 5,C", 	"BIT 5,D", 	"BIT 5,E", 	"BIT 5,H", 	"BIT 5,L", 	"BIT 5,(HL)", 	"BIT 5,A",
-"BIT 6,B", 	"BIT 6,C", 	"BIT 6,D", 	"BIT 6,E", 	"BIT 6,H", 	"BIT 6,L", 	"BIT 6,(HL)", 	"BIT 6,A", 	"BIT 7,B", 	"BIT 7,C", 	"BIT 7,D", 	"BIT 7,E", 	"BIT 7,H", 	"BIT 7,L", 	"BIT 7,(HL)", 	"BIT 7,A",
-"RES 0,B", 	"RES 0,C", 	"RES 0,D", 	"RES 0,E", 	"RES 0,H", 	"RES 0,L", 	"RES 0,(HL)", 	"RES 0,A", 	"RES 1,B", 	"RES 1,C", 	"RES 1,D", 	"RES 1,E", 	"RES 1,H", 	"RES 1,L", 	"RES 1,(HL)", 	"RES 1,A",
-"RES 2,B", 	"RES 2,C", 	"RES 2,D", 	"RES 2,E", 	"RES 2,H", 	"RES 2,L", 	"RES 2,(HL)", 	"RES 2,A", 	"RES 3,B", 	"RES 3,C", 	"RES 3,D", 	"RES 3,E", 	"RES 3,H", 	"RES 3,L", 	"RES 3,(HL)", 	"RES 3,A",
-"RES 4,B", 	"RES 4,C", 	"RES 4,D", 	"RES 4,E", 	"RES 4,H", 	"RES 4,L", 	"RES 4,(HL)", 	"RES 4,A", 	"RES 5,B", 	"RES 5,C", 	"RES 5,D", 	"RES 5,E", 	"RES 5,H", 	"RES 5,L", 	"RES 5,(HL)", 	"RES 5,A",
-"RES 6,B", 	"RES 6,C", 	"RES 6,D", 	"RES 6,E", 	"RES 6,H", 	"RES 6,L", 	"RES 6,(HL)", 	"RES 6,A", 	"RES 7,B", 	"RES 7,C", 	"RES 7,D", 	"RES 7,E", 	"RES 7,H", 	"RES 7,L", 	"RES 7,(HL)", 	"RES 7,A",
-"SET 0,B", 	"SET 0,C", 	"SET 0,D", 	"SET 0,E", 	"SET 0,H", 	"SET 0,L", 	"SET 0,(HL)", 	"SET 0,A", 	"SET 1,B", 	"SET 1,C", 	"SET 1,D", 	"SET 1,E", 	"SET 1,H", 	"SET 1,L", 	"SET 1,(HL)", 	"SET 1,A",
-"SET 2,B", 	"SET 2,C", 	"SET 2,D", 	"SET 2,E", 	"SET 2,H", 	"SET 2,L", 	"SET 2,(HL)", 	"SET 2,A", 	"SET 3,B", 	"SET 3,C", 	"SET 3,D", 	"SET 3,E", 	"SET 3,H", 	"SET 3,L", 	"SET 3,(HL)", 	"SET 3,A",
-"SET 4,B", 	"SET 4,C", 	"SET 4,D", 	"SET 4,E", 	"SET 4,H", 	"SET 4,L", 	"SET 4,(HL)", 	"SET 4,A", 	"SET 5,B", 	"SET 5,C", 	"SET 5,D", 	"SET 5,E", 	"SET 5,H", 	"SET 5,L", 	"SET 5,(HL)", 	"SET 5,A",
-"SET 6,B", 	"SET 6,C", 	"SET 6,D", 	"SET 6,E", 	"SET 6,H", 	"SET 6,L", 	"SET 6,(HL)", 	"SET 6,A", 	"SET 7,B", 	"SET 7,C", 	"SET 7,D", 	"SET 7,E", 	"SET 7,H", 	"SET 7,L", 	"SET 7,(HL)", 	"SET 7,A",
+    "RLC B",
+    "RLC C",
+    "RLC D",
+    "RLC E",
+    "RLC H",
+    "RLC L",
+    "RLC (HL)",
+    "RLC A",
+    "RRC B",
+    "RRC C",
+    "RRC D",
+    "RRC E",
+    "RRC H",
+    "RRC L",
+    "RRC (HL)",
+    "RRC A",
+    "RL B",
+    "RL C",
+    "RL D",
+    "RL E",
+    "RL H",
+    "RL L",
+    "RL (HL)",
+    "RL A",
+    "RR B",
+    "RR C",
+    "RR D",
+    "RR E",
+    "RR H",
+    "RR L",
+    "RR (HL)",
+    "RR A",
+    "SLA B",
+    "SLA C",
+    "SLA D",
+    "SLA E",
+    "SLA H",
+    "SLA L",
+    "SLA (HL)",
+    "SLA A",
+    "SRA B",
+    "SRA C",
+    "SRA D",
+    "SRA E",
+    "SRA H",
+    "SRA L",
+    "SRA (HL)",
+    "SRA A",
+    "SLL B",
+    "SLL C",
+    "SLL D",
+    "SLL E",
+    "SLL H",
+    "SLL L",
+    "SLL (HL)",
+    "SLL A",
+    "SRL B",
+    "SRL C",
+    "SRL D",
+    "SRL E",
+    "SRL H",
+    "SRL L",
+    "SRL (HL)",
+    "SRL A",
+    "BIT 0,B",
+    "BIT 0,C",
+    "BIT 0,D",
+    "BIT 0,E",
+    "BIT 0,H",
+    "BIT 0,L",
+    "BIT 0,(HL)",
+    "BIT 0,A",
+    "BIT 1,B",
+    "BIT 1,C",
+    "BIT 1,D",
+    "BIT 1,E",
+    "BIT 1,H",
+    "BIT 1,L",
+    "BIT 1,(HL)",
+    "BIT 1,A",
+    "BIT 2,B",
+    "BIT 2,C",
+    "BIT 2,D",
+    "BIT 2,E",
+    "BIT 2,H",
+    "BIT 2,L",
+    "BIT 2,(HL)",
+    "BIT 2,A",
+    "BIT 3,B",
+    "BIT 3,C",
+    "BIT 3,D",
+    "BIT 3,E",
+    "BIT 3,H",
+    "BIT 3,L",
+    "BIT 3,(HL)",
+    "BIT 3,A",
+    "BIT 4,B",
+    "BIT 4,C",
+    "BIT 4,D",
+    "BIT 4,E",
+    "BIT 4,H",
+    "BIT 4,L",
+    "BIT 4,(HL)",
+    "BIT 4,A",
+    "BIT 5,B",
+    "BIT 5,C",
+    "BIT 5,D",
+    "BIT 5,E",
+    "BIT 5,H",
+    "BIT 5,L",
+    "BIT 5,(HL)",
+    "BIT 5,A",
+    "BIT 6,B",
+    "BIT 6,C",
+    "BIT 6,D",
+    "BIT 6,E",
+    "BIT 6,H",
+    "BIT 6,L",
+    "BIT 6,(HL)",
+    "BIT 6,A",
+    "BIT 7,B",
+    "BIT 7,C",
+    "BIT 7,D",
+    "BIT 7,E",
+    "BIT 7,H",
+    "BIT 7,L",
+    "BIT 7,(HL)",
+    "BIT 7,A",
+    "RES 0,B",
+    "RES 0,C",
+    "RES 0,D",
+    "RES 0,E",
+    "RES 0,H",
+    "RES 0,L",
+    "RES 0,(HL)",
+    "RES 0,A",
+    "RES 1,B",
+    "RES 1,C",
+    "RES 1,D",
+    "RES 1,E",
+    "RES 1,H",
+    "RES 1,L",
+    "RES 1,(HL)",
+    "RES 1,A",
+    "RES 2,B",
+    "RES 2,C",
+    "RES 2,D",
+    "RES 2,E",
+    "RES 2,H",
+    "RES 2,L",
+    "RES 2,(HL)",
+    "RES 2,A",
+    "RES 3,B",
+    "RES 3,C",
+    "RES 3,D",
+    "RES 3,E",
+    "RES 3,H",
+    "RES 3,L",
+    "RES 3,(HL)",
+    "RES 3,A",
+    "RES 4,B",
+    "RES 4,C",
+    "RES 4,D",
+    "RES 4,E",
+    "RES 4,H",
+    "RES 4,L",
+    "RES 4,(HL)",
+    "RES 4,A",
+    "RES 5,B",
+    "RES 5,C",
+    "RES 5,D",
+    "RES 5,E",
+    "RES 5,H",
+    "RES 5,L",
+    "RES 5,(HL)",
+    "RES 5,A",
+    "RES 6,B",
+    "RES 6,C",
+    "RES 6,D",
+    "RES 6,E",
+    "RES 6,H",
+    "RES 6,L",
+    "RES 6,(HL)",
+    "RES 6,A",
+    "RES 7,B",
+    "RES 7,C",
+    "RES 7,D",
+    "RES 7,E",
+    "RES 7,H",
+    "RES 7,L",
+    "RES 7,(HL)",
+    "RES 7,A",
+    "SET 0,B",
+    "SET 0,C",
+    "SET 0,D",
+    "SET 0,E",
+    "SET 0,H",
+    "SET 0,L",
+    "SET 0,(HL)",
+    "SET 0,A",
+    "SET 1,B",
+    "SET 1,C",
+    "SET 1,D",
+    "SET 1,E",
+    "SET 1,H",
+    "SET 1,L",
+    "SET 1,(HL)",
+    "SET 1,A",
+    "SET 2,B",
+    "SET 2,C",
+    "SET 2,D",
+    "SET 2,E",
+    "SET 2,H",
+    "SET 2,L",
+    "SET 2,(HL)",
+    "SET 2,A",
+    "SET 3,B",
+    "SET 3,C",
+    "SET 3,D",
+    "SET 3,E",
+    "SET 3,H",
+    "SET 3,L",
+    "SET 3,(HL)",
+    "SET 3,A",
+    "SET 4,B",
+    "SET 4,C",
+    "SET 4,D",
+    "SET 4,E",
+    "SET 4,H",
+    "SET 4,L",
+    "SET 4,(HL)",
+    "SET 4,A",
+    "SET 5,B",
+    "SET 5,C",
+    "SET 5,D",
+    "SET 5,E",
+    "SET 5,H",
+    "SET 5,L",
+    "SET 5,(HL)",
+    "SET 5,A",
+    "SET 6,B",
+    "SET 6,C",
+    "SET 6,D",
+    "SET 6,E",
+    "SET 6,H",
+    "SET 6,L",
+    "SET 6,(HL)",
+    "SET 6,A",
+    "SET 7,B",
+    "SET 7,C",
+    "SET 7,D",
+    "SET 7,E",
+    "SET 7,H",
+    "SET 7,L",
+    "SET 7,(HL)",
+    "SET 7,A",
 ];
 
 impl CPU {
     /// Disassembles 1-byte opcode at (address)
-    pub fn dasm(&self, address: u16) -> (String, u8) {
-        let opcode = self.bus.read_byte(address);
+    pub fn dasm(&self, bus: &mut Bus, address: u16) -> (String, u8) {
+        let opcode = bus.read_byte(address);
         let instr = match opcode {
             0xCB => {
                 // Reading the byte following the prefix
-                let oc = self.bus.read_byte(address+1);
+                let oc = bus.read_byte(address + 1);
                 // Reading corresponding disassembled string from the table
                 let dasm_str = String::from(DASM_CB[oc as usize]);
                 format!("CB{:02X}          {}", oc, dasm_str)
-            },
+            }
             // 8-Bit Load Group
             // LD r,r'      LD r,(HL)
             0x40 => String::from("40            LD B,B"), // LD B,B
@@ -166,43 +407,43 @@ impl CPU {
             // LD r,n
             0x06 => {
                 // LD B,n
-                let data = self.bus.read_byte(address + 1);
+                let data = bus.read_byte(address + 1);
                 format!("06 {:02X}         LD B,${:02X}", data, data)
             }
             0x0E => {
                 // LD C,n
-                let data = self.bus.read_byte(address + 1);
+                let data = bus.read_byte(address + 1);
                 format!("0E {:02X}         LD C,${:02X}", data, data)
             }
             0x16 => {
                 // LD D,n
-                let data = self.bus.read_byte(address + 1);
+                let data = bus.read_byte(address + 1);
                 format!("16 {:02X}         LD D,${:02X}", data, data)
             }
             0x1E => {
                 // LD E,n
-                let data = self.bus.read_byte(address + 1);
+                let data = bus.read_byte(address + 1);
                 format!("1E {:02X}         LD E,${:02X}", data, data)
             }
             0x26 => {
                 // LD H,n
-                let data = self.bus.read_byte(address + 1);
+                let data = bus.read_byte(address + 1);
                 format!("26 {:02X}         LD H,${:02X}", data, data)
             }
             0x2E => {
                 // LD L,n
-                let data = self.bus.read_byte(address + 1);
+                let data = bus.read_byte(address + 1);
                 format!("2E {:02X}         LD L,${:02X}", data, data)
             }
             0x36 => {
                 // LD (HL),n
-                let data = self.bus.read_byte(address + 1);
+                let data = bus.read_byte(address + 1);
                 let addr = self.reg.get_hl();
                 format!("36 {:02X}         LD (${:04X}),{:02X}", data, addr, data)
             }
             0x3E => {
                 // LD A,n
-                let data = self.bus.read_byte(address + 1);
+                let data = bus.read_byte(address + 1);
                 format!("3E {:02X}         LD A,${:02X}", data, data)
             }
 
@@ -220,9 +461,9 @@ impl CPU {
 
             // LD A,(nn)
             0x3A => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "3A {:02X} {:02X}      LD A,(${:04X})",
                     addr_low, addr_high, addr
@@ -243,7 +484,7 @@ impl CPU {
 
             // LD (nn),A
             0x32 => {
-                let addr = self.bus.read_word(address + 1);
+                let addr = bus.read_word(address + 1);
                 format!("32            LD (${:04X}),A", addr)
             }
 
@@ -251,9 +492,9 @@ impl CPU {
             // LD dd,nn
             0x01 => {
                 // LD BC,nn
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let d16 = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let d16 = bus.read_word(address + 1);
                 format!(
                     "01 {:02X} {:02X}      LD BC,${:04X}",
                     addr_low, addr_high, d16
@@ -261,9 +502,9 @@ impl CPU {
             }
             0x11 => {
                 // LD DE,nn
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let d16 = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let d16 = bus.read_word(address + 1);
                 format!(
                     "11 {:02X} {:02X}      LD DE,${:04X}",
                     addr_low, addr_high, d16
@@ -271,9 +512,9 @@ impl CPU {
             }
             0x21 => {
                 // LD HL,nn
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let d16 = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let d16 = bus.read_word(address + 1);
                 format!(
                     "21 {:02X} {:02X}      LD HL,${:04X}",
                     addr_low, addr_high, d16
@@ -281,9 +522,9 @@ impl CPU {
             }
             0x31 => {
                 // LD SP,nn
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let d16 = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let d16 = bus.read_word(address + 1);
                 format!(
                     "31 {:02X} {:02X}      LD SP,${:04X}",
                     addr_low, addr_high, d16
@@ -292,9 +533,9 @@ impl CPU {
 
             // LD HL,(nn)
             0x2A => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "2A {:02X} {:02X}      LD HL,(${:04X})",
                     addr_low, addr_high, addr
@@ -303,9 +544,9 @@ impl CPU {
 
             // LD (nn),HL
             0x22 => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "22 {:02X} {:02X}      LD (${:04X}),HL",
                     addr_low, addr_high, addr
@@ -357,7 +598,7 @@ impl CPU {
 
             // ADD A,n
             0xC6 => {
-                let n = self.bus.read_byte(address + 1);
+                let n = bus.read_byte(address + 1);
                 format!("C6 {:02X}         ADD A,${:02X}", n, n)
             }
 
@@ -378,7 +619,7 @@ impl CPU {
             // ADC a,n
             0xCE => {
                 // ADC A,(HL)
-                let n = self.bus.read_byte(address + 1);
+                let n = bus.read_byte(address + 1);
                 format!("CE {:02X}         ADC A,${:02X}", n, n)
             }
 
@@ -398,7 +639,7 @@ impl CPU {
 
             0xD6 => {
                 // SUB A,n
-                let n = self.bus.read_byte(address + 1);
+                let n = bus.read_byte(address + 1);
                 format!("D6 {:02X}         SUB A,${:02X}", n, n)
             }
 
@@ -418,7 +659,7 @@ impl CPU {
 
             0xDE => {
                 // SBC A,n
-                let n = self.bus.read_byte(address + 1);
+                let n = bus.read_byte(address + 1);
                 format!("DE {:02X}         SBC A,${:02X}", n, n)
             }
 
@@ -438,7 +679,7 @@ impl CPU {
 
             0xE6 => {
                 // AND n
-                let n = self.bus.read_byte(address + 1);
+                let n = bus.read_byte(address + 1);
                 format!("E6 {:02X}         AND ${:02X}", n, n)
             }
 
@@ -458,7 +699,7 @@ impl CPU {
 
             0xF6 => {
                 // OR n
-                let n = self.bus.read_byte(address + 1);
+                let n = bus.read_byte(address + 1);
                 format!("F6 {:02X}         OR ${:02X}", n, n)
             }
 
@@ -478,7 +719,7 @@ impl CPU {
 
             0xEE => {
                 // XOR n
-                let n = self.bus.read_byte(address + 1);
+                let n = bus.read_byte(address + 1);
                 format!("EE {:02X}         XOR ${:02X}", n, n)
             }
 
@@ -498,7 +739,7 @@ impl CPU {
 
             0xFE => {
                 // CP n
-                let n = self.bus.read_byte(address + 1);
+                let n = bus.read_byte(address + 1);
                 format!("FE {:02X}         CP ${:02X}", n, n)
             }
 
@@ -590,9 +831,9 @@ impl CPU {
             // Jump group
             // JP nn
             0xC3 => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "C3 {:02X} {:02X}      JP ${:04X}",
                     addr_low, addr_high, addr
@@ -601,9 +842,9 @@ impl CPU {
 
             // JP C,nn
             0xDA => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "DA {:02X} {:02X}      JP C,${:04X}",
                     addr_low, addr_high, addr
@@ -612,9 +853,9 @@ impl CPU {
 
             // JP NC,nn
             0xD2 => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "D2 {:02X} {:02X}      JP NC,${:04X}",
                     addr_low, addr_high, addr
@@ -623,9 +864,9 @@ impl CPU {
 
             // JP Z,nn
             0xCA => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "CA {:02X} {:02X}      JP Z,${:04X}",
                     addr_low, addr_high, addr
@@ -634,9 +875,9 @@ impl CPU {
 
             // JP NZ,nn
             0xC2 => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "C2 {:02X} {:02X}      JP NZ,${:04X}",
                     addr_low, addr_high, addr
@@ -645,9 +886,9 @@ impl CPU {
 
             // JP M,nn
             0xFA => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "FA {:02X} {:02X}      JP M,${:04X}",
                     addr_low, addr_high, addr
@@ -656,9 +897,9 @@ impl CPU {
 
             // JP P,nn
             0xF2 => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "F2 {:02X} {:02X}      JP P,${:04X}",
                     addr_low, addr_high, addr
@@ -667,9 +908,9 @@ impl CPU {
 
             // JP PE,nn
             0xEA => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "EA {:02X} {:02X}      JP PE,${:04X}",
                     addr_low, addr_high, addr
@@ -678,9 +919,9 @@ impl CPU {
 
             // JP PO,nn
             0xE2 => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "E2 {:02X} {:02X}      JP PO,${:04X}",
                     addr_low, addr_high, addr
@@ -689,7 +930,7 @@ impl CPU {
 
             // JR e
             0x18 => {
-                let displacement = self.bus.read_byte(address + 1);
+                let displacement = bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
                     true => address + 2 - (signed_to_abs(displacement) as u16),
                     false => address + 2 + (displacement as u16),
@@ -699,7 +940,7 @@ impl CPU {
 
             // JR C,e
             0x38 => {
-                let displacement = self.bus.read_byte(address + 1);
+                let displacement = bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
                     true => address + 2 - (signed_to_abs(displacement) as u16),
                     false => address + 2 + (displacement as u16),
@@ -709,7 +950,7 @@ impl CPU {
 
             // JR NC,e
             0x30 => {
-                let displacement = self.bus.read_byte(address + 1);
+                let displacement = bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
                     true => address + 2 - (signed_to_abs(displacement) as u16),
                     false => address + 2 + (displacement as u16),
@@ -719,7 +960,7 @@ impl CPU {
 
             // JR Z,e
             0x28 => {
-                let displacement = self.bus.read_byte(address + 1);
+                let displacement = bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
                     true => address + 2 - (signed_to_abs(displacement) as u16),
                     false => address + 2 + (displacement as u16),
@@ -729,7 +970,7 @@ impl CPU {
 
             // JR NZ,e
             0x20 => {
-                let displacement = self.bus.read_byte(address + 1);
+                let displacement = bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
                     true => address + 2 - (signed_to_abs(displacement) as u16),
                     false => address + 2 + (displacement as u16),
@@ -740,15 +981,12 @@ impl CPU {
             // JP (HL)
             0xE9 => {
                 let addr = self.reg.get_hl();
-                format!(
-                    "E9            JP ${:04X}",
-                    addr
-                )
+                format!("E9            JP ${:04X}", addr)
             }
 
             // DJNZ, e
             0x10 => {
-                let displacement = self.bus.read_byte(address + 1);
+                let displacement = bus.read_byte(address + 1);
                 let addr = match bit::get(displacement, 7) {
                     true => address + 2 - (signed_to_abs(displacement) as u16),
                     false => address + 2 + (displacement as u16),
@@ -759,9 +997,9 @@ impl CPU {
             // Call and Return Group
             // CALL nn
             0xCD => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "CD {:02X} {:02X}      CALL ${:04X}",
                     addr_low, addr_high, addr
@@ -770,9 +1008,9 @@ impl CPU {
 
             // CALL C,nn
             0xDC => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "DC {:02X} {:02X}      CALL C,${:04X}",
                     addr_low, addr_high, addr
@@ -781,9 +1019,9 @@ impl CPU {
 
             // CALL NC,nn
             0xD4 => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "D4 {:02X} {:02X}      CALL NC,${:04X}",
                     addr_low, addr_high, addr
@@ -792,9 +1030,9 @@ impl CPU {
 
             // CALL Z,nn
             0xCC => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "CC {:02X} {:02X}      CALL Z,${:04X}",
                     addr_low, addr_high, addr
@@ -803,9 +1041,9 @@ impl CPU {
 
             // CALL NZ,nn
             0xC4 => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "C4 {:02X} {:02X}      CALL NZ,${:04X}",
                     addr_low, addr_high, addr
@@ -814,9 +1052,9 @@ impl CPU {
 
             // CALL M,nn
             0xFC => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "FC {:02X} {:02X}      CALL M,${:04X}",
                     addr_low, addr_high, addr
@@ -825,9 +1063,9 @@ impl CPU {
 
             // CALL P,nn
             0xF4 => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "F4 {:02X} {:02X}      CALL P,${:04X}",
                     addr_low, addr_high, addr
@@ -836,9 +1074,9 @@ impl CPU {
 
             // CALL PE,nn
             0xEC => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "EC {:02X} {:02X}      CALL PE,${:04X}",
                     addr_low, addr_high, addr
@@ -847,9 +1085,9 @@ impl CPU {
 
             // CALL PO,nn
             0xE4 => {
-                let addr_low = self.bus.read_byte(address + 1);
-                let addr_high = self.bus.read_byte(address + 2);
-                let addr = self.bus.read_word(address + 1);
+                let addr_low = bus.read_byte(address + 1);
+                let addr_high = bus.read_byte(address + 2);
+                let addr = bus.read_word(address + 1);
                 format!(
                     "E4 {:02X} {:02X}      CALL PO,${:04X}",
                     addr_low, addr_high, addr
@@ -910,13 +1148,13 @@ impl CPU {
             // Input and Output Group
             // IN A,(n)
             0xDB => {
-                let port = self.bus.read_byte(address + 1);
+                let port = bus.read_byte(address + 1);
                 format!("DB {:02X}         IN A,(${:02X})", port, port)
             }
 
             // OUT (n),A
             0xD3 => {
-                let port = self.bus.read_byte(address + 1);
+                let port = bus.read_byte(address + 1);
                 format!("D3 {:02X}         OUT A,(${:02X})", port, port)
             }
 
@@ -926,7 +1164,8 @@ impl CPU {
             0xC3 | 0xDA | 0xD2 | 0xCA | 0xC2 | 0xFA | 0xF2 | 0xEA | 0xE2 | 0xCD | 0xDC | 0xD4
             | 0xCC | 0xC4 | 0xFC | 0xF4 | 0xEC | 0xE4 => 3,
             0x06 | 0x0E | 0x16 | 0x1E | 0x26 | 0x2E | 0x36 | 0x3E | 0xC6 | 0xCE | 0xD6 | 0xDE
-            | 0xE6 | 0xF6 | 0xEE | 0xFE | 0xDB | 0xD3 | 0x10 | 0x18 | 0x38 | 0x30 | 0x28 | 0x20 | 0xCB => 2,
+            | 0xE6 | 0xF6 | 0xEE | 0xFE | 0xDB | 0xD3 | 0x10 | 0x18 | 0x38 | 0x30 | 0x28 | 0x20
+            | 0xCB => 2,
             0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 | 0x3A => 3,
             _ => 1,
         };
