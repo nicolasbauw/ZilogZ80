@@ -24,7 +24,7 @@ mod bit;
 pub mod bus;
 pub mod cpu;
 mod cycles;
-mod dasm;
+pub mod dasm;
 mod flags;
 pub mod registers;
 
