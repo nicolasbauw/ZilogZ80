@@ -1295,7 +1295,7 @@ impl CPU {
             print!(
                 "{:#06X}\t{}\nSP : {:#06X}\tS : {}\tZ : {}\tH : {}\tP : {}\tN : {}\tC : {}\nB : {:#04X}\tC : {:#04X}\tD : {:#04X}\tE : {:#04X}\tH : {:#04X}\tL : {:#04X}\tA : {:#04X}\t(SP) : {:#06X}\n",
                 pc,
-                crate::dasm::dasm(bus, pc).0,
+                Bus::dasm(bus, pc).0,
                 self.reg.sp,
                 self.reg.flags.s as i32,
                 self.reg.flags.z as i32,
