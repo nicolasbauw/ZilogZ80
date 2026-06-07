@@ -1055,7 +1055,7 @@ impl Bus {
                 format!("D3 {:02X}         OUT A,(${:02X})", port, port)
             }
 
-            _ => String::new(),
+            _ => String::from("Unknown opcode      "),
         };
         let instr_size = match opcode {
             0xC3 | 0xDA | 0xD2 | 0xCA | 0xC2 | 0xFA | 0xF2 | 0xEA | 0xE2 | 0xCD | 0xDC | 0xD4
