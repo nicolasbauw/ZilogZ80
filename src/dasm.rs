@@ -261,6 +261,265 @@ pub const DASM_CB: [&str; 256] = [
     "SET 7,A",
 ];
 
+pub const DASM_DD: [&str; 256] = [
+    "?",            // DD00
+    "?",            // DD01
+    "?",            // DD02
+    "?",            // DD03
+    "INC B",        // DD04
+    "DEC B",        // DD05
+    "LD B,n",       // DD06
+    "?",            // DD07
+    "?",            // DD08
+    "ADD IX,BC",    // DD09
+    "?",            // DD0A
+    "?",            // DD0B
+    "INC C",        // DD0C
+    "DEC C",        // DD0D
+    "LD C,n",       // DD0E
+    "?",            // DD0F
+    "?",            // DD10
+    "?",            // DD11
+    "?",            // DD12
+    "?",            // DD13
+    "INC D",        // DD14
+    "DEC D",        // DD15
+    "LD D,n",       // DD16
+    "?",            // DD17
+    "?",            // DD18
+    "ADD IX,DE",    // DD19
+    "?",            // DD1A
+    "?",            // DD1B
+    "INC E",        // DD1C
+    "DEC E",        // DD1E
+    "LD E,n",       // DD1E
+    "?",            // DD1F
+    "?",            // DD20
+    "LD IX,nn",     // DD21
+    "LD (nn),IX",   // DD22
+    "INC IX",       // DD23
+    "INC IXH",      // DD24
+    "DEC IXH",      // DD25
+    "LD IXH,n",     // DD26
+    "?",            // DD27
+    "?",            // DD28
+    "ADD IX,IX",    // DD29
+    "LD IX,(nn)",   // DD2A
+    "DEC IX",       // DD2B
+    "INC IXL",      // DD2C
+    "DEC IXL",      // DD2D
+    "LD IXL,n",     // DD2E
+    "?",            // DD2F
+    "?",            // DD30
+    "?",            // DD31
+    "?",            // DD32
+    "?",            // DD33
+    "INC (IX+d)",   // DD34
+    "DEC (IX+d)",   // DD35
+    "LD (IX+d),n",  // DD36
+    "?",            // DD37
+    "?",            // DD38
+    "ADD IX,SP",    // DD39
+    "?",            // DD3A
+    "?",            // DD3B
+    "INC A",        // DD3C
+    "DEC A",        // DD3D
+    "LD A,n",       // DD3E
+    "?",            // DD3F
+    "?",            // DD40
+    "?",            // DD41
+    "?",            // DD42
+    "?",            // DD43
+    "LD B,IXH",     // DD44
+    "LD B,IXL",     // DD45
+    "LD B,(IX+d)",  // DD46
+    "?",            // DD47
+    "?",            // DD48
+    "?",            // DD49
+    "?",            // DD4A
+    "?",            // DD4B
+    "LD C,IXH",     // DD4C
+    "LD C,IXL",     // DD4D
+    "LD C,(IX+d)",  // DD4E
+    "?",            // DD4F
+    "?",            // DD50
+    "?",            // DD51
+    "?",            // DD52
+    "?",            // DD53
+    "LD D,IXH",     // DD54
+    "LD D,IXL",     // DD55
+    "LD D,(IX+d)",  // DD56
+    "?",            // DD57
+    "?",            // DD58
+    "?",            // DD59
+    "?",            // DD5A
+    "?",            // DD5B
+    "LD E,IXH",     // DD5C
+    "LD E,IXL",     // DD5D
+    "LD E,(IX+d)",  // DD5E
+    "?",            // DD5F
+    "LD IXH,B",     // DD60
+    "LD IXH,C",     // DD61
+    "LD IXH,D",     // DD62
+    "LD IXH,E",     // DD63
+    "?",            // DD64
+    "LD IXH,IXL",   // DD65
+    "LD H,(IX+d)",  // DD66
+    "LD IXH,A",     // DD67
+    "LD IXL,B",     // DD68
+    "LD IXL,C",     // DD69
+    "LD IXL,D",     // DD6A
+    "LD IXL,E",     // DD6B
+    "LD IXL,IXH",   // DD6C
+    "?",            // DD6D
+    "LD L,(IX+d)",  // DD6E
+    "LD IXL,A",     // DD6F
+    "LD (IX+d),B",  // DD70
+    "LD (IX+d),C",  // DD71
+    "LD (IX+d),D",  // DD72
+    "LD (IX+d),E",  // DD73
+    "LD (IX+d),H",  // DD74
+    "LD (IX+d),L",  // DD75
+    "?",            // DD76
+    "LD (IX+d),A",  // DD77
+    "?",            // DD78
+    "?",            // DD79
+    "?",            // DD7A
+    "?",            // DD7B
+    "LD A,IXH",     // DD7C
+    "LD A,IXL",     // DD7D
+    "LD A,(IX+d)",  // DD7E
+    "?",            // DD7F
+    "?",            // DD80
+    "?",            // DD81
+    "?",            // DD82
+    "?",            // DD83
+    "ADD A,IXH",    // DD84
+    "ADD A,IXL",    // DD85
+    "ADD A,(IX+d)", // DD86
+    "?",            // DD87
+    "?",            // DD88
+    "?",            // DD89
+    "?",            // DD8A
+    "?",            // DD8B
+    "ADC A,IXH",    // DD8C
+    "ADC A,IXL",    // DD8D
+    "ADC A,(IX+d)", // DD8E
+    "?",            // DD8F
+    "?",            // DD90
+    "?",            // DD91
+    "?",            // DD92
+    "?",            // DD93
+    "SUB IXH",      // DD94
+    "SUB IXL",      // DD95
+    "SUB (IX+d)",   // DD96
+    "?",            // DD97
+    "?",            // DD98
+    "?",            // DD99
+    "?",            // DD9A
+    "?",            // DD9B
+    "SBC A,IXH",    // DD9C
+    "SBC A,IXL",    // DD9D
+    "SBC A,(IX+d)", // DD9E
+    "?",            // DD9F
+    "?",            // DDA0
+    "?",            // DDA1
+    "?",            // DDA2
+    "?",            // DDA3
+    "AND IXH",      // DDA4
+    "AND IXL",      // DDA5
+    "AND (IX+d)",   // DDA6
+    "?",            // DDA7
+    "?",            // DDA8
+    "?",            // DDA9
+    "?",            // DDAA
+    "?",            // DDAB
+    "XOR IXH",      // DDAC
+    "XOR IXL",      // DDAD
+    "XOR (IX+d)",   // DDAE
+    "?",            // DDAF
+    "?",            // DDB0
+    "?",            // DDB1
+    "?",            // DDB2
+    "?",            // DDB3
+    "OR IXH",       // DDB4
+    "OR IXL",       // DDB5
+    "OR (IX+d)",    // DDB6
+    "?",            // DDB7
+    "?",            // DDB8
+    "?",            // DDB9
+    "?",            // DDBA
+    "?",            // DDBB
+    "CP IXH",       // DDBC
+    "CP IXL",       // DDBD
+    "CP (IX+d)",    // DDBE
+    "?",            // DDBF
+    "?",            // DDC1
+    "?",            // DDC1
+    "?",            // DDC2
+    "?",            // DDC3
+    "?",            // DDC4
+    "?",            // DDC5
+    "?",            // DDC6
+    "?",            // DDC7
+    "?",            // DDC8
+    "?",            // DDC9
+    "?",            // DDCA
+    "?",            // DDCB
+    "?",            // DDCC
+    "?",            // DDCD
+    "?",            // DDCE
+    "?",            // DDCF
+    "?",            // DDD0
+    "?",            // DDD1
+    "?",            // DDD2
+    "?",            // DDD3
+    "?",            // DDD4
+    "?",            // DDD5
+    "?",            // DDD6
+    "?",            // DDD7
+    "?",            // DDD8
+    "?",            // DDD9
+    "?",            // DDDA
+    "?",            // DDDB
+    "?",            // DDDC
+    "?",            // DDDD
+    "?",            // DDDE
+    "?",            // DDDF
+    "?",            // DDE0
+    "POP IX",       // DDE1
+    "?",            // DDE2
+    "EX (SP),IX",   // DDE3
+    "?",            // DDE4
+    "PUSH IX",      // DDE5
+    "?",            // DDE6
+    "?",            // DDE7
+    "?",            // DDE8
+    "JP (IX)",      // DDE9
+    "?",            // DDEA
+    "?",            // DDEB
+    "?",            // DDEC
+    "?",            // DDED
+    "?",            // DDEE
+    "?",            // DDEF
+    "?",            // DDF0
+    "?",            // DDF1
+    "?",            // DDF2
+    "?",            // DDF3
+    "?",            // DDF4
+    "?",            // DDF5
+    "?",            // DDF6
+    "?",            // DDF7
+    "?",            // DDF8
+    "LD SP,IX",     // DDF9
+    "?",            // DDFA
+    "?",            // DDFB
+    "?",            // DDFC
+    "?",            // DDFD
+    "?",            // DDFE
+    "?",            // DDFF
+];
+
 impl Bus {
     /// Disassembles 1-byte opcode at (address)
     pub fn dasm(&self, address: u16) -> (String, u8) {
@@ -271,7 +530,14 @@ impl Bus {
                 let oc = self.read_byte(address + 1);
                 // Reading corresponding disassembled string from the table
                 let dasm_str = String::from(DASM_CB[oc as usize]);
-                format!("CB{:02X}          {}", oc, dasm_str)
+                format!("CB {:02X}          {}", oc, dasm_str)
+            }
+            0xDD => {
+                // Reading the byte following the prefix
+                let oc = self.read_byte(address + 1);
+                // Reading corresponding disassembled string from the table
+                let dasm_str = String::from(DASM_DD[oc as usize]);
+                format!("DD {:02X}          {}", oc, dasm_str)
             }
             // 8-Bit Load Group
             // LD r,r'      LD r,(HL)
