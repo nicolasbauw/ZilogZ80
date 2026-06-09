@@ -30,7 +30,7 @@ For IO and MMIO examples see my [demonstration TRS-80 emulator.](https://github.
 
 The library provides a (incomplete) disassembler:
 
-``
+```
 cargo run --example disassembler -- bin/inc_dec_ss_ix_iy.bin
    Compiling zilog_z80 v0.18.0 (/home/nicolasb/Dev/ZilogZ80)
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.20s
@@ -53,6 +53,6 @@ DD23          INC IX
 DD2B          DEC IX
 FD23          INC IY
 FD2B          DEC IY
-``
+```
 
 License: MIT
