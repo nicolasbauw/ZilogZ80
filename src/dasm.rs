@@ -520,10 +520,270 @@ pub const DASM_DD: [&str; 256] = [
     "?",            // DDFF
 ];
 
+pub const DASM_FD: [&str; 256] = [
+    "?",            // FD00
+    "?",            // FD01
+    "?",            // FD02
+    "?",            // FD03
+    "INC B",        // FD04
+    "DEC B",        // FD05
+    "LD B,n",       // FD06
+    "?",            // FD07
+    "?",            // FD08
+    "ADD IY,BC",    // FD09
+    "?",            // FD0A
+    "?",            // FD0B
+    "INC C",        // FD0C
+    "DEC C",        // FD0D
+    "LD C,n",       // FD0E
+    "?",            // FD0F
+    "?",            // FD10
+    "?",            // FD11
+    "?",            // FD12
+    "?",            // FD13
+    "INC D",        // FD14
+    "DEC D",        // FD15
+    "LD D,n",       // FD16
+    "?",            // FD17
+    "?",            // FD18
+    "ADD IY,DE",    // FD19
+    "?",            // FD1A
+    "?",            // FD1B
+    "INC E",        // FD1C
+    "DEC E",        // FD1D
+    "LD E,n",       // FD1E
+    "?",            // FD1F
+    "?",            // FD20
+    "LD IY,nn",     // FD21
+    "LD (nn),IY",   // FD22
+    "INC IY",       // FD23
+    "INC IYH",      // FD24
+    "DEC IYH",      // FD25
+    "LD IYH,n",     // FD26
+    "?",            // FD27
+    "?",            // FD28
+    "ADD IY,IY",    // FD29
+    "LD IY,(nn)",   // FD2A
+    "DEC IY",       // FD2B
+    "INC IYL",      // FD2C
+    "DEC IYL",      // FD2D
+    "LD IYL,n",     // FD2E
+    "?",            // FD2F
+    "?",            // FD30
+    "?",            // FD31
+    "?",            // FD32
+    "?",            // FD33
+    "INC (IY+d)",   // FD34
+    "DEC (IY+d)",   // FD35
+    "LD (IY+d),n",  // FD36
+    "?",            // FD37
+    "?",            // FD38
+    "ADD IY,SP",    // FD39
+    "?",            // FD3A
+    "?",            // FD3B
+    "INC A",        // FD3C
+    "DEC A",        // FD3D
+    "LD A,n",       // FD3E
+    "?",            // FD3F
+    "?",            // FD40
+    "?",            // FD41
+    "?",            // FD42
+    "?",            // FD43
+    "LD B,IYH",     // FD44
+    "LD B,IYL",     // FD45
+    "LD B,(IY+d)",  // FD46
+    "?",            // FD47
+    "?",            // FD48
+    "?",            // FD49
+    "?",            // FD4A
+    "?",            // FD4B
+    "LD C,IYH",     // FD4C
+    "LD C,IYL",     // FD4D
+    "LD C,(IY+d)",  // FD4E
+    "?",            // FD4F
+    "?",            // FD50
+    "?",            // FD51
+    "?",            // FD52
+    "?",            // FD53
+    "LD D,IYH",     // FD54
+    "LD D,IYL",     // FD55
+    "LD D,(IY+d)",  // FD56
+    "?",            // FD57
+    "?",            // FD58
+    "?",            // FD59
+    "?",            // FD5A
+    "?",            // FD5B
+    "LD E,IYH",     // FD5C
+    "LD E,IYL",     // FD5D
+    "LD E,(IY+d)",  // FD5E
+    "?",            // FD5F
+    "LD IYH,B",     // FD60
+    "LD IYH,C",     // FD61
+    "LD IYH,D",     // FD62
+    "LD IYH,E",     // FD63
+    "?",            // FD64
+    "LD IYH,IYL",   // FD65
+    "LD H,(IY+d)",  // FD66
+    "LD IYH,A",     // FD67
+    "LD IYL,B",     // FD68
+    "LD IYL,C",     // FD69
+    "LD IYL,D",     // FD6A
+    "LD IYL,E",     // FD6B
+    "LD IYL,IYH",   // FD6C
+    "?",            // FD6D
+    "LD L,(IY+d)",  // FD6E
+    "LD IYL,A",     // FD6F
+    "LD (IY+d),B",  // FD70
+    "LD (IY+d),C",  // FD71
+    "LD (IY+d),D",  // FD72
+    "LD (IY+d),E",  // FD73
+    "LD (IY+d),H",  // FD74
+    "LD (IY+d),L",  // FD75
+    "?",            // FD76
+    "LD (IY+d),A",  // FD77
+    "?",            // FD78
+    "?",            // FD79
+    "?",            // FD7A
+    "?",            // FD7B
+    "LD A,IYH",     // FD7C
+    "LD A,IYL",     // FD7D
+    "LD A,(IY+d)",  // FD7E
+    "?",            // FD7F
+    "?",            // FD80
+    "?",            // FD81
+    "?",            // FD82
+    "?",            // FD83
+    "ADD A,IYH",    // FD84
+    "ADD A,IYL",    // FD85
+    "ADD A,(IY+d)", // FD86
+    "?",            // FD87
+    "?",            // FD88
+    "?",            // FD89
+    "?",            // FD8A
+    "?",            // FD8B
+    "ADC A,IYH",    // FD8C
+    "ADC A,IYL",    // FD8D
+    "ADC A,(IY+d)", // FD8E
+    "?",            // FD8F
+    "?",            // FD90
+    "?",            // FD91
+    "?",            // FD92
+    "?",            // FD93
+    "SUB IYH",      // FD94
+    "SUB IYL",      // FD95
+    "SUB (IY+d)",   // FD96
+    "?",            // FD97
+    "?",            // FD98
+    "?",            // FD99
+    "?",            // FD9A
+    "?",            // FD9B
+    "SBC A,IYH",    // FD9C
+    "SBC A,IYL",    // FD9D
+    "SBC A,(IY+d)", // FD9E
+    "?",            // FD9F
+    "?",            // FDA0
+    "?",            // FDA1
+    "?",            // FDA2
+    "?",            // FDA3
+    "AND IYH",      // FDA4
+    "AND IYL",      // FDA5
+    "AND (IY+d)",   // FDA6
+    "?",            // FDA7
+    "?",            // FDA8
+    "?",            // FDA9
+    "?",            // FDAA
+    "?",            // FDAB
+    "XOR IYH",      // FDAC
+    "XOR IYL",      // FDAD
+    "XOR (IY+d)",   // FDAE
+    "?",            // FDAF
+    "?",            // FDB0
+    "?",            // FDB1
+    "?",            // FDB2
+    "?",            // FDB3
+    "OR IYH",       // FDB4
+    "OR IYL",       // FDB5
+    "OR (IY+d)",    // FDB6
+    "?",            // FDB7
+    "?",            // FDB8
+    "?",            // FDB9
+    "?",            // FDBA
+    "?",            // FDBB
+    "CP IYH",       // FDBC
+    "CP IYL",       // FDBD
+    "CP (IY+d)",    // FDBE
+    "?",            // FDBF
+    "?",            // FDC0
+    "?",            // FDC1
+    "?",            // FDC2
+    "?",            // FDC3
+    "?",            // FDC4
+    "?",            // FDC5
+    "?",            // FDC6
+    "?",            // FDC7
+    "?",            // FDC8
+    "?",            // FDC9
+    "?",            // FDCA
+    "?",            // FDCB
+    "?",            // FDCC
+    "?",            // FDCD
+    "?",            // FDCE
+    "?",            // FDCF
+    "?",            // FDD0
+    "?",            // FDD1
+    "?",            // FDD2
+    "?",            // FDD3
+    "?",            // FDD4
+    "?",            // FDD5
+    "?",            // FDD6
+    "?",            // FDD7
+    "?",            // FDD8
+    "?",            // FDD9
+    "?",            // FDDA
+    "?",            // FDDB
+    "?",            // FDDC
+    "?",            // FDDD
+    "?",            // FDDE
+    "?",            // FDDF
+    "?",            // FDE0
+    "POP IY",       // FDE1
+    "?",            // FDE2
+    "EX (SP),IY",   // FDE3
+    "?",            // FDE4
+    "PUSH IY",      // FDE5
+    "?",            // FDE6
+    "?",            // FDE7
+    "?",            // FDE8
+    "JP (IY)",      // FDE9
+    "?",            // FDEA
+    "?",            // FDEB
+    "?",            // FDEC
+    "?",            // FDED
+    "?",            // FDEE
+    "?",            // FDEF
+    "?",            // FDF0
+    "?",            // FDF1
+    "?",            // FDF2
+    "?",            // FDF3
+    "?",            // FDF4
+    "?",            // FDF5
+    "?",            // FDF6
+    "?",            // FDF7
+    "?",            // FDF8
+    "LD SP,IY",     // FDF9
+    "?",            // FDFA
+    "?",            // FDFB
+    "?",            // FDFC
+    "?",            // FDFD
+    "?",            // FDFE
+    "?",            // FDFF
+];
+
 impl Bus {
     /// Disassembles 1-byte opcode at (address)
     pub fn dasm(&self, address: u16) -> (String, u8) {
         let opcode = self.read_byte(address);
+        let mut opcode_16: u16 = 0x0000;
         let instr = match opcode {
             0xCB => {
                 // Reading the byte following the prefix
@@ -535,9 +795,66 @@ impl Bus {
             0xDD => {
                 // Reading the byte following the prefix
                 let oc = self.read_byte(address + 1);
+                opcode_16 = 0xDD00 | (oc as u16);
+                //println!("Debug opcode_16 : {:04X}", opcode_16);
                 // Reading corresponding disassembled string from the table
                 let dasm_str = String::from(DASM_DD[oc as usize]);
-                format!("DD {:02X}          {}", oc, dasm_str)
+                match opcode_16 {
+                    0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 | 0xDD5E | 0xFD5E
+                    | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E | 0xDD7E | 0xFD7E | 0xDD70 | 0xDD71
+                    | 0xDD72 | 0xDD73 | 0xDD74 | 0xDD75 | 0xDD77 | 0xFD70 | 0xFD71 | 0xFD72
+                    | 0xFD73 | 0xFD74 | 0xFD75 | 0xFD77 | 0xDD86 | 0xFD86 | 0xDD8E | 0xFD8E
+                    | 0xDD96 | 0xFD96 | 0xDD9E | 0xFD9E | 0xDDA6 | 0xFDA6 | 0xDDB6 | 0xFDB6
+                    | 0xDDAE | 0xFDAE | 0xDDBE | 0xFDBE | 0xDD34 | 0xFD34 | 0xDD35 | 0xFD35 => {
+                        let operand = self.read_byte(address + 2);
+                        format!("{:04X} {:02X}        {}", opcode_16, operand, dasm_str)
+                    }
+                    0xDD36 | 0xFD36 | 0xDD21 | 0xFD21 | 0xED4B | 0xED5B | 0xED6B | 0xED7B
+                    | 0xDD2A | 0xFD2A | 0xED43 | 0xED53 | 0xED63 | 0xED73 | 0xDD22 | 0xFD22
+                    | 0xDDCB | 0xFDCB => {
+                        let operand = self.read_word(address + 2);
+                        format!(
+                            "{:04X} {:02X} {:02X}    {}",
+                            opcode_16,
+                            (operand & 0x00FF) as u8,
+                            (operand >> 8 & 0x00FF) as u8,
+                            dasm_str
+                        )
+                    }
+                    _ => format!("DD{:02X}          {}", oc, dasm_str),
+                }
+            }
+            0xFD => {
+                // Reading the byte following the prefix
+                let oc = self.read_byte(address + 1);
+                opcode_16 = 0xFD00 | (oc as u16);
+                //println!("Debug opcode_16 : {:04X}", opcode_16);
+                // Reading corresponding disassembled string from the table
+                let dasm_str = String::from(DASM_FD[oc as usize]);
+                match opcode_16 {
+                    0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 | 0xDD5E | 0xFD5E
+                    | 0xDD66 | 0xFD66 | 0xDD6E | 0xFD6E | 0xDD7E | 0xFD7E | 0xDD70 | 0xDD71
+                    | 0xDD72 | 0xDD73 | 0xDD74 | 0xDD75 | 0xDD77 | 0xFD70 | 0xFD71 | 0xFD72
+                    | 0xFD73 | 0xFD74 | 0xFD75 | 0xFD77 | 0xDD86 | 0xFD86 | 0xDD8E | 0xFD8E
+                    | 0xDD96 | 0xFD96 | 0xDD9E | 0xFD9E | 0xDDA6 | 0xFDA6 | 0xDDB6 | 0xFDB6
+                    | 0xDDAE | 0xFDAE | 0xDDBE | 0xFDBE | 0xDD34 | 0xFD34 | 0xDD35 | 0xFD35 => {
+                        let operand = self.read_byte(address + 2);
+                        format!("{:04X} {:02X}        {}", opcode_16, operand, dasm_str)
+                    }
+                    0xDD36 | 0xFD36 | 0xDD21 | 0xFD21 | 0xED4B | 0xED5B | 0xED6B | 0xED7B
+                    | 0xDD2A | 0xFD2A | 0xED43 | 0xED53 | 0xED63 | 0xED73 | 0xDD22 | 0xFD22
+                    | 0xDDCB | 0xFDCB => {
+                        let operand = self.read_word(address + 2);
+                        format!(
+                            "{:04X} {:02X} {:02X}    {}",
+                            opcode_16,
+                            (operand & 0x00FF) as u8,
+                            (operand >> 8 & 0x00FF) as u8,
+                            dasm_str
+                        )
+                    }
+                    _ => format!("FD{:02X}          {}", oc, dasm_str),
+                }
             }
             // 8-Bit Load Group
             // LD r,r'      LD r,(HL)
@@ -1332,6 +1649,21 @@ impl Bus {
             0x32 | 0x01 | 0x11 | 0x21 | 0x31 | 0x2A | 0x22 | 0x3A => 3,
             _ => 1,
         };
-        (instr, instr_size)
+        let instr_size_16: u8 = match opcode_16 {
+            0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 | 0xDD5E | 0xFD5E | 0xDD66
+            | 0xFD66 | 0xDD6E | 0xFD6E | 0xDD7E | 0xFD7E | 0xDD70 | 0xDD71 | 0xDD72 | 0xDD73
+            | 0xDD74 | 0xDD75 | 0xDD77 | 0xFD70 | 0xFD71 | 0xFD72 | 0xFD73 | 0xFD74 | 0xFD75
+            | 0xFD77 | 0xDD86 | 0xFD86 | 0xDD8E | 0xFD8E | 0xDD96 | 0xFD96 | 0xDD9E | 0xFD9E
+            | 0xDDA6 | 0xFDA6 | 0xDDB6 | 0xFDB6 | 0xDDAE | 0xFDAE | 0xDDBE | 0xFDBE | 0xDD34
+            | 0xFD34 | 0xDD35 | 0xFD35 => 3,
+            0xDD36 | 0xFD36 | 0xDD21 | 0xFD21 | 0xED4B | 0xED5B | 0xED6B | 0xED7B | 0xDD2A
+            | 0xFD2A | 0xED43 | 0xED53 | 0xED63 | 0xED73 | 0xDD22 | 0xFD22 | 0xDDCB | 0xFDCB => 4,
+            _ => 2,
+        };
+        if opcode_16 == 0 {
+            return (instr, instr_size);
+        } else {
+            return (instr, instr_size_16);
+        }
     }
 }
