@@ -790,7 +790,7 @@ impl Bus {
                 let oc = self.read_byte(address + 1);
                 // Reading corresponding disassembled string from the table
                 let dasm_str = String::from(DASM_CB[oc as usize]);
-                format!("CB {:02X}          {}", oc, dasm_str)
+                format!("CB{:02X}          {}", oc, dasm_str)
             }
             0xDD => {
                 // Reading the byte following the prefix
