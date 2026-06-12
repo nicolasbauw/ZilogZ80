@@ -28,7 +28,7 @@ loop {
 
 For IO and MMIO examples see my [demonstration TRS-80 emulator.](https://github.com/nicolasbauw/TRS-80)
 
-The library provides a (incomplete) disassembler:
+The library provides a disassembler method:
 
 ```
 cargo run --example disassembler -- bin/inc_dec_ss_ix_iy.bin
