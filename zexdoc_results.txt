@@ -4,7 +4,7 @@ add hl,<bc,de,hl,sp>..........  OK
 add ix,<bc,de,ix,sp>..........  OK
 add iy,<bc,de,iy,sp>..........  OK
 aluop a,nn....................  OK
-aluop a,<b,c,d,e,h,l,(hl),a>..  ERROR **** crc expected:fe43b016 found:7e13452c
+aluop a,<b,c,d,e,h,l,(hl),a>..  OK
 aluop a,<ixh,ixl,iyh,iyl>.....  OK
 aluop a,(<ix,iy>+1)...........  OK
 bit n,(<ix,iy>+1).............  OK
