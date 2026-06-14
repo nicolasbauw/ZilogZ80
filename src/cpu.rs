@@ -3753,7 +3753,7 @@ impl CPU {
         let r = a.wrapping_add(n).wrapping_add(c);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
-        self.reg.flags.p = check_add_overflow(self.reg.a, n.wrapping_add(c));
+        self.reg.flags.p = ((a ^ r) & (n ^ r)) & 0x80 != 0;
         self.reg.flags.h = (a & 0x0f) + (n & 0x0f) + c > 0x0f;
         self.reg.flags.c = u16::from(a) + u16::from(n) + u16::from(c) > 0xff;
         self.reg.flags.n = false;
@@ -3780,11 +3780,11 @@ impl CPU {
             true => 1,
         };
         let a = self.reg.a;
-        let r = a.wrapping_sub(n.wrapping_add(c));
+        let r = a.wrapping_sub(n).wrapping_sub(c);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
-        self.reg.flags.p = check_sub_overflow(self.reg.a, n.wrapping_add(c));
-        self.reg.flags.h = (a as i8 & 0x0f) < (n as i8 & 0x0f).wrapping_add(c as i8);
+        self.reg.flags.p = ((a ^ n) & (a ^ r)) & 0x80 != 0;
+        self.reg.flags.h = (a & 0x0f) < (n & 0x0f) + c;
         self.reg.flags.c = u16::from(a) < (u16::from(n) + u16::from(c));
         self.reg.flags.n = true;
         self.reg.a = r;
