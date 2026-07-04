@@ -1,5 +1,5 @@
 use std::{error::Error, process};
-use zilog_z80::{bus::Bus, cpu::CPU};
+use zilog_z80::{bus::FlatBus, cpu::CPU};
 
 fn main() {
     if let Err(e) = load_execute() {
@@ -9,7 +9,7 @@ fn main() {
 }
 
 fn load_execute() -> Result<(), Box<dyn Error>> {
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     let mut c = CPU::new();
     c.debug.opcode = true;
 

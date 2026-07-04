@@ -1,4 +1,4 @@
-use crate::{bus::Bus, cpu::CPU};
+use crate::{bus::FlatBus, cpu::CPU};
 
 // carry flag
 const CF: u8 = 1 << 0;
@@ -30,7 +30,7 @@ const SF: u8 = 1 << 7;
 #[test]
 fn ld_r_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ld_r_r.bin", 0).unwrap();
     c.reg.a = 0x12;
     assert_eq!(c.execute(&mut b), 4);
@@ -65,7 +65,7 @@ fn ld_r_r_asm() {
 #[test]
 fn ld_hl_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ld_hl.bin", 0x0100).unwrap();
     c.reg.a = 0x33;
     c.reg.set_hl(0x1000);
@@ -87,7 +87,7 @@ fn ld_hl_asm() {
 #[test]
 fn ld_hl_n_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ld_hl_n.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 10);
     assert_eq!(c.reg.get_hl(), 0x2000); // LD HL,0x2000
@@ -102,7 +102,7 @@ fn ld_hl_n_asm() {
 #[test]
 fn ld_ix_iy_n_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ld_ix_iy_n.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 14);
     assert_eq!(c.reg.get_ix(), 0x2000); // LD IX,0x2000
@@ -121,7 +121,7 @@ fn ld_ix_iy_n_asm() {
 #[test]
 fn ld_hl_dd_ix_iy_inn_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x01);
     b.write_byte(0x1001, 0x02);
     b.write_byte(0x1002, 0x03);
@@ -150,7 +150,7 @@ fn ld_hl_dd_ix_iy_inn_asm() {
 #[test]
 fn ld_ix_iy_nn_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ld_ix_iy_nn.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 10);
     assert_eq!(0x1234, c.reg.get_bc()); // LD BC,0x1234
@@ -169,7 +169,7 @@ fn ld_ix_iy_nn_asm() {
 #[test]
 fn ld_sp_hl_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ld_sp_hl_ix_iy.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 10);
     assert_eq!(0x1234, c.reg.get_hl()); // LD HL,0x1234
@@ -188,7 +188,7 @@ fn ld_sp_hl_ix_iy_asm() {
 #[test]
 fn ld_r_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x01);
     b.write_byte(0x1001, 0x02);
     b.write_byte(0x1002, 0x03);
@@ -235,7 +235,7 @@ fn ld_r_ix_iy_asm() {
 #[test]
 fn ld_ix_iy_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ld_ix_iy_r.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 14);
     assert_eq!(0x1003, c.reg.get_ix(),);
@@ -302,7 +302,7 @@ fn ld_ix_iy_r_asm() {
 #[test]
 fn push_pop_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/push_pop.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 10);
     assert_eq!(0x1234, c.reg.get_bc()); // LD BC,0x1234
@@ -359,7 +359,7 @@ fn push_pop_asm() {
 #[test]
 fn add_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/add_r.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x0F, c.reg.a);
@@ -407,7 +407,7 @@ fn add_r_asm() {
 #[test]
 fn add_i_hl_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x41);
     b.write_byte(0x1001, 0x61);
     b.write_byte(0x1002, 0x81);
@@ -434,7 +434,7 @@ fn add_i_hl_ix_iy_asm() {
 #[test]
 fn add_ixh_ixl_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/add_a_ixh_ixl.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x0F, c.reg.a);
@@ -457,7 +457,7 @@ fn add_ixh_ixl_asm() {
 #[test]
 fn add_a_iyh_iyl_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/add_a_iyh_iyl.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x0F, c.reg.a);
@@ -480,7 +480,7 @@ fn add_a_iyh_iyl_asm() {
 #[test]
 fn adc_a_ixh_ixl_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/adc_a_ixh_ixl.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x00, c.reg.a); // LD A,0x00
@@ -500,7 +500,7 @@ fn adc_a_ixh_ixl_asm() {
 #[test]
 fn adc_a_iyh_iyl_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/adc_a_iyh_iyl.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x00, c.reg.a); // LD A,0x00
@@ -520,7 +520,7 @@ fn adc_a_iyh_iyl_asm() {
 #[test]
 fn adc_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/adc_r.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x00, c.reg.a); // LD A,0x00
@@ -572,7 +572,7 @@ fn adc_r_asm() {
 #[test]
 fn adc_i_hl_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x41);
     b.write_byte(0x1001, 0x61);
     b.write_byte(0x1002, 0x81);
@@ -603,7 +603,7 @@ fn adc_i_hl_ix_iy_asm() {
 #[test]
 fn sub_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/sub_r.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x04, c.reg.a); // LD A,0x04
@@ -651,7 +651,7 @@ fn sub_r_asm() {
 #[test]
 fn sub_ixh_ixl_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/sub_ixh_ixl.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x04, c.reg.a); // LD A,0x04
@@ -671,7 +671,7 @@ fn sub_ixh_ixl_asm() {
 #[test]
 fn sub_iyh_iyl_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/sub_iyh_iyl.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x04, c.reg.a); // LD A,0x04
@@ -691,7 +691,7 @@ fn sub_iyh_iyl_asm() {
 #[test]
 fn cp_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/cp_r.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x04, c.reg.a); // LD A,0x04
@@ -736,7 +736,7 @@ fn cp_r_asm() {
 #[test]
 fn sub_i_hl_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x41);
     b.write_byte(0x1001, 0x61);
     b.write_byte(0x1002, 0x81);
@@ -763,7 +763,7 @@ fn sub_i_hl_ix_iy_asm() {
 #[test]
 fn cp_i_hl_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x41);
     b.write_byte(0x1001, 0x61);
     b.write_byte(0x1002, 0x22);
@@ -790,7 +790,7 @@ fn cp_i_hl_ix_iy_asm() {
 #[test]
 fn sbc_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/sbc_r.bin", 0).unwrap();
     for _ in 0..7 {
         c.execute(&mut b);
@@ -834,7 +834,7 @@ fn sbc_r_asm() {
 #[test]
 fn sbc_ixyh_ixyl_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/sbc_ixyh_ixyl.bin", 0).unwrap();
     c.execute(&mut b);
     c.execute(&mut b);
@@ -863,7 +863,7 @@ fn sbc_ixyh_ixyl_asm() {
 #[test]
 fn sbc_i_hl_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x41);
     b.write_byte(0x1001, 0x61);
     b.write_byte(0x1002, 0x81);
@@ -890,7 +890,7 @@ fn sbc_i_hl_ix_iy_asm() {
 #[test]
 fn or_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/or_r.bin", 0).unwrap();
     for _ in 0..7 {
         c.execute(&mut b);
@@ -927,7 +927,7 @@ fn or_r_asm() {
 #[test]
 fn xor_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/xor_r.bin", 0).unwrap();
     for _ in 0..7 {
         c.execute(&mut b);
@@ -964,7 +964,7 @@ fn xor_r_asm() {
 #[test]
 fn or_xor_i_hl_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x41);
     b.write_byte(0x1001, 0x62);
     b.write_byte(0x1002, 0x84);
@@ -995,7 +995,7 @@ fn or_xor_i_hl_ix_iy_asm() {
 #[test]
 fn and_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/and_r.bin", 0).unwrap();
     for _ in 0..7 {
         c.execute(&mut b);
@@ -1050,7 +1050,7 @@ fn and_r_asm() {
 #[test]
 fn and_i_hl_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0xFE);
     b.write_byte(0x1001, 0xAA);
     b.write_byte(0x1002, 0x99);
@@ -1072,7 +1072,7 @@ fn and_i_hl_ix_iy_asm() {
 #[test]
 fn inc_dec_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/inc_dec_r.bin", 0).unwrap();
     for _ in 0..7 {
         c.execute(&mut b);
@@ -1127,7 +1127,7 @@ fn inc_dec_r_asm() {
 #[test]
 fn inc_dec_i_hl_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x00);
     b.write_byte(0x1001, 0x3F);
     b.write_byte(0x1002, 0x7F);
@@ -1158,7 +1158,7 @@ fn inc_dec_i_hl_ix_iy_asm() {
 #[test]
 fn inc_dec_ss_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/inc_dec_ss_ix_iy.bin", 0).unwrap();
     for _ in 0..6 {
         c.execute(&mut b);
@@ -1192,7 +1192,7 @@ fn inc_dec_ss_ix_iy_asm() {
 #[test]
 fn djnz_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/djnz.bin", 0x0204).unwrap();
     c.reg.pc = 0x0204;
     assert_eq!(c.execute(&mut b), 7);
@@ -1219,7 +1219,7 @@ fn djnz_asm() {
 #[test]
 fn jr_cc_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/jr_cc.bin", 0x0204).unwrap();
     c.reg.pc = 0x0204;
     assert_eq!(c.execute(&mut b), 4);
@@ -1245,7 +1245,7 @@ fn jr_cc_asm() {
 #[test]
 fn ld_i_hl_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ld_i_hl_r.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 10);
     assert_eq!(0x1000, c.reg.get_hl());
@@ -1278,7 +1278,7 @@ fn ld_i_hl_r_asm() {
 #[test]
 fn ld_a_i_bc_de_nn_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ld_a_i_bc_de_nn.bin", 0).unwrap();
     b.write_byte(0x1000, 0x11);
     b.write_byte(0x1001, 0x22);
@@ -1298,7 +1298,7 @@ fn ld_a_i_bc_de_nn_asm() {
 #[test]
 fn inc_dec_ss_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/inc_dec_ss.bin", 0).unwrap();
     for _ in 0..4 {
         c.execute(&mut b);
@@ -1324,7 +1324,7 @@ fn inc_dec_ss_asm() {
 #[test]
 fn ld_i_bc_de_nn_a_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ld_i_bc_de_nn_a.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 10);
     assert_eq!(0x1000, c.reg.get_bc()); // LD BC,0x1000
@@ -1343,7 +1343,7 @@ fn ld_i_bc_de_nn_a_asm() {
 #[test]
 fn rlca_rla_rrca_rra_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/rlca_rla_rrca_rra.bin", 0).unwrap();
     c.reg.flags.set_from_byte(0xFF);
     assert_eq!(c.execute(&mut b), 7);
@@ -1369,7 +1369,7 @@ fn rlca_rla_rrca_rra_asm() {
 #[test]
 fn daa_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/daa.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x15, c.reg.a); // LD A,0x15
@@ -1410,7 +1410,7 @@ fn daa_asm() {
 #[test]
 fn cpl_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/cpl.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x00, c.reg.a);
@@ -1435,7 +1435,7 @@ fn cpl_asm() {
 #[test]
 fn ccf_scf_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ccf_scf.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x00, c.reg.a);
@@ -1460,7 +1460,7 @@ fn ccf_scf_asm() {
 #[test]
 fn call_ret_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/call_ret.bin", 0x0204).unwrap();
     c.reg.pc = 0x0204;
     assert_eq!(c.execute(&mut b), 17);
@@ -1482,7 +1482,7 @@ fn call_ret_asm() {
 #[test]
 fn call_cc_ret_cc_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/call_cc_ret_cc.bin", 0x0204).unwrap();
     c.reg.pc = 0x0204;
     c.reg.sp = 0x0100;
@@ -1539,7 +1539,7 @@ fn call_cc_ret_cc_asm() {
 #[test]
 fn halt_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/halt.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x0000, c.reg.pc);
@@ -1552,7 +1552,7 @@ fn halt_asm() {
 #[test]
 fn ex_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ex.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 10);
     assert_eq!(0x1234, c.reg.get_hl());
@@ -1617,7 +1617,7 @@ fn ex_asm() {
 #[test]
 fn jp_cc_nn_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/jp_cc_nn.bin", 0x0204).unwrap();
     c.reg.pc = 0x0204;
     assert_eq!(c.execute(&mut b), 4);
@@ -1655,7 +1655,7 @@ fn jp_cc_nn_asm() {
 #[test]
 fn jp_jr_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/jp_jr.bin", 0x0204).unwrap();
     c.reg.pc = 0x0204;
     assert_eq!(c.execute(&mut b), 10);
@@ -1685,7 +1685,7 @@ fn jp_jr_asm() {
 #[test]
 fn ldi_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x01);
     b.write_byte(0x1001, 0x02);
     b.write_byte(0x1002, 0x03);
@@ -1716,7 +1716,7 @@ fn ldi_asm() {
 #[test]
 fn ldir_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x01);
     b.write_byte(0x1001, 0x02);
     b.write_byte(0x1002, 0x03);
@@ -1737,7 +1737,7 @@ fn ldir_asm() {
 #[test]
 fn ldd_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x01);
     b.write_byte(0x1001, 0x02);
     b.write_byte(0x1002, 0x03);
@@ -1768,7 +1768,7 @@ fn ldd_asm() {
 #[test]
 fn lddr_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x01);
     b.write_byte(0x1001, 0x02);
     b.write_byte(0x1002, 0x03);
@@ -1789,7 +1789,7 @@ fn lddr_asm() {
 #[test]
 fn cpi_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x01);
     b.write_byte(0x1001, 0x02);
     b.write_byte(0x1002, 0x03);
@@ -1821,7 +1821,7 @@ fn cpi_asm() {
 #[test]
 fn cpir_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x01);
     b.write_byte(0x1001, 0x02);
     b.write_byte(0x1002, 0x03);
@@ -1845,7 +1845,7 @@ fn cpir_asm() {
 #[test]
 fn cpd_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x01);
     b.write_byte(0x1001, 0x02);
     b.write_byte(0x1002, 0x03);
@@ -1875,7 +1875,7 @@ fn cpd_asm() {
 #[test]
 fn add_adc_sbc_16_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/add_adc_sbc_16.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 10);
     assert_eq!(0x00FC, c.reg.get_hl());
@@ -1946,7 +1946,7 @@ fn add_adc_sbc_16_asm() {
 #[test]
 fn ld_inn_hl_dd_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ld_inn_hl_dd_ix_iy.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 10);
     assert_eq!(0x0201, c.reg.get_hl()); // LD HL,0x0201
@@ -1981,7 +1981,7 @@ fn ld_inn_hl_dd_ix_iy_asm() {
 #[test]
 fn ld_a_ir_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ld_a_ir.bin", 0).unwrap();
     c.reg.r = 0x34;
     c.reg.i = 0x1;
@@ -2001,7 +2001,7 @@ fn ld_a_ir_asm() {
 #[test]
 fn ld_ir_a_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/ld_ir_a.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x45, c.reg.a);
@@ -2014,7 +2014,7 @@ fn ld_ir_a_asm() {
 #[test]
 fn rlc_rl_rrc_rr_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/rlc_rl_rrc_rr_r.bin", 0).unwrap();
     for _ in 0..7 {
         c.execute(&mut b);
@@ -2108,7 +2108,7 @@ fn rlc_rl_rrc_rr_r_asm() {
 #[test]
 fn rrc_rlc_rr_rl_i_hl_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x01);
     b.write_byte(0x1001, 0xFF);
     b.write_byte(0x1002, 0x11);
@@ -2181,7 +2181,7 @@ fn rrc_rlc_rr_rl_i_hl_ix_iy_asm() {
 #[test]
 fn sla_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/sla_r.bin", 0).unwrap();
     for _ in 0..7 {
         c.execute(&mut b);
@@ -2212,7 +2212,7 @@ fn sla_r_asm() {
 #[test]
 fn sra_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/sra_r.bin", 0).unwrap();
     for _ in 0..7 {
         c.execute(&mut b);
@@ -2243,7 +2243,7 @@ fn sra_r_asm() {
 #[test]
 fn srl_r_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/srl_r.bin", 0).unwrap();
     for _ in 0..7 {
         c.execute(&mut b);
@@ -2274,7 +2274,7 @@ fn srl_r_asm() {
 #[test]
 fn sla_i_hl_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x01);
     b.write_byte(0x1001, 0x80);
     b.write_byte(0x1002, 0xAA);
@@ -2302,7 +2302,7 @@ fn sla_i_hl_ix_iy_asm() {
 #[test]
 fn sra_i_hl_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x01);
     b.write_byte(0x1001, 0x80);
     b.write_byte(0x1002, 0xAA);
@@ -2330,7 +2330,7 @@ fn sra_i_hl_ix_iy_asm() {
 #[test]
 fn srl_i_hl_ix_iy_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x1000, 0x01);
     b.write_byte(0x1001, 0x80);
     b.write_byte(0x1002, 0xAA);
@@ -2358,7 +2358,7 @@ fn srl_i_hl_ix_iy_asm() {
 #[test]
 fn rld_rrd_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/rld_rrd.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x12, c.reg.a);
@@ -2408,7 +2408,7 @@ fn rld_rrd_asm() {
 #[test]
 fn ld_inn_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x63);
     b.write_byte(0x0002, 0x06);
@@ -2421,7 +2421,7 @@ fn ld_inn_hl() {
 #[test]
 fn ld_b() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
     c.reg.d = 0x1F;
@@ -2460,7 +2460,7 @@ fn ld_b() {
 #[test]
 fn ld_c() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
     c.reg.d = 0x1F;
@@ -2499,7 +2499,7 @@ fn ld_c() {
 #[test]
 fn ld_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
     c.reg.d = 0x1F;
@@ -2538,7 +2538,7 @@ fn ld_d() {
 #[test]
 fn ld_e() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
     c.reg.d = 0x1F;
@@ -2577,7 +2577,7 @@ fn ld_e() {
 #[test]
 fn ld_h() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
     c.reg.d = 0x1F;
@@ -2616,7 +2616,7 @@ fn ld_h() {
 #[test]
 fn ld_l() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
     c.reg.d = 0x1F;
@@ -2655,7 +2655,7 @@ fn ld_l() {
 #[test]
 fn ld_hl_r() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
     c.reg.d = 0x1F;
@@ -2691,7 +2691,7 @@ fn ld_hl_r() {
 #[test]
 fn ld_a() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.b = 0x11;
     c.reg.c = 0x15;
     c.reg.d = 0x1F;
@@ -2730,7 +2730,7 @@ fn ld_a() {
 #[test]
 fn hlt() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x76);
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 0);
@@ -2739,7 +2739,7 @@ fn hlt() {
 #[test]
 fn ld_b_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.set_ix(0x25AF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x46);
@@ -2753,7 +2753,7 @@ fn ld_b_ix_d() {
 #[test]
 fn ld_b_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.set_iy(0x25AF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0x46);
@@ -2767,7 +2767,7 @@ fn ld_b_iy_d() {
 #[test]
 fn ld_ix_d_c() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.c = 0x1C;
     c.reg.set_ix(0x3100);
     b.write_byte(0x0000, 0xDD);
@@ -2781,7 +2781,7 @@ fn ld_ix_d_c() {
 #[test]
 fn ld_ix_d_n() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.set_ix(0x219A);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x36);
@@ -2795,7 +2795,7 @@ fn ld_ix_d_n() {
 #[test]
 fn ld_a_bc() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x0a);
     b.write_byte(0x100, 0x65);
     c.reg.set_bc(0x100);
@@ -2807,7 +2807,7 @@ fn ld_a_bc() {
 #[test]
 fn ld_a_de() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x1a);
     b.write_byte(0x100, 0x65);
     c.reg.set_de(0x100);
@@ -2819,7 +2819,7 @@ fn ld_a_de() {
 #[test]
 fn ld_nn_a() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x32);
     b.write_byte(0x0001, 0x00);
     b.write_byte(0x0002, 0xff);
@@ -2832,7 +2832,7 @@ fn ld_nn_a() {
 #[test]
 fn ld_a_r() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x5F);
     c.reg.r = 0x56;
@@ -2844,7 +2844,7 @@ fn ld_a_r() {
 #[test]
 fn ld_dd_nn() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x21);
     b.write_byte(0x0001, 0x00);
     b.write_byte(0x0002, 0x50);
@@ -2856,7 +2856,7 @@ fn ld_dd_nn() {
 #[test]
 fn ld_ix_nn() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x21);
     b.write_byte(0x0002, 0xA2);
@@ -2869,7 +2869,7 @@ fn ld_ix_nn() {
 #[test]
 fn ld_hl_nn() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x2A);
     b.write_byte(0x0001, 0x45);
     b.write_byte(0x0002, 0x45);
@@ -2883,7 +2883,7 @@ fn ld_hl_nn() {
 #[test]
 fn ld_bc_cnn() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x4B);
     b.write_byte(0x0002, 0x30);
@@ -2898,7 +2898,7 @@ fn ld_bc_cnn() {
 #[test]
 fn ld_de_cnn() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x5B);
     b.write_byte(0x0002, 0x30);
@@ -2913,7 +2913,7 @@ fn ld_de_cnn() {
 #[test]
 fn ld_hl_cnn() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x6B);
     b.write_byte(0x0002, 0x30);
@@ -2928,7 +2928,7 @@ fn ld_hl_cnn() {
 #[test]
 fn ld_sp_cnn() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x7B);
     b.write_byte(0x0002, 0x30);
@@ -2943,7 +2943,7 @@ fn ld_sp_cnn() {
 #[test]
 fn ld_ix_cnn() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x2A);
     b.write_byte(0x0002, 0x66);
@@ -2958,7 +2958,7 @@ fn ld_ix_cnn() {
 #[test]
 fn ld_iy_cnn() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0x2A);
     b.write_byte(0x0002, 0x66);
@@ -2973,7 +2973,7 @@ fn ld_iy_cnn() {
 #[test]
 fn ld_cnn_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x22);
     b.write_byte(0x0001, 0x29);
     b.write_byte(0x0002, 0xB2);
@@ -2987,7 +2987,7 @@ fn ld_cnn_hl() {
 #[test]
 fn ld_ann_bc() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x43);
     b.write_byte(0x0002, 0x00);
@@ -3002,7 +3002,7 @@ fn ld_ann_bc() {
 #[test]
 fn ld_ann_de() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x53);
     b.write_byte(0x0002, 0x00);
@@ -3017,7 +3017,7 @@ fn ld_ann_de() {
 #[test]
 fn ld_ann_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x63);
     b.write_byte(0x0002, 0x00);
@@ -3032,7 +3032,7 @@ fn ld_ann_hl() {
 #[test]
 fn ld_ann_sp() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x73);
     b.write_byte(0x0002, 0x00);
@@ -3047,7 +3047,7 @@ fn ld_ann_sp() {
 #[test]
 fn ld_ann_ix() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x22);
     b.write_byte(0x0002, 0x38);
@@ -3062,7 +3062,7 @@ fn ld_ann_ix() {
 #[test]
 fn ld_ann_iy() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0x22);
     b.write_byte(0x0002, 0x38);
@@ -3077,7 +3077,7 @@ fn ld_ann_iy() {
 #[test]
 fn ld_sp_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xF9);
     c.reg.h = 0x50;
     c.reg.l = 0x6c;
@@ -3089,7 +3089,7 @@ fn ld_sp_hl() {
 #[test]
 fn ld_sp_ix() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xF9);
     c.reg.set_ix(0x98DA);
@@ -3101,7 +3101,7 @@ fn ld_sp_ix() {
 #[test]
 fn ld_sp_iy() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xF9);
     c.reg.set_iy(0x98DA);
@@ -3113,7 +3113,7 @@ fn ld_sp_iy() {
 #[test]
 fn push_af() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xF5);
     c.reg.a = 0x22;
     c.reg.flags.set_from_byte(0x33);
@@ -3130,7 +3130,7 @@ fn push_af() {
 #[test]
 fn push_ix() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xE5);
     c.reg.set_ix(0x2233);
@@ -3145,7 +3145,7 @@ fn push_ix() {
 #[test]
 fn push_iy() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xE5);
     c.reg.set_iy(0x2233);
@@ -3160,7 +3160,7 @@ fn push_iy() {
 #[test]
 fn pop_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xE1);
     b.write_byte(0x1000, 0x55);
     b.write_byte(0x1001, 0x33);
@@ -3174,7 +3174,7 @@ fn pop_hl() {
 #[test]
 fn pop_ix() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xE1);
     b.write_byte(0x1000, 0x55);
@@ -3189,7 +3189,7 @@ fn pop_ix() {
 #[test]
 fn pop_iy() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xE1);
     b.write_byte(0x1000, 0x55);
@@ -3204,7 +3204,7 @@ fn pop_iy() {
 #[test]
 fn ex_de_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xEB);
     c.reg.set_de(0x2822);
     c.reg.set_hl(0x499A);
@@ -3217,7 +3217,7 @@ fn ex_de_hl() {
 #[test]
 fn ex_af_afp() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x08);
     c.reg.set_af(0x9900);
     assert_eq!(c.reg.get_af(), 0x9900);
@@ -3231,7 +3231,7 @@ fn ex_af_afp() {
 #[test]
 fn exx() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xD9);
     c.reg.set_bc(0x445A);
     c.reg.set_de(0x3DA2);
@@ -3252,7 +3252,7 @@ fn exx() {
 #[test]
 fn ex_sp_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xE3);
     c.reg.set_hl(0x7012);
     c.reg.sp = 0x8856;
@@ -3269,7 +3269,7 @@ fn ex_sp_hl() {
 #[test]
 fn ex_sp_ix() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xE3);
     c.reg.set_ix(0x3988);
@@ -3287,7 +3287,7 @@ fn ex_sp_ix() {
 #[test]
 fn ex_sp_iy() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xE3);
     c.reg.set_iy(0x3988);
@@ -3305,7 +3305,7 @@ fn ex_sp_iy() {
 #[test]
 fn ldi() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0xA0);
     c.reg.set_hl(0x1111);
@@ -3325,7 +3325,7 @@ fn ldi() {
 #[test]
 fn ldir() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0xB0);
     c.reg.set_hl(0x1111);
@@ -3353,7 +3353,7 @@ fn ldir() {
 #[test]
 fn ldd() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0xA8);
     c.reg.set_hl(0x1111);
@@ -3373,7 +3373,7 @@ fn ldd() {
 #[test]
 fn lddr() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0xB8);
     c.reg.set_hl(0x1114);
@@ -3401,7 +3401,7 @@ fn lddr() {
 #[test]
 fn cpi() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0xA1);
     c.reg.a = 0x3B;
@@ -3419,7 +3419,7 @@ fn cpi() {
 #[test]
 fn cpir() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0xB1);
     c.reg.a = 0xF3;
@@ -3439,7 +3439,7 @@ fn cpir() {
 #[test]
 fn cpd() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0xA9);
     c.reg.a = 0x3B;
@@ -3457,7 +3457,7 @@ fn cpd() {
 #[test]
 fn cpdr() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0xB9);
     c.reg.a = 0xF3;
@@ -3477,7 +3477,7 @@ fn cpdr() {
 #[test]
 fn add_a_r() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x81);
     c.reg.a = 0x44;
     c.reg.c = 0x11;
@@ -3489,7 +3489,7 @@ fn add_a_r() {
 #[test]
 fn add_a_n() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xC6);
     b.write_byte(0x0001, 0x33);
     c.reg.a = 0x23;
@@ -3501,7 +3501,7 @@ fn add_a_n() {
 #[test]
 fn add_a_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x86);
     b.write_byte(0x0002, 0x05);
@@ -3516,7 +3516,7 @@ fn add_a_ix_d() {
 #[test]
 fn add_a_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0x86);
     b.write_byte(0x0002, 0x05);
@@ -3531,7 +3531,7 @@ fn add_a_iy_d() {
 #[test]
 fn addc_a_r() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x8E);
     b.write_byte(0x6666, 0x10);
     c.reg.a = 0x16;
@@ -3545,7 +3545,7 @@ fn addc_a_r() {
 #[test]
 fn addc_a_n() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xCE);
     b.write_byte(0x0001, 0x10);
     c.reg.a = 0x16;
@@ -3558,7 +3558,7 @@ fn addc_a_n() {
 #[test]
 fn sub_r() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x92);
     c.reg.a = 0x29;
     c.reg.d = 0x11;
@@ -3570,7 +3570,7 @@ fn sub_r() {
 #[test]
 fn sub_a_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x96);
     b.write_byte(0x0002, 0x05);
@@ -3585,7 +3585,7 @@ fn sub_a_ix_d() {
 #[test]
 fn sub_a_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0x96);
     b.write_byte(0x0002, 0x05);
@@ -3600,7 +3600,7 @@ fn sub_a_iy_d() {
 #[test]
 fn sbc_a_r() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x9E);
     b.write_byte(0x3433, 0x05);
     c.reg.a = 0x16;
@@ -3614,7 +3614,7 @@ fn sbc_a_r() {
 #[test]
 fn sbc_a_r_ovf() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x9E);
     b.write_byte(0x3433, 0x01);
     c.reg.a = 0x80;
@@ -3629,7 +3629,7 @@ fn sbc_a_r_ovf() {
 #[test]
 fn sbc_a_n() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDE);
     b.write_byte(0x0001, 0x05);
     c.reg.a = 0x16;
@@ -3642,7 +3642,7 @@ fn sbc_a_n() {
 #[test]
 fn sbc_a_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x9E);
     b.write_byte(0x0002, 0x05);
@@ -3658,7 +3658,7 @@ fn sbc_a_ix_d() {
 #[test]
 fn sbc_a_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0x9E);
     b.write_byte(0x0002, 0x05);
@@ -3674,7 +3674,7 @@ fn sbc_a_iy_d() {
 #[test]
 fn and_r() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xA0);
     c.reg.a = 0xC3;
     c.reg.b = 0x7B;
@@ -3686,7 +3686,7 @@ fn and_r() {
 #[test]
 fn and_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xA6);
     b.write_byte(0x0002, 0x05);
@@ -3701,7 +3701,7 @@ fn and_ix_d() {
 #[test]
 fn and_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xA6);
     b.write_byte(0x0002, 0x05);
@@ -3716,7 +3716,7 @@ fn and_iy_d() {
 #[test]
 fn or_r() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xB4);
     c.reg.a = 0x12;
     c.reg.h = 0x48;
@@ -3728,7 +3728,7 @@ fn or_r() {
 #[test]
 fn or_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xB6);
     b.write_byte(0x0002, 0x05);
@@ -3743,7 +3743,7 @@ fn or_ix_d() {
 #[test]
 fn or_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xB6);
     b.write_byte(0x0002, 0x05);
@@ -3758,7 +3758,7 @@ fn or_iy_d() {
 #[test]
 fn xor_n() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xEE);
     b.write_byte(0x0001, 0x5D);
     c.reg.a = 0x96;
@@ -3770,7 +3770,7 @@ fn xor_n() {
 #[test]
 fn xor_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xAE);
     b.write_byte(0x0002, 0x05);
@@ -3785,7 +3785,7 @@ fn xor_ix_d() {
 #[test]
 fn xor_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xAE);
     b.write_byte(0x0002, 0x05);
@@ -3800,7 +3800,7 @@ fn xor_iy_d() {
 #[test]
 fn cp_r() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xBB);
     c.reg.a = 0x0A;
     c.reg.e = 0x05;
@@ -3813,7 +3813,7 @@ fn cp_r() {
 #[test]
 fn cp_n() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFE);
     b.write_byte(0x0001, 0x05);
     c.reg.a = 0x0A;
@@ -3826,7 +3826,7 @@ fn cp_n() {
 #[test]
 fn cp_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xBE);
     b.write_byte(0x0002, 0x05);
@@ -3841,7 +3841,7 @@ fn cp_ix_d() {
 #[test]
 fn cp_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xBE);
     b.write_byte(0x0002, 0x05);
@@ -3856,7 +3856,7 @@ fn cp_iy_d() {
 #[test]
 fn inc_b() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x04);
     c.reg.b = 0xff;
     assert_eq!(c.execute(&mut b), 4);
@@ -3868,7 +3868,7 @@ fn inc_b() {
 #[test]
 fn inc_c() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x0C);
     c.reg.c = 0xff;
     assert_eq!(c.execute(&mut b), 4);
@@ -3880,7 +3880,7 @@ fn inc_c() {
 #[test]
 fn inc_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x14);
     c.reg.d = 0xff;
     assert_eq!(c.execute(&mut b), 4);
@@ -3892,7 +3892,7 @@ fn inc_d() {
 #[test]
 fn inc_e() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x1C);
     c.reg.e = 0xff;
     assert_eq!(c.execute(&mut b), 4);
@@ -3904,7 +3904,7 @@ fn inc_e() {
 #[test]
 fn inc_h() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x24);
     c.reg.h = 0xff;
     assert_eq!(c.execute(&mut b), 4);
@@ -3916,7 +3916,7 @@ fn inc_h() {
 #[test]
 fn inc_l() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x2C);
     c.reg.l = 0xff;
     assert_eq!(c.execute(&mut b), 4);
@@ -3928,7 +3928,7 @@ fn inc_l() {
 #[test]
 fn inc_c_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x34);
     b.write_byte(0x0001, 0x34);
     b.write_byte(0x100, 0xff);
@@ -3946,7 +3946,7 @@ fn inc_c_hl() {
 #[test]
 fn inc_a() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x3C);
     c.reg.a = 0x0f;
     assert_eq!(c.execute(&mut b), 4);
@@ -3959,7 +3959,7 @@ fn inc_a() {
 #[test]
 fn inc_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x34);
     b.write_byte(0x0002, 0x05);
@@ -3974,7 +3974,7 @@ fn inc_ix_d() {
 #[test]
 fn inc_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0x34);
     b.write_byte(0x0002, 0x05);
@@ -3989,7 +3989,7 @@ fn inc_iy_d() {
 #[test]
 fn dcr_b() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x05);
     b.write_byte(0x0001, 0x05);
     c.reg.b = 0x01;
@@ -4006,7 +4006,7 @@ fn dcr_b() {
 #[test]
 fn dcr_c() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x0d);
     b.write_byte(0x0001, 0x0d);
     c.reg.c = 0x01;
@@ -4023,7 +4023,7 @@ fn dcr_c() {
 #[test]
 fn dcr_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x15);
     b.write_byte(0x0001, 0x15);
     c.reg.d = 0x01;
@@ -4040,7 +4040,7 @@ fn dcr_d() {
 #[test]
 fn dcr_e() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x1d);
     b.write_byte(0x0001, 0x1d);
     c.reg.e = 0x01;
@@ -4057,7 +4057,7 @@ fn dcr_e() {
 #[test]
 fn dcr_h() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x25);
     b.write_byte(0x0001, 0x25);
     c.reg.h = 0x01;
@@ -4074,7 +4074,7 @@ fn dcr_h() {
 #[test]
 fn dcr_l() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x2d);
     b.write_byte(0x0001, 0x2d);
     c.reg.l = 0x01;
@@ -4091,7 +4091,7 @@ fn dcr_l() {
 #[test]
 fn dcr_m() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x35);
     b.write_byte(0x0001, 0x35);
     b.write_byte(0x100, 0x55);
@@ -4109,7 +4109,7 @@ fn dcr_m() {
 #[test]
 fn dcr_a() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x3d);
     b.write_byte(0x0001, 0x3d);
     c.reg.a = 0x01;
@@ -4126,7 +4126,7 @@ fn dcr_a() {
 #[test]
 fn dec_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x35);
     b.write_byte(0x0002, 0x05);
@@ -4141,7 +4141,7 @@ fn dec_ix_d() {
 #[test]
 fn dec_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0x35);
     b.write_byte(0x0002, 0x05);
@@ -4156,7 +4156,7 @@ fn dec_iy_d() {
 #[test]
 fn daa() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x27);
     c.reg.a = 0x9B;
     c.reg.flags.h = false;
@@ -4171,7 +4171,7 @@ fn daa() {
 #[test]
 fn neg_doc() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x44);
     c.reg.a = 0b10011000;
@@ -4183,7 +4183,7 @@ fn neg_doc() {
 #[test]
 fn neg_asm() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/neg.bin", 0).unwrap();
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(c.reg.a, 0x01); // LD A,0x01
@@ -4213,7 +4213,7 @@ fn neg_asm() {
 #[test]
 fn ccf() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x3f);
     b.write_byte(0x0001, 0x3f);
     assert_eq!(c.execute(&mut b), 4);
@@ -4227,7 +4227,7 @@ fn ccf() {
 #[test]
 fn scf() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x37);
     b.write_byte(0x0001, 0x37);
     assert_eq!(c.execute(&mut b), 4);
@@ -4241,7 +4241,7 @@ fn scf() {
 #[test]
 fn add_hl_b() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x09);
     c.reg.set_bc(0x339F);
     c.reg.set_hl(0xA17B);
@@ -4255,7 +4255,7 @@ fn add_hl_b() {
 #[test]
 fn add_hl_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x19);
     c.reg.set_de(0x339F);
     c.reg.set_hl(0xA17B);
@@ -4269,7 +4269,7 @@ fn add_hl_d() {
 #[test]
 fn add_hl_h() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x29);
     c.reg.set_hl(0x339F);
     assert_eq!(c.execute(&mut b), 11);
@@ -4282,7 +4282,7 @@ fn add_hl_h() {
 #[test]
 fn add_hl_sp() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x39);
     c.reg.sp = 0x339F;
     c.reg.set_hl(0xA17B);
@@ -4296,7 +4296,7 @@ fn add_hl_sp() {
 #[test]
 fn adc_hl_b() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x4A);
     c.reg.set_bc(0x2222);
@@ -4311,7 +4311,7 @@ fn adc_hl_b() {
 #[test]
 fn adc_hl_d_ovf() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x5A);
     c.reg.set_de(0x7FF0);
@@ -4327,7 +4327,7 @@ fn adc_hl_d_ovf() {
 #[test]
 fn adc_hl_h_ovf() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x6A);
     c.reg.set_hl(0x000F);
@@ -4342,7 +4342,7 @@ fn adc_hl_h_ovf() {
 #[test]
 fn adc_hl_sp_ovf() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x7A);
     c.reg.set_hl(0x7FF0);
@@ -4358,7 +4358,7 @@ fn adc_hl_sp_ovf() {
 #[test]
 fn sbc_hl_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x52);
     c.reg.set_hl(0x9999);
@@ -4373,7 +4373,7 @@ fn sbc_hl_d() {
 #[test]
 fn add_ix_bc() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x09);
     c.reg.set_ix(0x3333);
@@ -4386,7 +4386,7 @@ fn add_ix_bc() {
 #[test]
 fn add_iy_bc() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0x09);
     c.reg.set_iy(0x3333);
@@ -4399,7 +4399,7 @@ fn add_iy_bc() {
 #[test]
 fn inc_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x23);
     c.reg.set_hl(0x1000);
     assert_eq!(c.execute(&mut b), 6);
@@ -4410,7 +4410,7 @@ fn inc_hl() {
 #[test]
 fn inc_ix() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x23);
     c.reg.set_ix(0x1000);
@@ -4422,7 +4422,7 @@ fn inc_ix() {
 #[test]
 fn inc_iy() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0x23);
     c.reg.set_iy(0x1000);
@@ -4434,7 +4434,7 @@ fn inc_iy() {
 #[test]
 fn dec_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x2B);
     c.reg.set_hl(0x1001);
     assert_eq!(c.execute(&mut b), 6);
@@ -4445,7 +4445,7 @@ fn dec_hl() {
 #[test]
 fn dec_ix() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x2B);
     c.reg.set_ix(0x2006);
@@ -4457,7 +4457,7 @@ fn dec_ix() {
 #[test]
 fn dec_iy() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0x2B);
     c.reg.set_iy(0x2006);
@@ -4469,7 +4469,7 @@ fn dec_iy() {
 #[test]
 fn rlca() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x07);
     c.reg.a = 0b10001000;
     assert_eq!(c.execute(&mut b), 4);
@@ -4481,7 +4481,7 @@ fn rlca() {
 #[test]
 fn rla() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x17);
     c.reg.a = 0b01110110;
     c.reg.flags.c = true;
@@ -4494,7 +4494,7 @@ fn rla() {
 #[test]
 fn rrca() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x0F);
     c.reg.a = 0b00010001;
     assert_eq!(c.execute(&mut b), 4);
@@ -4506,7 +4506,7 @@ fn rrca() {
 #[test]
 fn rra() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0x1F);
     c.reg.a = 0b11100001;
     c.reg.flags.c = false;
@@ -4519,7 +4519,7 @@ fn rra() {
 #[test]
 fn rlc_a() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xCB);
     b.write_byte(0x0001, 0x07);
     c.reg.a = 0b10001000;
@@ -4532,7 +4532,7 @@ fn rlc_a() {
 #[test]
 fn rlc_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xCB);
     b.write_byte(0x0001, 0x06);
     b.write_byte(0x2828, 0b10001000);
@@ -4546,7 +4546,7 @@ fn rlc_hl() {
 #[test]
 fn rlc_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x02);
@@ -4562,7 +4562,7 @@ fn rlc_ix_d() {
 #[test]
 fn rlc_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x02);
@@ -4578,7 +4578,7 @@ fn rlc_iy_d() {
 #[test]
 fn rl_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xCB);
     b.write_byte(0x0001, 0x12);
     c.reg.d = 0b10001111;
@@ -4592,7 +4592,7 @@ fn rl_d() {
 #[test]
 fn rl_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x02);
@@ -4609,7 +4609,7 @@ fn rl_ix_d() {
 #[test]
 fn rl_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x02);
@@ -4625,7 +4625,7 @@ fn rl_iy_d() {
 
 #[test]
 fn read_le_dword() {
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x02);
@@ -4636,7 +4636,7 @@ fn read_le_dword() {
 #[test]
 fn rrc_a() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xCB);
     b.write_byte(0x0001, 0x0F);
     c.reg.a = 0b00110001;
@@ -4649,7 +4649,7 @@ fn rrc_a() {
 #[test]
 fn rrc_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x02);
@@ -4666,7 +4666,7 @@ fn rrc_ix_d() {
 #[test]
 fn rrc_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x02);
@@ -4683,7 +4683,7 @@ fn rrc_iy_d() {
 #[test]
 fn rr_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xCB);
     b.write_byte(0x0001, 0x1E);
     b.write_byte(0x4343, 0b11011101);
@@ -4697,7 +4697,7 @@ fn rr_hl() {
 #[test]
 fn rr_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x02);
@@ -4714,7 +4714,7 @@ fn rr_ix_d() {
 #[test]
 fn rr_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x02);
@@ -4731,7 +4731,7 @@ fn rr_iy_d() {
 #[test]
 fn sla_l() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xCB);
     b.write_byte(0x0001, 0x25);
     c.reg.l = 0b10110001;
@@ -4744,7 +4744,7 @@ fn sla_l() {
 #[test]
 fn sla_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x02);
@@ -4761,7 +4761,7 @@ fn sla_ix_d() {
 #[test]
 fn sla_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x02);
@@ -4778,7 +4778,7 @@ fn sla_iy_d() {
 #[test]
 fn sra_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x02);
@@ -4795,7 +4795,7 @@ fn sra_ix_d() {
 #[test]
 fn srl_b() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xCB);
     b.write_byte(0x0001, 0x38);
     c.reg.b = 0b10001111;
@@ -4808,7 +4808,7 @@ fn srl_b() {
 #[test]
 fn rld() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x6F);
     b.write_byte(0x5000, 0b00110001);
@@ -4823,7 +4823,7 @@ fn rld() {
 #[test]
 fn rrd() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0x67);
     b.write_byte(0x5000, 0b00100000);
@@ -4838,7 +4838,7 @@ fn rrd() {
 #[test]
 fn bit_4_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xCB);
     b.write_byte(0x0001, 0x66);
     b.write_byte(0x4444, 0x10);
@@ -4852,7 +4852,7 @@ fn bit_4_hl() {
 #[test]
 fn bit_6_ix_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x04);
@@ -4868,7 +4868,7 @@ fn bit_6_ix_d() {
 #[test]
 fn bit_6_iy_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x04);
@@ -4884,7 +4884,7 @@ fn bit_6_iy_d() {
 #[test]
 fn set_4_a() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xCB);
     b.write_byte(0x0001, 0xE7);
     assert_eq!(c.execute(&mut b), 8);
@@ -4895,7 +4895,7 @@ fn set_4_a() {
 #[test]
 fn set_4_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xCB);
     b.write_byte(0x0001, 0xE6);
     c.reg.set_hl(0x4444);
@@ -4907,7 +4907,7 @@ fn set_4_hl() {
 #[test]
 fn set_0_ix() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x03);
@@ -4921,7 +4921,7 @@ fn set_0_ix() {
 #[test]
 fn set_0_iy() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x03);
@@ -4935,7 +4935,7 @@ fn set_0_iy() {
 #[test]
 fn res_6_d() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xCB);
     b.write_byte(0x0001, 0xB2);
     c.reg.d = 0xFF;
@@ -4947,7 +4947,7 @@ fn res_6_d() {
 #[test]
 fn reset_0_ix() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x03);
@@ -4962,7 +4962,7 @@ fn reset_0_ix() {
 #[test]
 fn reset_0_iy() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFD);
     b.write_byte(0x0001, 0xCB);
     b.write_byte(0x0002, 0x03);
@@ -4977,7 +4977,7 @@ fn reset_0_iy() {
 #[test]
 fn jp() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xC3);
     b.write_byte(0x0001, 0x00);
     b.write_byte(0x0002, 0x3E);
@@ -4988,7 +4988,7 @@ fn jp() {
 #[test]
 fn jr() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x0480;
     b.write_byte(0x0480, 0x18);
     b.write_byte(0x0481, 0x03);
@@ -4999,7 +4999,7 @@ fn jr() {
 #[test]
 fn jr_neg() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x0480;
     b.write_byte(0x0480, 0x18);
     b.write_byte(0x0481, 0xFA);
@@ -5010,7 +5010,7 @@ fn jr_neg() {
 #[test]
 fn jr_c_e() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x0480;
     b.write_byte(0x0480, 0x38);
     b.write_byte(0x0481, 0xFA);
@@ -5022,7 +5022,7 @@ fn jr_c_e() {
 #[test]
 fn jr_nc_e() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x0480;
     b.write_byte(0x0480, 0x30);
     b.write_byte(0x0481, 0xFA);
@@ -5034,7 +5034,7 @@ fn jr_nc_e() {
 #[test]
 fn jr_z_e() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x0300;
     b.write_byte(0x0300, 0x28);
     b.write_byte(0x0301, 0x03);
@@ -5046,7 +5046,7 @@ fn jr_z_e() {
 #[test]
 fn jr_nz_e() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x0480;
     b.write_byte(0x0480, 0x20);
     b.write_byte(0x0481, 0xFA);
@@ -5058,7 +5058,7 @@ fn jr_nz_e() {
 #[test]
 fn jp_hl() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x1000;
     b.write_byte(0x1000, 0xE9);
     c.reg.set_hl(0x4800);
@@ -5069,7 +5069,7 @@ fn jp_hl() {
 #[test]
 fn jp_ix() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x1000;
     b.write_byte(0x1000, 0xDD);
     b.write_byte(0x1001, 0xE9);
@@ -5081,7 +5081,7 @@ fn jp_ix() {
 #[test]
 fn jp_iy() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x1000;
     b.write_byte(0x1000, 0xFD);
     b.write_byte(0x1001, 0xE9);
@@ -5093,7 +5093,7 @@ fn jp_iy() {
 #[test]
 fn call_nn() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x1A47;
     c.reg.sp = 0x3002;
     b.write_byte(0x1A47, 0xCD);
@@ -5109,7 +5109,7 @@ fn call_nn() {
 #[test]
 fn call_cc_nn() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.flags.c = false;
     c.reg.pc = 0x1A47;
     c.reg.sp = 0x3002;
@@ -5126,7 +5126,7 @@ fn call_cc_nn() {
 #[test]
 fn ret() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x3535;
     c.reg.sp = 0x2000;
     b.write_byte(0x3535, 0xC9);
@@ -5140,7 +5140,7 @@ fn ret() {
 #[test]
 fn ret_cc() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.flags.s = true;
     c.reg.pc = 0x3535;
     c.reg.sp = 0x2000;
@@ -5155,7 +5155,7 @@ fn ret_cc() {
 #[test]
 fn rst() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x15B3;
     b.write_byte(0x15B3, 0xDF);
     assert_eq!(c.execute(&mut b), 11);
@@ -5165,7 +5165,7 @@ fn rst() {
 #[test]
 fn debug_unkn() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
     b.write_byte(0x0001, 0x00);
     c.debug.unknw_instr = true;
@@ -5177,7 +5177,7 @@ fn debug_unkn() {
 #[test]
 fn int() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/int.bin", 0).unwrap();
     for _ in 0..7 {
         c.execute(&mut b);
@@ -5195,7 +5195,7 @@ fn int() {
 #[test]
 fn int_im1() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/int_im1.bin", 0).unwrap();
     for _ in 0..8 {
         c.execute(&mut b);
@@ -5213,7 +5213,7 @@ fn int_im1() {
 #[test]
 fn int_im2() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/int_im2.bin", 0).unwrap();
     for _ in 0..9 {
         c.execute(&mut b);
@@ -5230,7 +5230,7 @@ fn int_im2() {
 #[test]
 fn nmi() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.load_bin("bin/nmi.bin", 0).unwrap();
     for _ in 0..5 {
         c.execute(&mut b);
@@ -5250,7 +5250,7 @@ fn nmi() {
 #[test]
 fn jr_nz_neg() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x0274;
     b.write_byte(0x0274, 0x0E); // LD C,$08
     b.write_byte(0x0275, 0x08);
@@ -5266,7 +5266,7 @@ fn jr_nz_neg() {
 #[test]
 fn jr_nz_neg_false() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x0274;
     b.write_byte(0x0274, 0x0E); // LD C,$08
     b.write_byte(0x0275, 0x01);
@@ -5282,18 +5282,18 @@ fn jr_nz_neg_false() {
 #[test]
 fn dasm_cb() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     c.reg.pc = 0x0274;
     b.write_byte(0x0274, 0xCB); // RLC B
     b.write_byte(0x0275, 0x00);
     b.write_byte(0x0276, 0xCB); // BIT 1,B
     b.write_byte(0x0277, 0x48);
     assert_eq!(
-        Bus::dasm(&mut b, 0x274),
+        FlatBus::dasm(&mut b, 0x274),
         (String::from("CB00          RLC B"), 2)
     );
     assert_eq!(
-        Bus::dasm(&mut b, 0x276),
+        FlatBus::dasm(&mut b, 0x276),
         (String::from("CB48          BIT 1,B"), 2)
     );
 }

@@ -779,7 +779,7 @@ pub const DASM_FD: [&str; 256] = [
     "?",            // FDFF
 ];
 
-impl Bus {
+impl dyn Bus {
     /// Disassembles opcode and operand at (address), returns a tuple (disassembled string, instruction size in bytes)
     pub fn dasm(&self, address: u16) -> (String, u8) {
         let opcode = self.read_byte(address);

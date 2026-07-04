@@ -3,8 +3,48 @@ use std::{
     io::{self, prelude::*},
 };
 
-/// The Bus struct is hosting the Z80 memory map.
-pub struct Bus {
+// Dans src/bus.rs
+
+pub trait Bus {
+    // Lecture / Écriture mémoire obligatoires
+    fn read_byte(&self, address: u16) -> u8;
+    fn write_byte(&mut self, address: u16, data: u8);
+
+    // Méthodes mémoire utilitaires avec implémentations par défaut (Z80 Little Endian)
+    fn read_word(&self, address: u16) -> u16 {
+        u16::from(self.read_byte(address))
+            | (u16::from(self.read_byte(address.wrapping_add(1))) << 8)
+    }
+
+    fn read_le_word(&self, address: u16) -> u16 {
+        (u16::from(self.read_byte(address)) << 8)
+            | u16::from(self.read_byte(address.wrapping_add(1)))
+    }
+
+    fn read_le_dword(&self, address: u16) -> u32 {
+        u32::from(self.read_byte(address)) << 24
+            | u32::from(self.read_byte(address.wrapping_add(1))) << 16
+            | u32::from(self.read_byte(address.wrapping_add(2))) << 8
+            | u32::from(self.read_byte(address.wrapping_add(3)))
+    }
+
+    fn write_word(&mut self, address: u16, data: u16) {
+        self.write_byte(address, (data & 0xFF) as u8);
+        self.write_byte(address.wrapping_add(1), (data >> 8) as u8);
+    }
+
+    // Gestion de l'espace d'I/O (E/S) - 16 bits d'adresse de port
+    fn read_io(&self, _port: u16) -> u8 {
+        0xFF // Valeur par défaut (bus flottant)
+    }
+
+    fn write_io(&mut self, _port: u16, _data: u8) {
+        // Par défaut, ne fait rien (utile pour les systèmes sans I/O)
+    }
+}
+
+/// The FlatBus struct is hosting the Z80 memory map as a simple linear address space.
+pub struct FlatBus {
     address_space: Vec<u8>,
     rom_space: Option<ROMSpace>,
 }
@@ -15,10 +55,10 @@ struct ROMSpace {
     pub end: u16,
 }
 
-impl Bus {
+impl FlatBus {
     /// Creates a new bus instance. 'Size' will be its top address.
-    pub fn new(size: u16) -> Bus {
-        Bus {
+    pub fn new(size: u16) -> FlatBus {
+        FlatBus {
             address_space: vec![0; (size as usize) + 1],
             rom_space: None,
         }
@@ -26,8 +66,8 @@ impl Bus {
 
     /// Sets a ROM space. Write operations will be ineffective in this address range.
     /// ```rust
-    /// use zilog_z80::bus::Bus;
-    /// let mut b = Bus::new(0xFFFF);
+    /// use zilog_z80::bus::FlatBus;
+    /// let mut b = FlatBus::new(0xFFFF);
     /// b.set_romspace(0xF000, 0xFFFF);
     /// ```
     pub fn set_romspace(&mut self, start: u16, end: u16) {
@@ -133,12 +173,35 @@ impl Bus {
     }
 }
 
+// Implémentation du trait Bus pour ton SimpleBus
+impl Bus for FlatBus {
+    fn read_byte(&self, address: u16) -> u8 {
+        if address as usize >= self.address_space.len() {
+            return 0;
+        }
+        self.address_space[usize::from(address)]
+    }
+
+    fn write_byte(&mut self, address: u16, data: u8) {
+        if address as usize >= self.address_space.len() {
+            return;
+        }
+        if self.rom_space.is_some()
+            && address >= self.rom_space.as_ref().unwrap().start
+            && address <= self.rom_space.as_ref().unwrap().end
+        {
+            return;
+        }
+        self.address_space[usize::from(address)] = data;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
     fn r_le_dword() {
-        let mut b = Bus::new(0xFFFF);
+        let mut b = FlatBus::new(0xFFFF);
         b.write_byte(0x0000, 0xCC);
         b.write_byte(0x0001, 0xDD);
         b.write_byte(0x0002, 0xEE);
@@ -148,14 +211,14 @@ mod tests {
 
     #[test]
     fn read_invalid() {
-        let mut b = Bus::new(0x7FFF);
+        let mut b = FlatBus::new(0x7FFF);
         b.write_byte(0x8000, 0xFF);
         assert_eq!(b.read_byte(0x8000), 0);
     }
 
     #[test]
     fn write_romspace() {
-        let mut b = Bus::new(0x7FFF);
+        let mut b = FlatBus::new(0x7FFF);
         b.write_byte(0x0000, 0xFF);
         b.set_romspace(0x0000, 0x000F);
         b.write_byte(0x0000, 0x00);
@@ -164,7 +227,7 @@ mod tests {
 
     #[test]
     fn clear_slice() {
-        let mut b = Bus::new(0x000F);
+        let mut b = FlatBus::new(0x000F);
         for m in 0..=15 {
             b.write_byte(m, 0xFF);
         }

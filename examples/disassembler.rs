@@ -1,5 +1,5 @@
 use std::{env, error::Error, process};
-use zilog_z80::bus::Bus;
+use zilog_z80::bus::{Bus, FlatBus};
 
 fn main() {
     if let Err(e) = load_disassemble() {

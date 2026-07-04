@@ -58,7 +58,7 @@ impl CPU {
     }
 
     /// Fetches and executes one instruction from (pc). Returns consumed clock cycles.
-    pub fn execute(&mut self, bus: &mut Bus) -> u32 {
+    pub fn execute<B: Bus>(&mut self, bus: &mut B) -> u32 {
         if self.halt {
             return 4;
         };
@@ -105,7 +105,7 @@ impl CPU {
     }
 
     /// Fetches and executes one instruction from (pc). Returns the sleep time when slice_max_cycles is reached.
-    pub fn execute_timed(&mut self, bus: &mut Bus) -> Option<u32> {
+    pub fn execute_timed<B: Bus>(&mut self, bus: &mut B) -> Option<u32> {
         let mut sleep_time: Option<u32> = None;
         if self.slice_current_cycles > self.slice_max_cycles {
             self.slice_current_cycles = 0;
@@ -136,11 +136,11 @@ impl CPU {
         self.slice_duration = slice_duration;
     }
 
-    fn execute_1byte(&mut self, bus: &mut Bus, opcode: u8) -> u32 {
+    fn execute_1byte<B: Bus>(&mut self, bus: &mut B, opcode: u8) -> u32 {
         let mut cycles = CYCLES[opcode as usize].into();
 
         // Saving current PC for debug output
-        let pc = self.reg.pc;
+        //let pc = self.reg.pc;
 
         match opcode {
             // 8-Bit Load Group
@@ -1292,7 +1292,7 @@ impl CPU {
         }
 
         // TODO implement debuf for 2 and 4 bytes execute_()
-        if self.debug.opcode {
+        /*if self.debug.opcode {
             print!(
                 "{:#06X}\t{}\nSP : {:#06X}\tS : {}\tZ : {}\tH : {}\tP : {}\tN : {}\tC : {}\nB : {:#04X}\tC : {:#04X}\tD : {:#04X}\tE : {:#04X}\tH : {:#04X}\tL : {:#04X}\tA : {:#04X}\t(SP) : {:#06X}\n",
                 pc,
@@ -1313,7 +1313,7 @@ impl CPU {
                 self.reg.a,
                 bus.read_word(self.reg.sp)
             )
-        }
+        }*/
 
         match opcode {
             0xC3 | 0xDA | 0xD2 | 0xCA | 0xC2 | 0xFA | 0xF2 | 0xEA | 0xE2 | 0xE9 | 0xCD | 0xDC
@@ -1329,7 +1329,7 @@ impl CPU {
         cycles
     }
 
-    fn execute_2bytes(&mut self, bus: &mut Bus) -> u32 {
+    fn execute_2bytes<B: Bus>(&mut self, bus: &mut B) -> u32 {
         let opcode = bus.read_le_word(self.reg.pc);
         let mut cycles = match opcode & 0xFF00 {
             0xDD00 | 0xFD00 => CYCLES_DD_FD[(opcode & 0x00FF) as usize].into(),
@@ -3276,7 +3276,7 @@ impl CPU {
     }
 
     // DDCB FDCB
-    fn execute_4bytes(&mut self, bus: &mut Bus) -> u32 {
+    fn execute_4bytes<B: Bus>(&mut self, bus: &mut B) -> u32 {
         let opcode = bus.read_le_dword(self.reg.pc);
         let cycles;
 
@@ -3696,7 +3696,7 @@ impl CPU {
         cycles
     }
 
-    fn ldi(&mut self, bus: &mut Bus) {
+    fn ldi<B: Bus>(&mut self, bus: &mut B) {
         let bc = self.reg.get_bc();
         let de = self.reg.get_de();
         let hl = self.reg.get_hl();
@@ -3706,7 +3706,7 @@ impl CPU {
         self.reg.set_bc(bc.wrapping_sub(1));
     }
 
-    fn ldd(&mut self, bus: &mut Bus) {
+    fn ldd<B: Bus>(&mut self, bus: &mut B) {
         let bc = self.reg.get_bc();
         let de = self.reg.get_de();
         let hl = self.reg.get_hl();
@@ -3717,7 +3717,7 @@ impl CPU {
     }
 
     // Returns A - (HL)
-    fn cpi(&mut self, bus: &mut Bus) {
+    fn cpi<B: Bus>(&mut self, bus: &mut B) {
         let bc = self.reg.get_bc();
         let hl = self.reg.get_hl();
         let h = bus.read_byte(hl);
@@ -3734,7 +3734,7 @@ impl CPU {
     }
 
     // Returns A - (HL)
-    fn cpd(&mut self, bus: &mut Bus) {
+    fn cpd<B: Bus>(&mut self, bus: &mut B) {
         let bc = self.reg.get_bc();
         let hl = self.reg.get_hl();
         let h = bus.read_byte(hl);
@@ -4156,7 +4156,7 @@ impl CPU {
     }
 
     // Bit test
-    fn bit(&mut self, bus: &mut Bus, operand: u8) {
+    fn bit<B: Bus>(&mut self, bus: &mut B, operand: u8) {
         let bit = ((operand & 0x38) >> 3) as usize;
         let register = operand & 0x07;
         let r = match register {
@@ -4176,7 +4176,7 @@ impl CPU {
     }
 
     // Bit set
-    fn set(&mut self, bus: &mut Bus, operand: u8) {
+    fn set<B: Bus>(&mut self, bus: &mut B, operand: u8) {
         let bit = ((operand & 0x38) >> 3) as usize;
         let register = operand & 0x07;
         match register {
@@ -4196,7 +4196,7 @@ impl CPU {
     }
 
     // Bit reset
-    fn reset(&mut self, bus: &mut Bus, operand: u8) {
+    fn reset<B: Bus>(&mut self, bus: &mut B, operand: u8) {
         let bit = ((operand & 0x38) >> 3) as usize;
         let register = operand & 0x07;
         match register {
@@ -4216,19 +4216,19 @@ impl CPU {
     }
 
     // call stack push
-    fn call_stack_push(&mut self, bus: &mut Bus) {
+    fn call_stack_push<B: Bus>(&mut self, bus: &mut B) {
         self.reg.sp = self.reg.sp.wrapping_sub(2);
         bus.write_word(self.reg.sp, self.reg.pc.wrapping_add(3));
     }
 
     // call stack pop
-    fn call_stack_pop(&mut self, bus: &mut Bus) {
+    fn call_stack_pop<B: Bus>(&mut self, bus: &mut B) {
         self.reg.pc = bus.read_word(self.reg.sp);
         self.reg.sp = self.reg.sp.wrapping_add(2);
     }
 
     // interrupt stack push
-    fn interrupt_stack_push(&mut self, bus: &mut Bus) {
+    fn interrupt_stack_push<B: Bus>(&mut self, bus: &mut B) {
         self.reg.sp = self.reg.sp.wrapping_sub(2);
         bus.write_word(self.reg.sp, self.reg.pc);
     }
