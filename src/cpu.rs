@@ -1283,6 +1283,21 @@ impl CPU {
                 self.reg.pc = 0x0038;
             }
 
+            // OUT (n), A (Opcode 0xD3)
+            0xD3 => {
+                let n = bus.read_byte(self.reg.pc + 1);
+                // Le port d'I/O Z80 sur 16 bits : A sur le poids fort, n sur le poids faible.
+                let port = ((self.reg.a as u16) << 8) | (n as u16);
+                bus.write_io(port, self.reg.a);
+            }
+
+            // IN A, (n) (Opcode 0xDB)
+            0xDB => {
+                let n = bus.read_byte(self.reg.pc + 1);
+                let port = ((self.reg.a as u16) << 8) | (n as u16);
+                self.reg.a = bus.read_io(port);
+            }
+
             _ => {
                 if self.debug.unknw_instr {
                     self.debug.string = format!("{:#04X}", opcode);
@@ -3243,6 +3258,205 @@ impl CPU {
             0xCB37 => {
                 let r = self.sll(self.reg.a);
                 self.reg.a = r;
+            }
+
+            // =========================================================================
+            // GROUPE D'INSTRUCTIONS D'ENTRÉE / SORTIE (I/O) - OPCODES 0xED
+            // =========================================================================
+
+            // IN r, (C) - Lit le port BC et écrit dans le registre spécifié.
+            // Modifie les flags S, Z, H (reset), P (parité), N (reset).
+            0xED40 | 0xED48 | 0xED50 | 0xED58 | 0xED60 | 0xED68 | 0xED78 => {
+                let port = self.reg.get_bc();
+                let data = bus.read_io(port);
+
+                // Routage vers le bon registre de destination selon l'opcode
+                match opcode {
+                    0xED40 => self.reg.b = data, // IN B, (C)
+                    0xED48 => self.reg.c = data, // IN C, (C)
+                    0xED50 => self.reg.d = data, // IN D, (C)
+                    0xED58 => self.reg.e = data, // IN E, (C)
+                    0xED60 => self.reg.h = data, // IN H, (C)
+                    0xED68 => self.reg.l = data, // IN L, (C)
+                    0xED78 => self.reg.a = data, // IN A, (C)
+                    _ => {}
+                }
+
+                // Mise à jour des flags
+                self.reg.flags.s = (data & 0x80) != 0;
+                self.reg.flags.z = data == 0;
+                self.reg.flags.h = false;
+                self.reg.flags.p = data.count_ones() % 2 == 0; // Parité
+                self.reg.flags.n = false;
+            }
+
+            // IN F, (C) - Opcode 0xED70 (Undocumented) : affecte seulement les flags
+            0xED70 => {
+                let port = self.reg.get_bc();
+                let data = bus.read_io(port);
+                self.reg.flags.s = (data & 0x80) != 0;
+                self.reg.flags.z = data == 0;
+                self.reg.flags.h = false;
+                self.reg.flags.p = data.count_ones() % 2 == 0;
+                self.reg.flags.n = false;
+            }
+
+            // OUT (C), r - Écrit la valeur du registre spécifié sur le port BC.
+            0xED41 | 0xED49 | 0xED51 | 0xED59 | 0xED61 | 0xED69 | 0xED79 => {
+                let port = self.reg.get_bc();
+                let data = match opcode {
+                    0xED41 => self.reg.b, // OUT (C), B
+                    0xED49 => self.reg.c, // OUT (C), C
+                    0xED51 => self.reg.d, // OUT (C), D
+                    0xED59 => self.reg.e, // OUT (C), E
+                    0xED61 => self.reg.h, // OUT (C), H
+                    0xED69 => self.reg.l, // OUT (C), L
+                    0xED79 => self.reg.a, // OUT (C), A
+                    _ => 0,
+                };
+                bus.write_io(port, data);
+            }
+
+            // OUT (C), 0 - Opcode 0xED71 (Undocumented) : Écrit un octet nul sur le port BC.
+            0xED71 => {
+                let port = self.reg.get_bc();
+                bus.write_io(port, 0);
+            }
+
+            // -------------------------------------------------------------------------
+            // Transferts par Blocs I/O (Opcodes INI, INIR, IND, INDR, OUTI, OTIR, OUTD, OTDR)
+            // -------------------------------------------------------------------------
+
+            // INI (0xEDA2) : Lit depuis le port BC, écrit à (HL), incrémente HL, décrémente B
+            0xEDA2 => {
+                let port = self.reg.get_bc();
+                let data = bus.read_io(port);
+                bus.write_byte(self.reg.get_hl(), data);
+                self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
+                self.reg.b = self.reg.b.wrapping_sub(1);
+
+                self.reg.flags.z = self.reg.b == 0;
+                self.reg.flags.n = true; // N est mis à 1 après les opcodes de bloc I/O
+            }
+
+            // INIR (0xEDB2) : INI répété jusqu'à ce que B devienne 0
+            0xEDB2 => {
+                let mut cycles_spent = 0;
+                loop {
+                    let port = self.reg.get_bc();
+                    let data = bus.read_io(port);
+                    bus.write_byte(self.reg.get_hl(), data);
+                    self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
+                    self.reg.b = self.reg.b.wrapping_sub(1);
+
+                    cycles_spent += 21; // 21 cycles par itération (sauf la dernière qui en fait 16)
+                    if self.reg.b == 0 {
+                        cycles_spent -= 5; // Ajustement pour la dernière boucle (16 cycles)
+                        break;
+                    }
+                }
+                self.reg.flags.z = true;
+                self.reg.flags.n = true;
+                return cycles_spent; // Retourne directement les cycles consommés
+            }
+
+            // IND (0xEDAA) : Lit depuis le port BC, écrit à (HL), décrémente HL, décrémente B
+            0xEDAA => {
+                let port = self.reg.get_bc();
+                let data = bus.read_io(port);
+                bus.write_byte(self.reg.get_hl(), data);
+                self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
+                self.reg.b = self.reg.b.wrapping_sub(1);
+
+                self.reg.flags.z = self.reg.b == 0;
+                self.reg.flags.n = true;
+            }
+
+            // INDR (0xEDBA) : IND répété jusqu'à ce que B devienne 0
+            0xEDBA => {
+                let mut cycles_spent = 0;
+                loop {
+                    let port = self.reg.get_bc();
+                    let data = bus.read_io(port);
+                    bus.write_byte(self.reg.get_hl(), data);
+                    self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
+                    self.reg.b = self.reg.b.wrapping_sub(1);
+
+                    cycles_spent += 21;
+                    if self.reg.b == 0 {
+                        cycles_spent -= 5;
+                        break;
+                    }
+                }
+                self.reg.flags.z = true;
+                self.reg.flags.n = true;
+                return cycles_spent;
+            }
+
+            // OUTI (0xEDA3) : Lit depuis (HL), écrit sur le port BC, incrémente HL, décrémente B
+            0xEDA3 => {
+                let data = bus.read_byte(self.reg.get_hl());
+                let port = self.reg.get_bc();
+                bus.write_io(port, data);
+                self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
+                self.reg.b = self.reg.b.wrapping_sub(1);
+
+                self.reg.flags.z = self.reg.b == 0;
+                self.reg.flags.n = true;
+            }
+
+            // OTIR (0xEDB3) : OUTI répété jusqu'à ce que B devienne 0
+            0xEDB3 => {
+                let mut cycles_spent = 0;
+                loop {
+                    let data = bus.read_byte(self.reg.get_hl());
+                    let port = self.reg.get_bc();
+                    bus.write_io(port, data);
+                    self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
+                    self.reg.b = self.reg.b.wrapping_sub(1);
+
+                    cycles_spent += 21;
+                    if self.reg.b == 0 {
+                        cycles_spent -= 5;
+                        break;
+                    }
+                }
+                self.reg.flags.z = true;
+                self.reg.flags.n = true;
+                return cycles_spent;
+            }
+
+            // OUTD (0xEDAB) : Lit depuis (HL), écrit sur le port BC, décrémente HL, décrémente B
+            0xEDAB => {
+                let data = bus.read_byte(self.reg.get_hl());
+                let port = self.reg.get_bc();
+                bus.write_io(port, data);
+                self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
+                self.reg.b = self.reg.b.wrapping_sub(1);
+
+                self.reg.flags.z = self.reg.b == 0;
+                self.reg.flags.n = true;
+            }
+
+            // OTDR (0xEDBB) : OUTD répété jusqu'à ce que B devienne 0
+            0xEDBB => {
+                let mut cycles_spent = 0;
+                loop {
+                    let data = bus.read_byte(self.reg.get_hl());
+                    let port = self.reg.get_bc();
+                    bus.write_io(port, data);
+                    self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
+                    self.reg.b = self.reg.b.wrapping_sub(1);
+
+                    cycles_spent += 21;
+                    if self.reg.b == 0 {
+                        cycles_spent -= 5;
+                        break;
+                    }
+                }
+                self.reg.flags.z = true;
+                self.reg.flags.n = true;
+                return cycles_spent;
             }
 
             _ => {
