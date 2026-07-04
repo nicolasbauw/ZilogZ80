@@ -2,8 +2,8 @@
 //!
 //! Example for a small loop:
 //! ```rust
-//! use zilog_z80::{cpu::CPU, bus::Bus};
-//! let mut b = Bus::new(0xFFFF);
+//! use zilog_z80::{cpu::CPU, bus::Bus, bus::FlatBus};
+//! let mut b = FlatBus::new(0xFFFF);
 //! let mut c = CPU::new();
 //! c.reg.pc = 0x0100;                  // sets pc to 0x0100
 //! // Here we create a small machine code program for demo purpose.

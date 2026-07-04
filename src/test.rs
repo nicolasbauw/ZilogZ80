@@ -1,4 +1,4 @@
-use crate::{bus::FlatBus, cpu::CPU};
+use crate::{bus::Bus, bus::FlatBus, cpu::CPU};
 
 // carry flag
 const CF: u8 = 1 << 0;
@@ -5289,11 +5289,11 @@ fn dasm_cb() {
     b.write_byte(0x0276, 0xCB); // BIT 1,B
     b.write_byte(0x0277, 0x48);
     assert_eq!(
-        FlatBus::dasm(&mut b, 0x274),
+        crate::dasm::dasm(&b, 0x274),
         (String::from("CB00          RLC B"), 2)
     );
     assert_eq!(
-        FlatBus::dasm(&mut b, 0x276),
+        crate::dasm::dasm(&b, 0x276),
         (String::from("CB48          BIT 1,B"), 2)
     );
 }

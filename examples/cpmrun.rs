@@ -1,5 +1,5 @@
 use std::{env, error::Error, process};
-use zilog_z80::{bus::FlatBus, cpu::CPU};
+use zilog_z80::{bus::Bus, bus::FlatBus, cpu::CPU};
 
 fn main() {
     if let Err(e) = load_execute() {
