@@ -85,6 +85,8 @@ impl CPU {
             let addr = ((self.reg.i as u16) << 8) | (self.int.unwrap() as u16);
             self.reg.pc = bus.read_word(addr);
             self.int = None;
+            self.iff1 = false;
+            self.iff2 = false;
         };
 
         // We retrieve the opcode, wether it comes from an interrupt request or normal fetch
