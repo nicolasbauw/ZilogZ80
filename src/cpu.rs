@@ -74,7 +74,9 @@ impl CPU {
 
         // Interrupt requested in interrupt mode 1 ? Restart at address 0038h (opcode 0xFF)
         if self.iff1 && self.int.is_some() && self.im == 1 {
-            self.int = Some(0xFF)
+            self.int = Some(0xFF);
+            self.iff1 = false;
+            self.iff2 = false;
         };
 
         // Interrupt requested in interrupt mode 2 ? Push PC onto the stack, build jump address and jump to that address
