@@ -1737,7 +1737,7 @@ fn ldir_asm() {
 #[test]
 fn ldir_returns_total_cycles() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0xB0);
     b.write_byte(0x1000, 0x01);
@@ -1761,7 +1761,7 @@ fn ldir_returns_total_cycles() {
 #[test]
 fn ldir_with_zero_bc_repeats_64kb() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0xB0);
     c.reg.set_hl(0x0000);
@@ -1831,7 +1831,7 @@ fn lddr_asm() {
 #[test]
 fn lddr_returns_total_cycles() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0xB8);
     b.write_byte(0x1000, 0x01);
@@ -1855,7 +1855,7 @@ fn lddr_returns_total_cycles() {
 #[test]
 fn lddr_with_zero_bc_repeats_64kb() {
     let mut c = CPU::new();
-    let mut b = Bus::new(0xFFFF);
+    let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
     b.write_byte(0x0001, 0xB8);
     b.write_byte(0xFFFF, 0xAA);
@@ -3423,7 +3423,7 @@ fn ldir() {
     b.write_byte(0x2223, 0x59);
     b.write_byte(0x1113, 0xA5);
     b.write_byte(0x2224, 0xC5);
-    assert_eq!(c.execute(&mut b), 21);
+    c.execute(&mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1114);
     assert_eq!(b.read_byte(0x1111), 0x88);
@@ -3471,7 +3471,7 @@ fn lddr() {
     b.write_byte(0x2224, 0x59);
     b.write_byte(0x1114, 0xA5);
     b.write_byte(0x2225, 0xC5);
-    assert_eq!(c.execute(&mut b), 21);
+    c.execute(&mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1111);
     assert_eq!(b.read_byte(0x1112), 0x88);
