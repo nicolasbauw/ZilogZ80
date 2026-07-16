@@ -1735,6 +1735,48 @@ fn ldir_asm() {
 }
 
 #[test]
+fn ldir_returns_total_cycles() {
+    let mut c = CPU::new();
+    let mut b = Bus::new(0xFFFF);
+    b.write_byte(0x0000, 0xED);
+    b.write_byte(0x0001, 0xB0);
+    b.write_byte(0x1000, 0x01);
+    b.write_byte(0x1001, 0x02);
+    b.write_byte(0x1002, 0x03);
+    c.reg.set_hl(0x1000);
+    c.reg.set_de(0x2000);
+    c.reg.set_bc(0x0003);
+
+    assert_eq!(c.execute(&mut b), 58);
+    assert_eq!(c.reg.pc, 0x0002);
+    assert_eq!(c.reg.get_hl(), 0x1003);
+    assert_eq!(c.reg.get_de(), 0x2003);
+    assert_eq!(c.reg.get_bc(), 0x0000);
+    assert_eq!(b.read_byte(0x2000), 0x01);
+    assert_eq!(b.read_byte(0x2001), 0x02);
+    assert_eq!(b.read_byte(0x2002), 0x03);
+    assert_eq!(c.flags(), 0);
+}
+
+#[test]
+fn ldir_with_zero_bc_repeats_64kb() {
+    let mut c = CPU::new();
+    let mut b = Bus::new(0xFFFF);
+    b.write_byte(0x0000, 0xED);
+    b.write_byte(0x0001, 0xB0);
+    c.reg.set_hl(0x0000);
+    c.reg.set_de(0x0000);
+    c.reg.set_bc(0x0000);
+
+    assert_eq!(c.execute(&mut b), 16 + (21_u32 * 0xFFFF));
+    assert_eq!(c.reg.pc, 0x0002);
+    assert_eq!(c.reg.get_hl(), 0x0000);
+    assert_eq!(c.reg.get_de(), 0x0000);
+    assert_eq!(c.reg.get_bc(), 0x0000);
+    assert_eq!(c.flags(), 0);
+}
+
+#[test]
 fn ldd_asm() {
     let mut c = CPU::new();
     let mut b = FlatBus::new(0xFFFF);
@@ -1784,6 +1826,50 @@ fn lddr_asm() {
     assert_eq!(c.flags(), 0);
     c.execute(&mut b);
     assert_eq!(0x33, c.reg.a);
+}
+
+#[test]
+fn lddr_returns_total_cycles() {
+    let mut c = CPU::new();
+    let mut b = Bus::new(0xFFFF);
+    b.write_byte(0x0000, 0xED);
+    b.write_byte(0x0001, 0xB8);
+    b.write_byte(0x1000, 0x01);
+    b.write_byte(0x1001, 0x02);
+    b.write_byte(0x1002, 0x03);
+    c.reg.set_hl(0x1002);
+    c.reg.set_de(0x2002);
+    c.reg.set_bc(0x0003);
+
+    assert_eq!(c.execute(&mut b), 58);
+    assert_eq!(c.reg.pc, 0x0002);
+    assert_eq!(c.reg.get_hl(), 0x0FFF);
+    assert_eq!(c.reg.get_de(), 0x1FFF);
+    assert_eq!(c.reg.get_bc(), 0x0000);
+    assert_eq!(b.read_byte(0x2000), 0x01);
+    assert_eq!(b.read_byte(0x2001), 0x02);
+    assert_eq!(b.read_byte(0x2002), 0x03);
+    assert_eq!(c.flags(), 0);
+}
+
+#[test]
+fn lddr_with_zero_bc_repeats_64kb() {
+    let mut c = CPU::new();
+    let mut b = Bus::new(0xFFFF);
+    b.write_byte(0x0000, 0xED);
+    b.write_byte(0x0001, 0xB8);
+    b.write_byte(0xFFFF, 0xAA);
+    c.reg.set_hl(0xFFFF);
+    c.reg.set_de(0xFFFF);
+    c.reg.set_bc(0x0000);
+
+    assert_eq!(c.execute(&mut b), 16 + (21_u32 * 0xFFFF));
+    assert_eq!(c.reg.pc, 0x0002);
+    assert_eq!(c.reg.get_hl(), 0xFFFF);
+    assert_eq!(c.reg.get_de(), 0xFFFF);
+    assert_eq!(c.reg.get_bc(), 0x0000);
+    assert_eq!(b.read_byte(0xFFFF), 0xAA);
+    assert_eq!(c.flags(), 0);
 }
 
 #[test]

@@ -1883,14 +1883,17 @@ impl CPU {
 
             // LDIR
             0xEDB0 => {
-                // TODO : When the BC is set to 0 prior to instruction execution, the instruction loops through 64 KB.
-                while self.reg.get_bc() != 0 {
+                cycles = 16;
+                loop {
                     self.ldi(bus);
                     let bc = self.reg.get_bc();
                     self.reg.flags.h = false;
                     self.reg.flags.p = bc != 0;
                     self.reg.flags.n = false;
-                    // TODO : return cycles * number of executions
+                    if bc == 0 {
+                        break;
+                    }
+                    cycles += 21;
                 }
             }
 
@@ -1905,14 +1908,17 @@ impl CPU {
 
             // LDDR
             0xEDB8 => {
-                // TODO : When the BC is set to 0 prior to instruction execution, the instruction loops through 64 KB.
-                while self.reg.get_bc() != 0 {
+                cycles = 16;
+                loop {
                     self.ldd(bus);
                     let bc = self.reg.get_bc();
                     self.reg.flags.h = false;
                     self.reg.flags.p = bc != 0;
                     self.reg.flags.n = false;
-                    // TODO : return cycles * number of executions
+                    if bc == 0 {
+                        break;
+                    }
+                    cycles += 21;
                 }
             }
 
