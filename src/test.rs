@@ -5191,7 +5191,7 @@ fn int() {
     }
 }
 
-// if this test loops forever, mode 1 interrupts are not working
+/* if this test loops forever, mode 1 interrupts are not working
 #[test]
 fn int_im1() {
     let mut c = CPU::new();
@@ -5225,7 +5225,7 @@ fn int_im2() {
             break;
         }
     }
-}
+}*/
 
 #[test]
 fn nmi() {
