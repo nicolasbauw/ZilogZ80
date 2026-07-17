@@ -99,11 +99,15 @@ impl CPU {
         let maskable_interrupts_enabled = self.maskable_interrupts_enabled();
         let has_pending_maskable_interrupt = self.has_pending_maskable_interrupt();
 
+        // Accepting any maskable interrupt disables further maskable interrupts (IFF1 = IFF2 = false)
+        if has_pending_maskable_interrupt {
+            self.iff1 = false;
+            self.iff2 = false;
+        }
+
         // Interrupt requested in interrupt mode 1 ? Restart at address 0038h (opcode 0xFF)
         if has_pending_maskable_interrupt && self.im == 1 {
             self.int = Some(0xFF);
-            self.iff1 = false;
-            self.iff2 = false;
         };
 
         // Interrupt requested in interrupt mode 2 ? Push PC onto the stack, build jump address and jump to that address
@@ -2251,7 +2255,10 @@ impl CPU {
             }
 
             // RETI
-            0xED4D => self.call_stack_pop(bus),
+            0xED4D => {
+                self.iff1 = self.iff2;
+                self.call_stack_pop(bus);
+            }
 
             // RETN
             0xED45 => {

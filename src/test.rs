@@ -5389,6 +5389,142 @@ fn nmi() {
     assert_eq!(b.read_word(0x1FFE), 0x0001);
 }
 
+// RETN: verifies that returning from NMI restores IFF1 from IFF2, re-enabling maskable interrupts.
+#[test]
+fn retn() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xFB); // EI
+    // NMI handler at 0x0066: RETN
+    b.write_byte(0x0066, 0xED);
+    b.write_byte(0x0067, 0x45); // RETN
+    c.reg.sp = 0x2000;
+    c.execute(&mut b); // EI: IFF1=true, IFF2=true
+    c.nmi_request();
+    // NMI fires: IFF2=true (saved), IFF1=false; RETN executes at 0x0066: IFF1=IFF2=true, returns to 0x0001
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0x0001); // returned from NMI handler
+    assert_eq!(c.reg.sp, 0x2000); // stack fully restored
+    // Verify IFF1=true: a maskable interrupt must now fire
+    c.int_request(0xFF);
+    c.execute(&mut b); // INT fires (RST 38h) because IFF1 was restored to true by RETN
+    assert_eq!(c.reg.pc, 0x0038);
+}
+
+// RETI: basic return-from-interrupt test (IM 1). Verifies that RETI pops the correct return
+// address and fully restores the stack pointer.
+#[test]
+fn reti() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xED); // IM 1
+    b.write_byte(0x0001, 0x56);
+    b.write_byte(0x0002, 0xFB); // EI
+    b.write_byte(0x0003, 0x00); // NOP (must execute before IRQ)
+    b.write_byte(0x0004, 0x00); // NOP (INT fires at the start of this step)
+    // ISR at 0x0038: NOP then RETI
+    b.write_byte(0x0038, 0x00); // NOP
+    b.write_byte(0x0039, 0xED);
+    b.write_byte(0x003A, 0x4D); // RETI
+    c.reg.sp = 0x2000;
+    c.execute(&mut b); // IM 1
+    c.execute(&mut b); // EI
+    c.int_request(0xDF);
+    c.execute(&mut b); // NOP at 0x0003: delay expires, INT not yet taken
+    assert_eq!(c.reg.pc, 0x0004);
+    c.execute(&mut b); // INT fires: RST 38h → PC=0x0038, pushes 0x0004
+    assert_eq!(c.reg.pc, 0x0038);
+    assert_eq!(c.reg.sp, 0x1FFE);
+    assert_eq!(b.read_word(0x1FFE), 0x0004);
+    c.execute(&mut b); // NOP at 0x0038
+    c.execute(&mut b); // RETI: restores PC and SP
+    assert_eq!(c.reg.pc, 0x0004); // returned to the instruction that was interrupted
+    assert_eq!(c.reg.sp, 0x2000); // stack fully restored
+    c.execute(&mut b); // NOP at 0x0004: execution continues normally in main
+    assert_eq!(c.reg.pc, 0x0005);
+}
+
+// RETI must copy IFF2 to IFF1, just like RETN. This test sets IFF2=true via EI and then triggers
+// an NMI (which sets IFF1=false, IFF2=true). The NMI handler uses RETI instead of RETN. After
+// RETI, IFF1 must equal IFF2=true so that the next maskable interrupt is accepted.
+#[test]
+fn reti_iff_restore() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xFB); // EI
+    // NMI handler at 0x0066: RETI (instead of the canonical RETN)
+    b.write_byte(0x0066, 0xED);
+    b.write_byte(0x0067, 0x4D); // RETI
+    c.reg.sp = 0x2000;
+    c.execute(&mut b); // EI: IFF1=true, IFF2=true
+    c.nmi_request();
+    // NMI fires: IFF2=true (saved from IFF1), IFF1=false;
+    // RETI executes at 0x0066: must set IFF1=IFF2=true, then return to 0x0001
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0x0001);
+    assert_eq!(c.reg.sp, 0x2000);
+    // Verify RETI restored IFF1=IFF2=true: a maskable interrupt must now be accepted
+    c.int_request(0xFF);
+    c.execute(&mut b); // INT fires because IFF1 was correctly restored to true by RETI
+    assert_eq!(c.reg.pc, 0x0038);
+    assert_eq!(c.reg.sp, 0x1FFE);
+}
+
+// Nesting of interrupts: two nested IM 1 maskable interrupts are serviced one inside the other.
+// ISR at 0x0038 calls EI to re-enable interrupts, allowing a second INT to fire while the first
+// ISR is still active. Each ISR ends with RETI. The test checks that return addresses are correct
+// at every level and that the stack is fully restored after both RETI instructions.
+#[test]
+fn reti_nesting() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    // Main: IM 1 then EI (NOPs follow by default)
+    b.write_byte(0x0000, 0xED); // IM 1
+    b.write_byte(0x0001, 0x56);
+    b.write_byte(0x0002, 0xFB); // EI
+    // ISR at 0x0038 (shared by ISR1 and ISR2): EI, NOP, NOP, RETI
+    b.write_byte(0x0038, 0xFB); // EI  (re-enables interrupts, allowing nesting)
+    b.write_byte(0x0039, 0x00); // NOP
+    b.write_byte(0x003A, 0x00); // NOP (INT2 fires here when executing ISR1)
+    b.write_byte(0x003B, 0xED);
+    b.write_byte(0x003C, 0x4D); // RETI
+    c.reg.sp = 0x8000;
+    c.execute(&mut b); // IM 1
+    c.execute(&mut b); // EI
+    // INT1: fires after EI delay expires
+    c.int_request(0xFF);
+    c.execute(&mut b); // NOP: EI delay expires
+    c.execute(&mut b); // INT1 fires → RST 38h, pushes return address, enters ISR1
+    assert_eq!(c.reg.pc, 0x0038);
+    assert_eq!(c.reg.sp, 0x7FFE);
+    assert_eq!(b.read_word(0x7FFE), 0x0004); // return address: main NOP that was about to run
+    // ISR1: EI re-enables interrupts
+    c.execute(&mut b); // EI in ISR1
+    // INT2: fires while inside ISR1 (nesting)
+    c.int_request(0xFF);
+    c.execute(&mut b); // NOP: EI delay expires
+    c.execute(&mut b); // INT2 fires → RST 38h, pushes return address, enters ISR2
+    assert_eq!(c.reg.pc, 0x0038);
+    assert_eq!(c.reg.sp, 0x7FFC);
+    assert_eq!(b.read_word(0x7FFC), 0x003A); // return address: NOP in ISR1 that was about to run
+    // ISR2: EI, NOPs, then RETI (no third interrupt is requested)
+    c.execute(&mut b); // EI in ISR2
+    c.execute(&mut b); // NOP
+    c.execute(&mut b); // NOP
+    c.execute(&mut b); // RETI from ISR2: returns to ISR1 (0x003A)
+    assert_eq!(c.reg.pc, 0x003A); // back in ISR1
+    assert_eq!(c.reg.sp, 0x7FFE); // one stack frame removed
+    // ISR1 resumes from 0x003A and returns
+    c.execute(&mut b); // NOP at 0x003A
+    c.execute(&mut b); // RETI from ISR1: returns to main (0x0004)
+    assert_eq!(c.reg.pc, 0x0004); // back in main
+    assert_eq!(c.reg.sp, 0x8000); // stack fully restored
+    // After both ISRs used EI+RETI, IFF1 must be true: a new interrupt must fire
+    c.int_request(0xFF);
+    c.execute(&mut b); // INT fires immediately because IFF1 was correctly restored
+    assert_eq!(c.reg.pc, 0x0038);
+}
+
 #[test]
 fn jr_nz_neg() {
     let mut c = CPU::new();
