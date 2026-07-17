@@ -61,6 +61,9 @@ impl CPU {
         self.reg.flags.to_byte()
     }
 
+    /// Returns true when maskable interrupts are currently enabled and ready to be accepted.
+    /// Per Z80 spec, EI takes effect only after the instruction following EI completes, so
+    /// `ei_instr_delay` must be zero (the one-instruction delay has expired).
     fn maskable_interrupts_enabled(&self) -> bool {
         self.iff1 && self.ei_instr_delay == 0
     }
@@ -99,7 +102,8 @@ impl CPU {
         let maskable_interrupts_enabled = self.maskable_interrupts_enabled();
         let has_pending_maskable_interrupt = self.has_pending_maskable_interrupt();
 
-        // Accepting any maskable interrupt disables further maskable interrupts (IFF1 = IFF2 = false)
+        // Accepting any maskable interrupt disables further maskable interrupts (IFF1 = IFF2 = false).
+        // Interrupt nesting is only possible if the ISR explicitly calls EI to re-enable them.
         if has_pending_maskable_interrupt {
             self.iff1 = false;
             self.iff2 = false;

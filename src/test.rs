@@ -5445,14 +5445,17 @@ fn reti() {
 }
 
 // RETI must copy IFF2 to IFF1, just like RETN. This test sets IFF2=true via EI and then triggers
-// an NMI (which sets IFF1=false, IFF2=true). The NMI handler uses RETI instead of RETN. After
-// RETI, IFF1 must equal IFF2=true so that the next maskable interrupt is accepted.
+// an NMI (which sets IFF1=false, IFF2=true). The NMI handler uses RETI instead of the canonical
+// RETN to prove that RETI also restores IFF1 from IFF2 as required by the Z80 specification.
+// In normal Z80 code RETN is used after NMI and RETI after maskable interrupts; this non-standard
+// combination is the only straightforward way to create a state where IFF2 != IFF1 before RETI
+// and thus distinguish a correct implementation from a buggy one.
 #[test]
 fn reti_iff_restore() {
     let mut c = CPU::new();
     let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xFB); // EI
-    // NMI handler at 0x0066: RETI (instead of the canonical RETN)
+    // NMI handler at 0x0066: RETI (instead of the canonical RETN — intentional for this test)
     b.write_byte(0x0066, 0xED);
     b.write_byte(0x0067, 0x4D); // RETI
     c.reg.sp = 0x2000;
