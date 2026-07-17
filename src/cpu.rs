@@ -4,6 +4,8 @@ use crate::cycles::{CYCLES, CYCLES_CB, CYCLES_DD_FD, CYCLES_ED};
 use crate::registers::Registers;
 use std::time::SystemTime;
 
+const EI_DELAY_COUNTDOWN_START: u8 = 2;
+
 pub struct CPU {
     pub reg: Registers,
     pub alt: Registers,
@@ -14,6 +16,7 @@ pub struct CPU {
     im: u8,
     iff1: bool,
     iff2: bool,
+    ei_instr_delay: u8,
     slice_duration: u32,
     // Defaults to 35000 cycles per 16ms slice (2.1 Mhz).
     // cycles = clock speed in Hz / required frames-per-second
@@ -35,6 +38,7 @@ impl CPU {
             im: 0,
             iff1: false,
             iff2: false,
+            ei_instr_delay: 0,
             slice_duration: 16,
             slice_max_cycles: 35000,
             slice_current_cycles: 0,
@@ -57,10 +61,30 @@ impl CPU {
         self.reg.flags.to_byte()
     }
 
+    fn maskable_interrupts_enabled(&self) -> bool {
+        self.iff1 && self.ei_instr_delay == 0
+    }
+
+    fn has_pending_maskable_interrupt(&self) -> bool {
+        self.maskable_interrupts_enabled() && self.int.is_some()
+    }
+
+    fn interrupt_pending_during_instruction(&self) -> bool {
+        self.iff1 && self.ei_instr_delay > 0 && self.int.is_some()
+    }
+
     /// Fetches and executes one instruction from (pc). Returns consumed clock cycles.
     pub fn execute<B: Bus>(&mut self, bus: &mut B) -> u32 {
+        // Interrupt request must stay latched while masked (DI/EI delay) and be cleared only when acknowledged.
+        let mut clear_int_request = false;
+
+        let has_pending_maskable_interrupt = self.has_pending_maskable_interrupt();
         if self.halt {
-            return 4;
+            if self.nmi || has_pending_maskable_interrupt {
+                self.halt = false;
+            } else {
+                return 4;
+            }
         };
 
         // Non maskable interrupt requested ?
@@ -72,31 +96,36 @@ impl CPU {
             self.nmi = false;
         }
 
+        let maskable_interrupts_enabled = self.maskable_interrupts_enabled();
+        let has_pending_maskable_interrupt = self.has_pending_maskable_interrupt();
+
         // Interrupt requested in interrupt mode 1 ? Restart at address 0038h (opcode 0xFF)
-        if self.iff1 && self.int.is_some() && self.im == 1 {
+        if has_pending_maskable_interrupt && self.im == 1 {
             self.int = Some(0xFF);
             self.iff1 = false;
             self.iff2 = false;
         };
 
         // Interrupt requested in interrupt mode 2 ? Push PC onto the stack, build jump address and jump to that address
-        if self.iff1 && self.int.is_some() && self.im == 2 {
+        if has_pending_maskable_interrupt && self.im == 2 {
             self.interrupt_stack_push(bus);
             let addr = ((self.reg.i as u16) << 8) | (self.int.unwrap() as u16);
             self.reg.pc = bus.read_word(addr);
             self.int = None;
-            self.iff1 = false;
-            self.iff2 = false;
+            clear_int_request = true;
         };
 
         // We retrieve the opcode, wether it comes from an interrupt request or normal fetch
-        let opcode = match self.iff1 {
-            false => bus.read_byte(self.reg.pc),
-            // interrupts enabled : is there a pending interrupt ?
-            true => match self.int {
+        let opcode = if maskable_interrupts_enabled {
+            match self.int {
                 None => bus.read_byte(self.reg.pc),
-                Some(o) => o,
-            },
+                Some(o) => {
+                    clear_int_request = true;
+                    o
+                }
+            }
+        } else {
+            bus.read_byte(self.reg.pc)
         };
 
         let cycles = match opcode {
@@ -104,7 +133,12 @@ impl CPU {
             _ => self.execute_1byte(bus, opcode),
         };
 
-        self.int = None;
+        if clear_int_request {
+            self.int = None;
+        }
+        if self.ei_instr_delay > 0 {
+            self.ei_instr_delay -= 1;
+        }
         cycles
     }
 
@@ -723,12 +757,14 @@ impl CPU {
             0xF3 => {
                 self.iff1 = false;
                 self.iff2 = false;
+                self.ei_instr_delay = 0;
             }
 
             // EI
             0xFB => {
                 self.iff1 = true;
                 self.iff2 = true;
+                self.ei_instr_delay = EI_DELAY_COUNTDOWN_START;
             }
 
             // 16-Bit Arithmetic Group
@@ -1722,10 +1758,10 @@ impl CPU {
                 self.reg.flags.s = self.reg.i & 0x80 == 0x80;
                 self.reg.flags.z = self.reg.i == 0;
                 self.reg.flags.h = false;
-                self.reg.flags.p = self.iff2;
+                let interrupt_pending_during_instruction =
+                    self.interrupt_pending_during_instruction();
+                self.reg.flags.p = self.iff2 && !interrupt_pending_during_instruction;
                 self.reg.flags.n = false;
-                // TODO :
-                // If an interrupt occurs during execution of this instruction, the Parity flag contains a 0.
             }
 
             // LD A,R
@@ -1734,10 +1770,10 @@ impl CPU {
                 self.reg.flags.s = self.reg.r & 0x80 == 0x80;
                 self.reg.flags.z = self.reg.r == 0;
                 self.reg.flags.h = false;
-                self.reg.flags.p = self.iff2;
+                let interrupt_pending_during_instruction =
+                    self.interrupt_pending_during_instruction();
+                self.reg.flags.p = self.iff2 && !interrupt_pending_during_instruction;
                 self.reg.flags.n = false;
-                // TODO :
-                // If an interrupt occurs during execution of this instruction, the Parity flag contains a 0.
             }
 
             // LD I,A

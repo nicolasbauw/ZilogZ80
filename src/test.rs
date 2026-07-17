@@ -2068,11 +2068,16 @@ fn ld_inn_hl_dd_ix_iy_asm() {
 fn ld_a_ir_asm() {
     let mut c = CPU::new();
     let mut b = FlatBus::new(0xFFFF);
-    b.load_bin("bin/ld_a_ir.bin", 0).unwrap();
+    b.write_byte(0x0000, 0xFB); // EI
+    b.write_byte(0x0001, 0xED); // LD A,I
+    b.write_byte(0x0002, 0x57);
+    b.write_byte(0x0003, 0x97); // SUB A
+    b.write_byte(0x0004, 0xED); // LD A,R
+    b.write_byte(0x0005, 0x5F);
     c.reg.r = 0x34;
     c.reg.i = 0x1;
     c.reg.flags.c = true;
-    c.execute(&mut b);
+    assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.execute(&mut b), 9);
     assert_eq!(0x01, c.reg.a);
     assert_eq!(c.flags(), PF | CF);
@@ -2095,6 +2100,46 @@ fn ld_ir_a_asm() {
     assert_eq!(0x45, c.reg.i);
     assert_eq!(c.execute(&mut b), 9);
     assert_eq!(0x45, c.reg.r);
+}
+
+#[test]
+fn ld_a_i_interrupt_pending_clears_parity() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xFB); // EI
+    b.write_byte(0x0001, 0xED); // LD A,I
+    b.write_byte(0x0002, 0x57);
+    b.write_byte(0x0003, 0x00); // NOP
+    c.reg.i = 0x80;
+    c.reg.sp = 0x2000;
+    c.execute(&mut b);
+    c.int_request(0xCF);
+    assert_eq!(c.execute(&mut b), 9);
+    assert_eq!(c.reg.a, 0x80);
+    // P/V must be cleared when an interrupt is pending during the EI delay window.
+    assert_eq!(c.flags() & PF, 0);
+    assert_eq!(c.execute(&mut b), 11);
+    assert_eq!(c.reg.pc, 0x0008);
+}
+
+#[test]
+fn ld_a_r_interrupt_pending_clears_parity() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xFB); // EI
+    b.write_byte(0x0001, 0xED); // LD A,R
+    b.write_byte(0x0002, 0x5F);
+    b.write_byte(0x0003, 0x00); // NOP
+    c.reg.r = 0x44;
+    c.reg.sp = 0x2000;
+    c.execute(&mut b);
+    c.int_request(0xCF);
+    assert_eq!(c.execute(&mut b), 9);
+    assert_eq!(c.reg.a, 0x44);
+    // P/V must be cleared when an interrupt is pending during the EI delay window.
+    assert_eq!(c.flags() & PF, 0);
+    assert_eq!(c.execute(&mut b), 11);
+    assert_eq!(c.reg.pc, 0x0008);
 }
 
 #[test]
@@ -5264,73 +5309,84 @@ fn debug_unkn() {
 fn int() {
     let mut c = CPU::new();
     let mut b = FlatBus::new(0xFFFF);
-    b.load_bin("bin/int.bin", 0).unwrap();
-    for _ in 0..7 {
-        c.execute(&mut b);
-    }
+    b.write_byte(0x0000, 0xFB); // EI
+    b.write_byte(0x0001, 0x00); // NOP (must execute before IRQ)
+    b.write_byte(0x0002, 0x00); // NOP
+    c.reg.sp = 0x2000;
+    c.execute(&mut b);
     c.int_request(0xCF);
-    loop {
-        c.execute(&mut b);
-        if c.reg.pc == 0x0000 {
-            break;
-        }
-    }
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0x0002);
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0x0008);
+    assert_eq!(c.reg.sp, 0x1FFE);
+    assert_eq!(b.read_word(0x1FFE), 0x0002);
 }
 
-/* if this test loops forever, mode 1 interrupts are not working
 #[test]
 fn int_im1() {
     let mut c = CPU::new();
     let mut b = FlatBus::new(0xFFFF);
-    b.load_bin("bin/int_im1.bin", 0).unwrap();
-    for _ in 0..8 {
-        c.execute(&mut b);
-    }
+    b.write_byte(0x0000, 0xED); // IM 1
+    b.write_byte(0x0001, 0x56);
+    b.write_byte(0x0002, 0xFB); // EI
+    b.write_byte(0x0003, 0x00); // NOP (must execute before IRQ)
+    b.write_byte(0x0004, 0x00); // NOP
+    c.reg.sp = 0x2000;
+    c.execute(&mut b);
+    c.execute(&mut b);
     c.int_request(0xDF);
-    loop {
-        c.execute(&mut b);
-        if c.reg.pc == 0x0000 {
-            break;
-        }
-    }
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0x0004);
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0x0038);
+    assert_eq!(c.reg.sp, 0x1FFE);
+    assert_eq!(b.read_word(0x1FFE), 0x0004);
 }
 
-// if this test loops forever, mode 1 interrupts are not working
 #[test]
 fn int_im2() {
     let mut c = CPU::new();
     let mut b = FlatBus::new(0xFFFF);
-    b.load_bin("bin/int_im2.bin", 0).unwrap();
-    for _ in 0..9 {
-        c.execute(&mut b);
-    }
+    b.write_byte(0x0000, 0x3E); // LD A,0x01
+    b.write_byte(0x0001, 0x01);
+    b.write_byte(0x0002, 0xED); // LD I,A
+    b.write_byte(0x0003, 0x47);
+    b.write_byte(0x0004, 0xED); // IM 2
+    b.write_byte(0x0005, 0x5E);
+    b.write_byte(0x0006, 0xFB); // EI
+    b.write_byte(0x0007, 0x00); // NOP (must execute before IRQ)
+    b.write_byte(0x0008, 0x00); // NOP
+    b.write_word(0x0102, 0x1234);
+    c.reg.sp = 0x2000;
+    c.execute(&mut b);
+    c.execute(&mut b);
+    c.execute(&mut b);
+    c.execute(&mut b);
     c.int_request(0x02);
-    loop {
-        c.execute(&mut b);
-        if c.reg.pc == 0x0000 {
-            break;
-        }
-    }
-}*/
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0x0008);
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0x1235);
+    assert_eq!(c.reg.sp, 0x1FFE);
+    assert_eq!(b.read_word(0x1FFE), 0x0008);
+}
 
 #[test]
 fn nmi() {
     let mut c = CPU::new();
     let mut b = FlatBus::new(0xFFFF);
-    b.load_bin("bin/nmi.bin", 0).unwrap();
-    for _ in 0..5 {
-        c.execute(&mut b);
-    }
+    b.write_byte(0x0000, 0xFB); // EI
+    b.write_byte(0x0066, 0x47); // LD B,A
+    c.reg.a = 0x0F;
+    c.reg.sp = 0x2000;
+    c.execute(&mut b);
     c.nmi_request();
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 0x0067);
     assert_eq!(c.reg.b, 0x0F);
-    loop {
-        c.execute(&mut b);
-        if c.reg.pc == 0x0000 {
-            break;
-        }
-    }
+    assert_eq!(c.reg.sp, 0x1FFE);
+    assert_eq!(b.read_word(0x1FFE), 0x0001);
 }
 
 #[test]
