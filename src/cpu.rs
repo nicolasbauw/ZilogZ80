@@ -46,6 +46,38 @@ impl CPU {
         }
     }
 
+    // --- Getters pour les Interruptions ---
+
+    /// Renvoie l'état de la première bascule d'interruption (IFF1)
+    pub fn iff1(&self) -> bool {
+        self.iff1
+    }
+
+    /// Renvoie l'état de la seconde bascule d'interruption (IFF2)
+    pub fn iff2(&self) -> bool {
+        self.iff2
+    }
+
+    /// Renvoie le mode d'interruption actuel (0, 1 ou 2)
+    pub fn im(&self) -> u8 {
+        self.im
+    }
+
+    /// Indique si le CPU est actuellement en état HALT
+    pub fn is_halted(&self) -> bool {
+        self.halt
+    }
+
+    /// Indique si une interruption masquable (INT) est en attente
+    pub fn has_pending_int(&self) -> bool {
+        self.int.is_some()
+    }
+
+    /// Indique si une interruption non masquable (NMI) est en attente
+    pub fn has_pending_nmi(&self) -> bool {
+        self.nmi
+    }
+
     /// Creates a maskable interrupt request
     pub fn int_request(&mut self, byte: u8) {
         self.int = Some(byte);
