@@ -806,7 +806,7 @@ pub fn dasm<B: Bus + ?Sized>(bus: &B, address: u16) -> (String, u8) {
                 | 0xFD96 | 0xDD9E | 0xFD9E | 0xDDA6 | 0xFDA6 | 0xDDB6 | 0xFDB6 | 0xDDAE
                 | 0xFDAE | 0xDDBE | 0xFDBE | 0xDD34 | 0xFD34 | 0xDD35 | 0xFD35 => {
                     let operand = bus.read_byte(address + 2);
-                    format!("{:04X} {:02X}        {}", opcode_16, operand, dasm_str)
+                    format!("{:04X} {:02X}       {}", opcode_16, operand, dasm_str)
                 }
                 0xDD36 | 0xFD36 | 0xDD21 | 0xFD21 | 0xED4B | 0xED5B | 0xED6B | 0xED7B | 0xDD2A
                 | 0xFD2A | 0xED43 | 0xED53 | 0xED63 | 0xED73 | 0xDD22 | 0xFD22 | 0xDDCB
