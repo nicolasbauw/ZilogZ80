@@ -5578,3 +5578,28 @@ fn dasm_cb() {
         (String::from("CB48          BIT 1,B"), 2)
     );
 }
+
+#[test]
+fn ldir_bc_zero() {
+    // When BC = 0 prior to execution, LDIR loops through 64 KB (65536 iterations).
+    // This is documented Z80 behavior: BC wraps from 0 to 0xFFFF on the first
+    // decrement and counts down to 0. The loop completes quickly in practice.
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xED);
+    b.write_byte(0x0001, 0xB0);
+    c.reg.set_hl(0x1000);
+    c.reg.set_de(0x2000);
+    c.reg.set_bc(0x0000);
+    b.write_byte(0x1000, 0xAB);
+    c.execute(&mut b);
+    // After 65536 iterations, BC wraps back to 0
+    assert_eq!(c.reg.get_bc(), 0x0000);
+    // HL and DE each increment 65536 times, wrapping back to their original values
+    assert_eq!(c.reg.get_hl(), 0x1000);
+    assert_eq!(c.reg.get_de(), 0x2000);
+    // The first byte was copied
+    assert_eq!(b.read_byte(0x2000), 0xAB);
+    // Flags: H=0, P=0 (BC=0), N=0
+    assert_eq!(c.flags() & (HF | PF | NF), 0);
+}
