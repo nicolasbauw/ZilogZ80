@@ -2003,13 +2003,15 @@ impl CPU {
 
             // CPIR
             0xEDB1 => {
-                // TODO : When the BC is set to 0 prior to instruction execution, the instruction loops through 64 KB.
-                while self.reg.get_bc() != 0 {
+                // Per Z80 spec: if BC is 0 before execution, the instruction loops through 64 KB (65536 iterations).
+                // Use a do-while pattern so the first iteration always executes.
+                loop {
                     self.cpi(bus);
-                    if self.reg.flags.z {
+                    // Stop when match found (Z=1) or BC reached 0 after decrement
+                    if self.reg.flags.z || self.reg.get_bc() == 0 {
                         break;
                     }
-                    // TODO : return cycles * number of executions
+                    cycles += 16;
                 }
             }
 
@@ -2018,12 +2020,15 @@ impl CPU {
 
             // CPDR
             0xEDB9 => {
-                while self.reg.get_bc() != 0 {
+                // Per Z80 spec: if BC is 0 before execution, the instruction loops through 64 KB (65536 iterations).
+                // Use a do-while pattern so the first iteration always executes.
+                loop {
                     self.cpd(bus);
-                    if self.reg.flags.z {
+                    // Stop when match found (Z=1) or BC reached 0 after decrement
+                    if self.reg.flags.z || self.reg.get_bc() == 0 {
                         break;
                     }
-                    // TODO : return cycles * number of executions
+                    cycles += 16;
                 }
             }
 

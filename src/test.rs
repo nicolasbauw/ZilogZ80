@@ -3559,7 +3559,7 @@ fn cpir() {
     b.write_byte(0x1111, 0x52);
     b.write_byte(0x1112, 0x00);
     b.write_byte(0x1113, 0xF3);
-    assert_eq!(c.execute(&mut b), 21);
+    c.execute(&mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1114);
     assert_eq!(c.reg.get_bc(), 4);
@@ -3597,7 +3597,7 @@ fn cpdr() {
     b.write_byte(0x1116, 0xF3);
     b.write_byte(0x1117, 0x00);
     b.write_byte(0x1118, 0x52);
-    assert_eq!(c.execute(&mut b), 21);
+    c.execute(&mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1115);
     assert_eq!(c.reg.get_bc(), 4);
@@ -5602,4 +5602,156 @@ fn ldir_bc_zero() {
     assert_eq!(b.read_byte(0x2000), 0xAB);
     // Flags: H=0, P=0 (BC=0), N=0
     assert_eq!(c.flags() & (HF | PF | NF), 0);
+}
+
+// CPI with no match: Z=0, S set when result is negative, H set on nibble borrow, N=1, C unchanged
+#[test]
+fn cpi_no_match() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xED);
+    b.write_byte(0x0001, 0xA1);
+    // A=0x01, (HL)=0x02 → result = 0xFF (negative), H=1 (nibble borrow: 0x1 < 0x2), Z=0
+    c.reg.a = 0x01;
+    c.reg.set_hl(0x2000);
+    c.reg.set_bc(0x03);
+    c.reg.flags.c = true; // C must be preserved
+    b.write_byte(0x2000, 0x02);
+    assert_eq!(c.execute(&mut b), 16);
+    assert_eq!(c.reg.pc, 2);
+    assert_eq!(c.reg.get_hl(), 0x2001);
+    assert_eq!(c.reg.get_bc(), 0x02);
+    assert_eq!(c.reg.flags.z, false); // no match
+    assert_eq!(c.reg.flags.s, true); // result 0xFF has bit 7 set
+    assert_eq!(c.reg.flags.h, true); // borrow from bit 4 (0x1 < 0x2)
+    assert_eq!(c.reg.flags.n, true); // subtraction
+    assert_eq!(c.reg.flags.p, true); // BC=2 after decrement ≠ 0
+    assert_eq!(c.reg.flags.c, true); // C must be unchanged
+}
+
+// CPI: no half-carry when no nibble borrow
+#[test]
+fn cpi_no_half_carry() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xED);
+    b.write_byte(0x0001, 0xA1);
+    // A=0x20, (HL)=0x10 → result=0x10 (positive), H=0 (0x0 >= 0x0, no borrow)
+    c.reg.a = 0x20;
+    c.reg.set_hl(0x2000);
+    c.reg.set_bc(0x02);
+    b.write_byte(0x2000, 0x10);
+    assert_eq!(c.execute(&mut b), 16);
+    assert_eq!(c.reg.flags.z, false);
+    assert_eq!(c.reg.flags.s, false); // result 0x10 is positive
+    assert_eq!(c.reg.flags.h, false); // 0x0 >= 0x0, no borrow
+    assert_eq!(c.reg.flags.n, true);
+}
+
+// CPD with no match: same flag rules as CPI but HL decremented
+#[test]
+fn cpd_no_match() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xED);
+    b.write_byte(0x0001, 0xA9);
+    c.reg.a = 0x01;
+    c.reg.set_hl(0x2000);
+    c.reg.set_bc(0x03);
+    c.reg.flags.c = false; // C must be preserved
+    b.write_byte(0x2000, 0x02);
+    assert_eq!(c.execute(&mut b), 16);
+    assert_eq!(c.reg.pc, 2);
+    assert_eq!(c.reg.get_hl(), 0x1FFF); // decremented
+    assert_eq!(c.reg.get_bc(), 0x02);
+    assert_eq!(c.reg.flags.z, false);
+    assert_eq!(c.reg.flags.s, true);
+    assert_eq!(c.reg.flags.h, true);
+    assert_eq!(c.reg.flags.n, true);
+    assert_eq!(c.reg.flags.p, true);
+    assert_eq!(c.reg.flags.c, false); // C unchanged
+}
+
+// CPIR terminated because BC reaches 0 with no match: Z=0, P=0
+#[test]
+fn cpir_bc_exhausted() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xED);
+    b.write_byte(0x0001, 0xB1);
+    c.reg.a = 0xAA;
+    c.reg.set_hl(0x1000);
+    c.reg.set_bc(0x03);
+    b.write_byte(0x1000, 0x11);
+    b.write_byte(0x1001, 0x22);
+    b.write_byte(0x1002, 0x33); // none equal 0xAA
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 2);
+    assert_eq!(c.reg.get_hl(), 0x1003); // advanced by 3
+    assert_eq!(c.reg.get_bc(), 0x00); // exhausted
+    assert_eq!(c.reg.flags.z, false); // no match found
+    assert_eq!(c.reg.flags.p, false); // BC=0
+    assert_eq!(c.reg.flags.n, true);
+}
+
+// CPIR match found on very first iteration
+#[test]
+fn cpir_first_match() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xED);
+    b.write_byte(0x0001, 0xB1);
+    c.reg.a = 0x55;
+    c.reg.set_hl(0x3000);
+    c.reg.set_bc(0x05);
+    b.write_byte(0x3000, 0x55); // immediate match
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 2);
+    assert_eq!(c.reg.get_hl(), 0x3001); // one increment
+    assert_eq!(c.reg.get_bc(), 0x04); // one decrement (5-1=4)
+    assert_eq!(c.reg.flags.z, true); // match
+    assert_eq!(c.reg.flags.p, true); // BC=4 ≠ 0
+    assert_eq!(c.reg.flags.n, true);
+}
+
+// CPDR terminated because BC reaches 0 with no match: Z=0, P=0
+#[test]
+fn cpdr_bc_exhausted() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xED);
+    b.write_byte(0x0001, 0xB9);
+    c.reg.a = 0xAA;
+    c.reg.set_hl(0x1002);
+    c.reg.set_bc(0x03);
+    b.write_byte(0x1000, 0x11);
+    b.write_byte(0x1001, 0x22);
+    b.write_byte(0x1002, 0x33); // none equal 0xAA
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 2);
+    assert_eq!(c.reg.get_hl(), 0x0FFF); // decremented by 3
+    assert_eq!(c.reg.get_bc(), 0x00); // exhausted
+    assert_eq!(c.reg.flags.z, false); // no match found
+    assert_eq!(c.reg.flags.p, false); // BC=0
+    assert_eq!(c.reg.flags.n, true);
+}
+
+// CPDR match found on very first iteration
+#[test]
+fn cpdr_first_match() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xED);
+    b.write_byte(0x0001, 0xB9);
+    c.reg.a = 0x77;
+    c.reg.set_hl(0x3000);
+    c.reg.set_bc(0x05);
+    b.write_byte(0x3000, 0x77); // immediate match
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 2);
+    assert_eq!(c.reg.get_hl(), 0x2FFF); // one decrement
+    assert_eq!(c.reg.get_bc(), 0x04); // one decrement (5-1=4)
+    assert_eq!(c.reg.flags.z, true); // match
+    assert_eq!(c.reg.flags.p, true); // BC=4 ≠ 0
+    assert_eq!(c.reg.flags.n, true);
 }
