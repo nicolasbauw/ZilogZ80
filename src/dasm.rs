@@ -2,6 +2,8 @@ use crate::bit;
 use crate::bus::Bus;
 use crate::cpu::signed_to_abs;
 
+//TODO add EDB0 (LDIR)
+
 pub const DASM_CB: [&str; 256] = [
     "RLC B",
     "RLC C",
