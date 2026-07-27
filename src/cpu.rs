@@ -1798,9 +1798,13 @@ impl CPU {
                 self.reg.flags.s = self.reg.i & 0x80 == 0x80;
                 self.reg.flags.z = self.reg.i == 0;
                 self.reg.flags.h = false;
-                let interrupt_pending_during_instruction =
-                    self.interrupt_pending_during_instruction();
-                self.reg.flags.p = self.iff2 && !interrupt_pending_during_instruction;
+                // Le flag P/V copie IFF2.
+                // Note: Si une interruption arrive au même moment, P/V est forcé à 0.
+                self.reg.flags.p = if self.interrupt_pending_during_instruction() {
+                    false
+                } else {
+                    self.iff2
+                };
                 self.reg.flags.n = false;
             }
 
@@ -1810,9 +1814,11 @@ impl CPU {
                 self.reg.flags.s = self.reg.r & 0x80 == 0x80;
                 self.reg.flags.z = self.reg.r == 0;
                 self.reg.flags.h = false;
-                let interrupt_pending_during_instruction =
-                    self.interrupt_pending_during_instruction();
-                self.reg.flags.p = self.iff2 && !interrupt_pending_during_instruction;
+                self.reg.flags.p = if self.interrupt_pending_during_instruction() {
+                    false
+                } else {
+                    self.iff2
+                };
                 self.reg.flags.n = false;
             }
 
