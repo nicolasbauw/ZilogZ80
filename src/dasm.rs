@@ -1043,6 +1043,27 @@ pub fn dasm<B: Bus + ?Sized>(bus: &B, address: u16) -> (String, u8) {
     let opcode = bus.read_byte(address);
     let mut opcode_16: u16 = 0x0000;
     let instr = match opcode {
+        0xED => {
+            let oc = bus.read_byte(address + 1);
+            opcode_16 = 0xED00 | (oc as u16);
+            let dasm_str = String::from(DASM_ED[oc as usize]);
+
+            match oc {
+                // Instructions ED avec argument 16 bits (nn)
+                // LD (nn),dd | LD dd,(nn) | JP nn
+                0x43 | 0x4B | 0x53 | 0x5B | 0x63 | 0x6B | 0x73 | 0x7B => {
+                    let operand = bus.read_word(address + 2);
+                    format!(
+                        "ED{:02X} {:02X} {:02X}    {}",
+                        oc,
+                        (operand & 0xFF) as u8,
+                        (operand >> 8) as u8,
+                        dasm_str.replace("nn", &format!("${:04X}", operand))
+                    )
+                }
+                _ => format!("ED{:02X}          {}", oc, dasm_str),
+            }
+        }
         0xCB => {
             // Reading the byte following the prefix
             let oc = bus.read_byte(address + 1);
