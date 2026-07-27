@@ -2,8 +2,6 @@ use crate::bit;
 use crate::bus::Bus;
 use crate::cpu::signed_to_abs;
 
-//TODO add EDB0 (LDIR)
-
 pub const DASM_CB: [&str; 256] = [
     "RLC B",
     "RLC C",
@@ -779,6 +777,265 @@ pub const DASM_FD: [&str; 256] = [
     "?",            // FDFD
     "?",            // FDFE
     "?",            // FDFF
+];
+
+pub const DASM_ED: [&str; 256] = [
+    "?",          // ED00
+    "?",          // ED01
+    "?",          // ED02
+    "?",          // ED03
+    "?",          // ED04
+    "?",          // ED05
+    "?",          // ED06
+    "?",          // ED07
+    "?",          // ED08
+    "?",          // ED09
+    "?",          // ED0A
+    "?",          // ED0B
+    "?",          // ED0C
+    "?",          // ED0D
+    "?",          // ED0E
+    "?",          // ED0F
+    "?",          // ED10
+    "?",          // ED11
+    "?",          // ED12
+    "?",          // ED13
+    "?",          // ED14
+    "?",          // ED15
+    "?",          // ED16
+    "?",          // ED17
+    "?",          // ED18
+    "?",          // ED19
+    "?",          // ED1A
+    "?",          // ED1B
+    "?",          // ED1C
+    "?",          // ED1D
+    "?",          // ED1E
+    "?",          // ED1F
+    "?",          // ED20
+    "?",          // ED21
+    "?",          // ED22
+    "?",          // ED23
+    "?",          // ED24
+    "?",          // ED25
+    "?",          // ED26
+    "?",          // ED27
+    "?",          // ED28
+    "?",          // ED29
+    "?",          // ED2A
+    "?",          // ED2B
+    "?",          // ED2C
+    "?",          // ED2D
+    "?",          // ED2E
+    "?",          // ED2F
+    "?",          // ED30
+    "?",          // ED31
+    "?",          // ED32
+    "?",          // ED33
+    "?",          // ED34
+    "?",          // ED35
+    "?",          // ED36
+    "?",          // ED37
+    "?",          // ED38
+    "?",          // ED39
+    "?",          // ED3A
+    "?",          // ED3B
+    "?",          // ED3C
+    "?",          // ED3D
+    "?",          // ED3E
+    "?",          // ED3F
+    "IN B,(C)",   // ED40
+    "OUT (C),B",  // ED41
+    "SBC HL,BC",  // ED42
+    "LD (nn),BC", // ED43
+    "NEG",        // ED44
+    "RETN",       // ED45
+    "IM 0",       // ED46
+    "LD I,A",     // ED47
+    "IN C,(C)",   // ED48
+    "OUT (C),C",  // ED49
+    "ADC HL,BC",  // ED4A
+    "LD BC,(nn)", // ED4B
+    "NEG",        // ED4C
+    "RETI",       // ED4D
+    "IM 0",       // ED4E
+    "LD R,A",     // ED4F
+    "IN D,(C)",   // ED50
+    "OUT (C),D",  // ED51
+    "SBC HL,DE",  // ED52
+    "LD (nn),DE", // ED53
+    "NEG",        // ED54
+    "RETN",       // ED55
+    "IM 1",       // ED56
+    "LD A,I",     // ED57
+    "IN E,(C)",   // ED58
+    "OUT (C),E",  // ED59
+    "ADC HL,DE",  // ED5A
+    "LD DE,(nn)", // ED5B
+    "NEG",        // ED5C
+    "RETN",       // ED5D
+    "IM 2",       // ED5E
+    "LD A,R",     // ED5F
+    "IN H,(C)",   // ED60
+    "OUT (C),H",  // ED61
+    "SBC HL,HL",  // ED62
+    "LD (nn),HL", // ED63
+    "NEG",        // ED64
+    "RETN",       // ED65
+    "IM 0",       // ED66
+    "RRD",        // ED67
+    "IN L,(C)",   // ED68
+    "OUT (C),L",  // ED69
+    "ADC HL,HL",  // ED6A
+    "LD HL,(nn)", // ED6B
+    "NEG",        // ED6C
+    "RETN",       // ED6D
+    "IM 0",       // ED6E
+    "RLD",        // ED6F
+    "IN (C)",     // ED70
+    "OUT (C),0",  // ED71
+    "SBC HL,SP",  // ED72
+    "LD (nn),SP", // ED73
+    "NEG",        // ED74
+    "RETN",       // ED75
+    "IM 1",       // ED76
+    "?",          // ED77
+    "IN A,(C)",   // ED78
+    "OUT (C),A",  // ED79
+    "ADC HL,SP",  // ED7A
+    "LD SP,(nn)", // ED7B
+    "NEG",        // ED7C
+    "RETN",       // ED7D
+    "IM 2",       // ED7E
+    "?",          // ED7F
+    "?",          // ED80
+    "?",          // ED81
+    "?",          // ED82
+    "?",          // ED83
+    "?",          // ED84
+    "?",          // ED85
+    "?",          // ED86
+    "?",          // ED87
+    "?",          // ED88
+    "?",          // ED89
+    "?",          // ED8A
+    "?",          // ED8B
+    "?",          // ED8C
+    "?",          // ED8D
+    "?",          // ED8E
+    "?",          // ED8F
+    "?",          // ED90
+    "?",          // ED91
+    "?",          // ED92
+    "?",          // ED93
+    "?",          // ED94
+    "?",          // ED95
+    "?",          // ED96
+    "?",          // ED97
+    "?",          // ED98
+    "?",          // ED99
+    "?",          // ED9A
+    "?",          // ED9B
+    "?",          // ED9C
+    "?",          // ED9D
+    "?",          // ED9E
+    "?",          // ED9F
+    "LDI",        // EDA0
+    "CPI",        // EDA1
+    "INI",        // EDA2
+    "OUTI",       // EDA3
+    "?",          // EDA4
+    "?",          // EDA5
+    "?",          // EDA6
+    "?",          // EDA7
+    "LDD",        // EDA8
+    "CPD",        // EDA9
+    "IND",        // EDAA
+    "OUTD",       // EDAB
+    "?",          // EDAC
+    "?",          // EDAD
+    "?",          // EDAE
+    "?",          // EDAF
+    "LDIR",       // EDB0
+    "CPIR",       // EDB1
+    "INIR",       // EDB2
+    "OTIR",       // EDB3
+    "?",          // EDB4
+    "?",          // EDB5
+    "?",          // EDB6
+    "?",          // EDB7
+    "LDDR",       // EDB8
+    "CPDR",       // EDB9
+    "INDR",       // EDBA
+    "OTDR",       // EDBB
+    "?",          // EDBC
+    "?",          // EDBD
+    "?",          // EDBE
+    "?",          // EDBF
+    "?",          // EDC0
+    "?",          // EDC1
+    "?",          // EDC2
+    "?",          // EDC3
+    "?",          // EDC4
+    "?",          // EDC5
+    "?",          // EDC6
+    "?",          // EDC7
+    "?",          // EDC8
+    "?",          // EDC9
+    "?",          // EDCA
+    "?",          // EDCB
+    "?",          // EDCC
+    "?",          // EDCD
+    "?",          // EDCE
+    "?",          // EDCF
+    "?",          // EDD0
+    "?",          // EDD1
+    "?",          // EDD2
+    "?",          // EDD3
+    "?",          // EDD4
+    "?",          // EDD5
+    "?",          // EDD6
+    "?",          // EDD7
+    "?",          // EDD8
+    "?",          // EDD9
+    "?",          // EDDA
+    "?",          // EDDB
+    "?",          // EDDC
+    "?",          // EDDD
+    "?",          // EDDE
+    "?",          // EDDF
+    "?",          // EDE0
+    "?",          // EDE1
+    "?",          // EDE2
+    "?",          // EDE3
+    "?",          // EDE4
+    "?",          // EDE5
+    "?",          // EDE6
+    "?",          // EDE7
+    "?",          // EDE8
+    "?",          // EDE9
+    "?",          // EDEA
+    "?",          // EDEB
+    "?",          // EDEC
+    "?",          // EDED
+    "?",          // EDEE
+    "?",          // EDEF
+    "?",          // EDF0
+    "?",          // EDF1
+    "?",          // EDF2
+    "?",          // EDF3
+    "?",          // EDF4
+    "?",          // EDF5
+    "?",          // EDF6
+    "?",          // EDF7
+    "?",          // EDF8
+    "?",          // EDF9
+    "?",          // EDFA
+    "?",          // EDFB
+    "?",          // EDFC
+    "?",          // EDFD
+    "?",          // EDFE
+    "?",          // EDFF
 ];
 
 /// Disassembles opcode and operand at (address), returns a tuple (disassembled string, instruction size in bytes)
