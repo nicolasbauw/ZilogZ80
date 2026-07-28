@@ -1233,7 +1233,7 @@ pub fn dasm<B: Bus + ?Sized>(bus: &B, address: u16) -> (String, u8) {
         0x36 => {
             // LD (HL),n
             let data = bus.read_byte(address + 1);
-            format!("36 {:02X}         LD LD (HL),{:02X}", data, data)
+            format!("36 {:02X}         LD (HL),{:02X}", data, data)
         }
         0x3E => {
             // LD A,n
