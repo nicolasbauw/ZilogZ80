@@ -5755,3 +5755,145 @@ fn cpdr_first_match() {
     assert_eq!(c.reg.flags.p, true); // BC=4 ≠ 0
     assert_eq!(c.reg.flags.n, true);
 }
+
+// DJNZ inline tests (no bin fixture required)
+
+#[test]
+fn djnz_no_branch() {
+    // B = 1: decrement gives 0, branch NOT taken → PC advances by 2, 8 cycles
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    c.reg.pc = 0x0100;
+    c.reg.b = 0x01;
+    b.write_byte(0x0100, 0x10); // DJNZ
+    b.write_byte(0x0101, 0x05); // displacement +5 (ignored when no branch)
+    assert_eq!(c.execute(&mut b), 8);
+    assert_eq!(c.reg.b, 0x00);
+    assert_eq!(c.reg.pc, 0x0102);
+}
+
+#[test]
+fn djnz_branch_positive() {
+    // B = 3: decrement gives 2, branch taken with positive displacement +3
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    c.reg.pc = 0x0100;
+    c.reg.b = 0x03;
+    b.write_byte(0x0100, 0x10); // DJNZ
+    b.write_byte(0x0101, 0x03); // displacement +3
+    // Expected: PC = 0x0100 + 2 + 3 = 0x0105
+    assert_eq!(c.execute(&mut b), 13);
+    assert_eq!(c.reg.b, 0x02);
+    assert_eq!(c.reg.pc, 0x0105);
+}
+
+#[test]
+fn djnz_branch_negative() {
+    // B = 2: decrement gives 1, branch taken with negative displacement -5 (0xFB)
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    c.reg.pc = 0x0110;
+    c.reg.b = 0x02;
+    b.write_byte(0x0110, 0x10); // DJNZ
+    b.write_byte(0x0111, 0xFB); // displacement -5
+    // signed_to_abs(0xFB) = !0xFB + 1 = 0x04 + 1 = 5
+    // Expected: PC = 0x0110 + 2 - 5 = 0x010D
+    assert_eq!(c.execute(&mut b), 13);
+    assert_eq!(c.reg.b, 0x01);
+    assert_eq!(c.reg.pc, 0x010D);
+}
+
+#[test]
+fn djnz_b_wraps() {
+    // B = 0: wrapping_sub(1) gives 0xFF, branch IS taken
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    c.reg.pc = 0x0100;
+    c.reg.b = 0x00;
+    b.write_byte(0x0100, 0x10); // DJNZ
+    b.write_byte(0x0101, 0x02); // displacement +2
+    // Expected: B = 0xFF, PC = 0x0100 + 2 + 2 = 0x0104, 13 cycles
+    assert_eq!(c.execute(&mut b), 13);
+    assert_eq!(c.reg.b, 0xFF);
+    assert_eq!(c.reg.pc, 0x0104);
+}
+
+#[test]
+fn djnz_max_positive_disp() {
+    // Maximum positive displacement: +127 (0x7F)
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    c.reg.pc = 0x0100;
+    c.reg.b = 0x02;
+    b.write_byte(0x0100, 0x10); // DJNZ
+    b.write_byte(0x0101, 0x7F); // displacement +127
+    // Expected: PC = 0x0100 + 2 + 127 = 0x0181
+    assert_eq!(c.execute(&mut b), 13);
+    assert_eq!(c.reg.b, 0x01);
+    assert_eq!(c.reg.pc, 0x0181);
+}
+
+#[test]
+fn djnz_max_negative_disp() {
+    // Maximum negative displacement: -128 (0x80)
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    c.reg.pc = 0x0200;
+    c.reg.b = 0x02;
+    b.write_byte(0x0200, 0x10); // DJNZ
+    b.write_byte(0x0201, 0x80); // displacement -128
+    // signed_to_abs(0x80) = !0x80 + 1 = 0x7F + 1 = 128
+    // Expected: PC = 0x0200 + 2 - 128 = 0x0182
+    assert_eq!(c.execute(&mut b), 13);
+    assert_eq!(c.reg.b, 0x01);
+    assert_eq!(c.reg.pc, 0x0182);
+}
+
+#[test]
+fn djnz_loop() {
+    // Full loop: B starts at 3, DJNZ with -2 displacement loops back to itself
+    // until B reaches 0
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    c.reg.pc = 0x0100;
+    c.reg.b = 0x03;
+    b.write_byte(0x0100, 0x10); // DJNZ
+    b.write_byte(0x0101, 0xFE); // displacement -2 (self-loop)
+
+    // Iteration 1: B 3→2, branch taken, PC stays at 0x0100
+    assert_eq!(c.execute(&mut b), 13);
+    assert_eq!(c.reg.b, 0x02);
+    assert_eq!(c.reg.pc, 0x0100);
+
+    // Iteration 2: B 2→1, branch taken, PC stays at 0x0100
+    assert_eq!(c.execute(&mut b), 13);
+    assert_eq!(c.reg.b, 0x01);
+    assert_eq!(c.reg.pc, 0x0100);
+
+    // Iteration 3: B 1→0, branch NOT taken, PC advances to 0x0102
+    assert_eq!(c.execute(&mut b), 8);
+    assert_eq!(c.reg.b, 0x00);
+    assert_eq!(c.reg.pc, 0x0102);
+}
+
+#[test]
+fn djnz_dasm() {
+    // Verify the disassembler output for DJNZ with positive and negative displacements
+    let mut b = FlatBus::new(0xFFFF);
+
+    // Positive displacement +3 at 0x0100: target = 0x0100 + 2 + 3 = 0x0105
+    b.write_byte(0x0100, 0x10);
+    b.write_byte(0x0101, 0x03);
+    assert_eq!(
+        crate::dasm::dasm(&mut b, 0x0100),
+        (String::from("10 03         DJNZ $0105"), 2)
+    );
+
+    // Negative displacement -2 (0xFE) at 0x0200: target = 0x0200 + 2 - 2 = 0x0200
+    b.write_byte(0x0200, 0x10);
+    b.write_byte(0x0201, 0xFE);
+    assert_eq!(
+        crate::dasm::dasm(&mut b, 0x0200),
+        (String::from("10 FE         DJNZ $0200"), 2)
+    );
+}
