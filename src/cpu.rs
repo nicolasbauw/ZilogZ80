@@ -3070,25 +3070,25 @@ impl CPU {
 
             // LD IXH,n
             0xDD26 => {
-                let n = bus.read_byte(self.reg.pc + 3);
+                let n = bus.read_byte(self.reg.pc + 2);
                 self.reg.ixh = n;
             }
 
             // LD IYH,n
             0xFD26 => {
-                let n = bus.read_byte(self.reg.pc + 3);
+                let n = bus.read_byte(self.reg.pc + 2);
                 self.reg.iyh = n;
             }
 
             // LD IXL,n
             0xDD2E => {
-                let n = bus.read_byte(self.reg.pc + 3);
+                let n = bus.read_byte(self.reg.pc + 2);
                 self.reg.ixl = n;
             }
 
             // LD IYL,n
             0xFD2E => {
-                let n = bus.read_byte(self.reg.pc + 3);
+                let n = bus.read_byte(self.reg.pc + 2);
                 self.reg.iyl = n;
             }
 
@@ -3574,7 +3574,7 @@ impl CPU {
             | 0xDD74 | 0xDD75 | 0xDD77 | 0xFD70 | 0xFD71 | 0xFD72 | 0xFD73 | 0xFD74 | 0xFD75
             | 0xFD77 | 0xDD86 | 0xFD86 | 0xDD8E | 0xFD8E | 0xDD96 | 0xFD96 | 0xDD9E | 0xFD9E
             | 0xDDA6 | 0xFDA6 | 0xDDB6 | 0xFDB6 | 0xDDAE | 0xFDAE | 0xDDBE | 0xFDBE | 0xDD34
-            | 0xFD34 | 0xDD35 | 0xFD35 => self.reg.pc += 3,
+            | 0xFD34 | 0xDD35 | 0xFD35 | 0xDD26 | 0xDD2E | 0xFD26 | 0xFD2E => self.reg.pc += 3,
             0xDD36 | 0xFD36 | 0xDD21 | 0xFD21 | 0xED4B | 0xED5B | 0xED6B | 0xED7B | 0xDD2A
             | 0xFD2A | 0xED43 | 0xED53 | 0xED63 | 0xED73 | 0xDD22 | 0xFD22 | 0xDDCB | 0xFDCB => {
                 self.reg.pc += 4
