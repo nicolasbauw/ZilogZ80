@@ -4,7 +4,7 @@ use crate::cycles::{CYCLES, CYCLES_CB, CYCLES_DD_FD, CYCLES_ED};
 use crate::registers::Registers;
 use std::time::SystemTime;
 
-const EI_DELAY_COUNTDOWN_START: u8 = 2;
+const EI_DELAY_COUNTDOWN_START: u8 = 1;
 
 pub struct CPU {
     pub reg: Registers,
