@@ -4303,7 +4303,7 @@ impl CPU {
         self.reg.flags.c = u32::from(h) < u32::from(n) + c as u32;
         self.reg.flags.n = true;
         self.reg.flags.p = {
-            let r = (h as i16).overflowing_sub((n + c) as i16);
+            let r = (h as i16).overflowing_sub((u32::from(n) + u32::from(c)) as i16);
             r.1
         }
     }
