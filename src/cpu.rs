@@ -4300,7 +4300,7 @@ impl CPU {
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x8000 == 0x8000;
         self.reg.flags.h = (h & 0x0fff) < (n & 0x0fff) + c;
-        self.reg.flags.c = h < n + c;
+        self.reg.flags.c = u32::from(h) < u32::from(n) + c as u32;
         self.reg.flags.n = true;
         self.reg.flags.p = {
             let r = (h as i16).overflowing_sub((n + c) as i16);
