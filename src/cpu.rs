@@ -122,13 +122,16 @@ impl CPU {
             }
         };
 
-        // Non maskable interrupt requested ?
+        // Non maskable interrupt requested ? IFF1 is saved into IFF2 (RETN restores it), PC is pushed
+        // and execution restarts at 0x0066. The acknowledge cycle is 11 T-states and consumes the whole
+        // call: the first instruction of the handler is fetched by the next execute() call, not by this one.
         if self.nmi {
             self.iff2 = self.iff1;
             self.iff1 = false;
             self.interrupt_stack_push(bus);
             self.reg.pc = 0x0066;
             self.nmi = false;
+            return 11;
         }
 
         let maskable_interrupts_enabled = self.maskable_interrupts_enabled();
@@ -146,21 +149,25 @@ impl CPU {
             self.int = Some(0xFF);
         };
 
-        // Interrupt requested in interrupt mode 2 ? Push PC onto the stack, build jump address and jump to that address
+        // Interrupt requested in interrupt mode 2 ? Push PC onto the stack, build jump address and jump to that address.
+        // The acknowledge cycle is 19 T-states and consumes the whole call: the first instruction of the
+        // service routine is fetched by the next execute() call, not by this one.
         if has_pending_maskable_interrupt && self.im == 2 {
             self.interrupt_stack_push(bus);
             let addr = ((self.reg.i as u16) << 8) | (self.int.unwrap() as u16);
             self.reg.pc = bus.read_word(addr);
             self.int = None;
-            clear_int_request = true;
+            return 19;
         };
 
         // We retrieve the opcode, wether it comes from an interrupt request or normal fetch
+        let mut interrupt_acknowledge = false;
         let opcode = if maskable_interrupts_enabled {
             match self.int {
                 None => bus.read_byte(self.reg.pc),
                 Some(o) => {
                     clear_int_request = true;
+                    interrupt_acknowledge = true;
                     o
                 }
             }
@@ -168,10 +175,17 @@ impl CPU {
             bus.read_byte(self.reg.pc)
         };
 
-        let cycles = match opcode {
+        let mut cycles = match opcode {
             0xDD | 0xFD | 0xED | 0xCB => self.execute_2bytes(bus),
             _ => self.execute_1byte(bus, opcode),
         };
+
+        // In IM 0 and IM 1 the opcode comes from the interrupting device instead of memory:
+        // the M1 acknowledge cycle is lengthened by two wait states. An IM 1 acknowledge
+        // (a forced RST 38) therefore takes 11 + 2 = 13 T-states.
+        if interrupt_acknowledge {
+            cycles += 2;
+        }
 
         if clear_int_request {
             self.int = None;
@@ -1356,6 +1370,7 @@ impl CPU {
                 match self.int {
                     Some(_) => self.interrupt_stack_push(bus),
                     None => {
+                        //println!("PC before add : {:04X}", self.reg.pc);
                         self.reg.pc += 1;
                         self.interrupt_stack_push(bus);
                     }

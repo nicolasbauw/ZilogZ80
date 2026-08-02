@@ -2118,7 +2118,8 @@ fn ld_a_i_interrupt_pending_clears_parity() {
     assert_eq!(c.reg.a, 0x80);
     // P/V must be cleared when an interrupt is pending during the EI delay window.
     assert_eq!(c.flags() & PF, 0);
-    assert_eq!(c.execute(&mut b), 11);
+    // IM 0 acknowledge: RST 08 fetched from the data bus, 11 + 2 wait states.
+    assert_eq!(c.execute(&mut b), 13);
     assert_eq!(c.reg.pc, 0x0008);
 }
 
@@ -2138,7 +2139,8 @@ fn ld_a_r_interrupt_pending_clears_parity() {
     assert_eq!(c.reg.a, 0x44);
     // P/V must be cleared when an interrupt is pending during the EI delay window.
     assert_eq!(c.flags() & PF, 0);
-    assert_eq!(c.execute(&mut b), 11);
+    // IM 0 acknowledge: RST 08 fetched from the data bus, 11 + 2 wait states.
+    assert_eq!(c.execute(&mut b), 13);
     assert_eq!(c.reg.pc, 0x0008);
 }
 
@@ -5366,10 +5368,14 @@ fn int_im2() {
     c.int_request(0x02);
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 0x0008);
-    c.execute(&mut b);
-    assert_eq!(c.reg.pc, 0x1235);
+    // IM 2 acknowledge: 19 T-states, and nothing else is executed during that call.
+    assert_eq!(c.execute(&mut b), 19);
+    assert_eq!(c.reg.pc, 0x1234);
     assert_eq!(c.reg.sp, 0x1FFE);
     assert_eq!(b.read_word(0x1FFE), 0x0008);
+    // The first instruction of the service routine (a NOP here) runs on the next call.
+    assert_eq!(c.execute(&mut b), 4);
+    assert_eq!(c.reg.pc, 0x1235);
 }
 
 #[test]
@@ -5382,11 +5388,15 @@ fn nmi() {
     c.reg.sp = 0x2000;
     c.execute(&mut b);
     c.nmi_request();
-    c.execute(&mut b);
-    assert_eq!(c.reg.pc, 0x0067);
-    assert_eq!(c.reg.b, 0x0F);
+    // NMI acknowledge: 11 T-states, and nothing else is executed during that call.
+    assert_eq!(c.execute(&mut b), 11);
+    assert_eq!(c.reg.pc, 0x0066);
     assert_eq!(c.reg.sp, 0x1FFE);
     assert_eq!(b.read_word(0x1FFE), 0x0001);
+    // The first instruction of the handler runs on the next call.
+    assert_eq!(c.execute(&mut b), 4);
+    assert_eq!(c.reg.pc, 0x0067);
+    assert_eq!(c.reg.b, 0x0F);
 }
 
 // RETN: verifies that returning from NMI restores IFF1 from IFF2, re-enabling maskable interrupts.
@@ -5401,7 +5411,9 @@ fn retn() {
     c.reg.sp = 0x2000;
     c.execute(&mut b); // EI: IFF1=true, IFF2=true
     c.nmi_request();
-    // NMI fires: IFF2=true (saved), IFF1=false; RETN executes at 0x0066: IFF1=IFF2=true, returns to 0x0001
+    // NMI fires: IFF2=true (saved), IFF1=false, PC jumps to 0x0066
+    c.execute(&mut b);
+    // RETN executes at 0x0066: IFF1=IFF2=true, returns to 0x0001
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 0x0001); // returned from NMI handler
     assert_eq!(c.reg.sp, 0x2000); // stack fully restored
@@ -5461,7 +5473,8 @@ fn reti_iff_restore() {
     c.reg.sp = 0x2000;
     c.execute(&mut b); // EI: IFF1=true, IFF2=true
     c.nmi_request();
-    // NMI fires: IFF2=true (saved from IFF1), IFF1=false;
+    // NMI fires: IFF2=true (saved from IFF1), IFF1=false, PC jumps to 0x0066
+    c.execute(&mut b);
     // RETI executes at 0x0066: must set IFF1=IFF2=true, then return to 0x0001
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 0x0001);
@@ -5896,4 +5909,406 @@ fn djnz_dasm() {
         crate::dasm::dasm(&mut b, 0x0200),
         (String::from("10 FE         DJNZ $0200"), 2)
     );
+}
+
+// --- Amstrad CPC interrupt-critical sequence -------------------------------
+//
+// The following routine comes from Amstrad CPC code, where both the timing and
+// the exact semantics of the DI / EX AF,AF' / EXX / EI / EX AF,AF' / DI chain
+// are critical (the CPC raises an interrupt every 300 microseconds / 52 scanlines):
+//
+//   B941  F3        DI
+//   B942  08        EX AF,AF'
+//   B943  38 33     JR C,$B978
+//   B945  D9        EXX
+//   B946  79        LD A,C
+//   B947  37        SCF
+//   B948  FB        EI
+//   B949  08        EX AF,AF'
+//   B94A  F3        DI
+//   B94B  F5        PUSH AF
+//
+// Note that the JR C tests the carry flag of the *alternate* AF (it has just
+// been swapped in), and that the EI ... DI window is exactly one instruction
+// wide: since EI only takes effect after the instruction following it, the
+// single spot where an interrupt can be acknowledged is right after the
+// EX AF,AF' at B949, i.e. just before the DI at B94A.
+
+const CPC_SEQ_ORG: u16 = 0xB941;
+const CPC_SEQ: [u8; 11] = [
+    0xF3, // DI
+    0x08, // EX AF,AF'
+    0x38, 0x33, // JR C,$B978
+    0xD9, // EXX
+    0x79, // LD A,C
+    0x37, // SCF
+    0xFB, // EI
+    0x08, // EX AF,AF'
+    0xF3, // DI
+    0xF5, // PUSH AF
+];
+
+// Loads the sequence at B941, preceded by IM 1 / EI / NOP / NOP at B93C so that
+// maskable interrupts are already enabled (and the EI delay expired) when the
+// leading DI is reached.
+fn cpc_seq_bus() -> FlatBus {
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0xB93C, 0xED); // IM 1
+    b.write_byte(0xB93D, 0x56);
+    b.write_byte(0xB93E, 0xFB); // EI
+    b.write_byte(0xB93F, 0x00); // NOP
+    b.write_byte(0xB940, 0x00); // NOP
+    for (i, byte) in CPC_SEQ.iter().enumerate() {
+        b.write_byte(CPC_SEQ_ORG + i as u16, *byte);
+    }
+    b
+}
+
+// Runs IM 1 / EI / NOP / NOP, leaving PC on the leading DI with IFF1 set.
+fn cpc_seq_prologue(c: &mut CPU, b: &mut FlatBus) {
+    c.reg.pc = 0xB93C;
+    c.reg.sp = 0x2000;
+    for _ in 0..4 {
+        c.execute(b);
+    }
+    assert_eq!(c.reg.pc, CPC_SEQ_ORG);
+    assert!(c.iff1());
+    assert_eq!(c.im(), 1);
+}
+
+// Nominal path (carry clear in AF'): the whole sequence is executed, exchanging
+// both register banks twice and leaving interrupts disabled on exit.
+#[test]
+fn cpc_di_ex_exx_ei_sequence() {
+    let mut c = CPU::new();
+    let mut b = cpc_seq_bus();
+    cpc_seq_prologue(&mut c, &mut b);
+
+    c.reg.set_af(0x1100);
+    c.alt.set_af(0x2200); // carry clear => JR C not taken
+    c.reg.set_bc(0x1122);
+    c.reg.set_de(0x3344);
+    c.reg.set_hl(0x5566);
+    c.alt.set_bc(0x9ABC);
+    c.alt.set_de(0xDEF0);
+    c.alt.set_hl(0x1357);
+
+    // DI
+    assert_eq!(c.execute(&mut b), 4);
+    assert!(!c.iff1());
+    assert!(!c.iff2());
+    assert_eq!(c.reg.pc, 0xB942);
+
+    // EX AF,AF'
+    assert_eq!(c.execute(&mut b), 4);
+    assert_eq!(c.reg.get_af(), 0x2200);
+    assert_eq!(c.alt.get_af(), 0x1100);
+    assert_eq!(c.reg.pc, 0xB943);
+
+    // JR C,$B978 : carry comes from the AF' just swapped in => not taken (7 cycles)
+    assert_eq!(c.execute(&mut b), 7);
+    assert_eq!(c.reg.pc, 0xB945);
+
+    // EXX
+    assert_eq!(c.execute(&mut b), 4);
+    assert_eq!(c.reg.get_bc(), 0x9ABC);
+    assert_eq!(c.reg.get_de(), 0xDEF0);
+    assert_eq!(c.reg.get_hl(), 0x1357);
+    assert_eq!(c.alt.get_bc(), 0x1122);
+    assert_eq!(c.alt.get_de(), 0x3344);
+    assert_eq!(c.alt.get_hl(), 0x5566);
+    // EXX must not touch AF / AF'
+    assert_eq!(c.reg.get_af(), 0x2200);
+    assert_eq!(c.alt.get_af(), 0x1100);
+    assert_eq!(c.reg.pc, 0xB946);
+
+    // LD A,C : C is the alternate C brought in by EXX
+    assert_eq!(c.execute(&mut b), 4);
+    assert_eq!(c.reg.a, 0xBC);
+    assert_eq!(c.reg.pc, 0xB947);
+
+    // SCF
+    assert_eq!(c.execute(&mut b), 4);
+    assert_eq!(c.flags(), CF);
+    assert_eq!(c.reg.pc, 0xB948);
+
+    // EI : IFF1/IFF2 set, but interrupts are not acknowledged yet
+    assert_eq!(c.execute(&mut b), 4);
+    assert!(c.iff1());
+    assert!(c.iff2());
+    assert_eq!(c.reg.pc, 0xB949);
+
+    // EX AF,AF' : back to the caller's AF, the modified one is parked in AF'
+    assert_eq!(c.execute(&mut b), 4);
+    assert_eq!(c.reg.get_af(), 0x1100);
+    assert_eq!(c.alt.get_af(), 0xBC00 | CF as u16);
+    assert_eq!(c.reg.pc, 0xB94A);
+
+    // DI : closes the one-instruction window opened by EI
+    assert_eq!(c.execute(&mut b), 4);
+    assert!(!c.iff1());
+    assert!(!c.iff2());
+    assert_eq!(c.reg.pc, 0xB94B);
+
+    // PUSH AF : the caller's AF is the one saved
+    assert_eq!(c.execute(&mut b), 11);
+    assert_eq!(c.reg.sp, 0x1FFE);
+    assert_eq!(b.read_word(0x1FFE), 0x1100);
+    assert_eq!(c.reg.pc, 0xB94C);
+}
+
+// Branch path (carry set in AF'): the JR skips the EI, so the routine leaves
+// with interrupts still disabled by the leading DI.
+#[test]
+fn cpc_di_ex_exx_ei_sequence_jr_taken() {
+    let mut c = CPU::new();
+    let mut b = cpc_seq_bus();
+    b.write_byte(0xB978, 0x00); // NOP at the JR target
+    cpc_seq_prologue(&mut c, &mut b);
+
+    c.reg.set_af(0x1100);
+    c.alt.set_af(0x2200 | CF as u16); // carry set => JR C taken
+
+    // DI
+    assert_eq!(c.execute(&mut b), 4);
+    assert!(!c.iff1());
+
+    // EX AF,AF' brings in the alternate AF, whose carry is set
+    assert_eq!(c.execute(&mut b), 4);
+    assert_eq!(c.flags() & CF, CF);
+    assert_eq!(c.reg.pc, 0xB943);
+
+    // JR C,$B978 taken : 12 cycles
+    assert_eq!(c.execute(&mut b), 12);
+    assert_eq!(c.reg.pc, 0xB978);
+
+    // The EI at B948 has been skipped: interrupts stay disabled
+    assert!(!c.iff1());
+    assert!(!c.iff2());
+    c.int_request(0x00);
+    assert_eq!(c.execute(&mut b), 4); // NOP, no interrupt acknowledged
+    assert_eq!(c.reg.pc, 0xB979);
+    assert!(c.has_pending_int()); // still latched
+}
+
+// An interrupt raised while the sequence runs with interrupts disabled must stay
+// latched, and be acknowledged at exactly one point: after the EX AF,AF' that
+// follows the EI, i.e. instead of the DI at B94A.
+#[test]
+fn cpc_int_acknowledged_in_the_ei_di_window() {
+    let mut c = CPU::new();
+    let mut b = cpc_seq_bus();
+    cpc_seq_prologue(&mut c, &mut b);
+
+    c.reg.set_af(0x1100);
+    c.alt.set_af(0x2200); // carry clear => straight line path
+    c.alt.set_bc(0x9ABC);
+
+    // DI
+    c.execute(&mut b);
+    assert!(!c.iff1());
+
+    // The CPC raster interrupt fires while interrupts are masked.
+    c.int_request(0x00); // in IM 1 the data bus value is ignored (RST 38 is forced)
+
+    // EX AF,AF' / JR C / EXX / LD A,C / SCF / EI must all run undisturbed,
+    // the request staying latched until it can be served.
+    for expected_pc in [0xB943, 0xB945, 0xB946, 0xB947, 0xB948, 0xB949] {
+        c.execute(&mut b);
+        assert_eq!(c.reg.pc, expected_pc);
+        assert!(c.has_pending_int());
+    }
+    assert!(c.iff1()); // EI has been executed...
+
+    // ...but its effect is delayed by one instruction: the EX AF,AF' at B949 runs.
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0xB94A);
+    assert_eq!(c.reg.get_af(), 0x1100);
+    assert!(c.has_pending_int());
+
+    // Now the interrupt is acknowledged, in place of the DI at B94A:
+    // IM 1 forces a RST 38, 11 T-states plus the two wait states of the acknowledge cycle.
+    assert_eq!(c.execute(&mut b), 13);
+    assert_eq!(c.reg.pc, 0x0038);
+    assert_eq!(c.reg.sp, 0x1FFE);
+    assert_eq!(b.read_word(0x1FFE), 0xB94A); // the DI has not been executed yet
+    assert!(!c.has_pending_int());
+    // Acknowledging a maskable interrupt clears both flip-flops
+    assert!(!c.iff1());
+    assert!(!c.iff2());
+}
+
+// An interrupt raised after the closing DI must never be served: it stays
+// latched until the program re-enables interrupts.
+#[test]
+fn cpc_int_raised_after_closing_di_stays_latched() {
+    let mut c = CPU::new();
+    let mut b = cpc_seq_bus();
+    // Tail after the sequence: NOP / NOP / EI / NOP
+    b.write_byte(0xB94C, 0x00);
+    b.write_byte(0xB94D, 0x00);
+    b.write_byte(0xB94E, 0xFB);
+    b.write_byte(0xB94F, 0x00);
+    cpc_seq_prologue(&mut c, &mut b);
+
+    c.reg.set_af(0x1100);
+    c.alt.set_af(0x2200);
+    c.alt.set_bc(0x9ABC);
+
+    // Run the whole sequence up to and including the closing DI at B94A.
+    for _ in 0..9 {
+        c.execute(&mut b);
+    }
+    assert_eq!(c.reg.pc, 0xB94B);
+    assert!(!c.iff1());
+    assert!(!c.iff2());
+
+    c.int_request(0x00);
+
+    // PUSH AF, NOP, NOP: nothing is acknowledged while IFF1 is clear.
+    for expected_pc in [0xB94C, 0xB94D, 0xB94E] {
+        c.execute(&mut b);
+        assert_eq!(c.reg.pc, expected_pc);
+        assert!(c.has_pending_int());
+    }
+    assert_eq!(b.read_word(0x1FFE), 0x1100); // PUSH AF did happen
+
+    // EI at B94E: still delayed by one instruction.
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0xB94F);
+    assert!(c.iff1());
+    assert!(c.has_pending_int());
+
+    // NOP at B94F runs, then the latched request is finally served.
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0xB950);
+    assert!(c.has_pending_int());
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0x0038);
+    assert_eq!(b.read_word(0x1FFC), 0xB950);
+    assert!(!c.has_pending_int());
+}
+
+// --- Assembled interrupt programs (tests/int*.asm) -------------------------
+//
+// These three programs exercise a full round trip through an assembled binary:
+// the main loop spins on CP B / JP NZ until the interrupt service routine loads
+// A (0x0F) into B, then falls through to a RET that pops 0x0000 off the stack.
+// Reaching PC 0x0000 with the stack unwound is the success condition.
+
+// tests/int.asm, IM 0: the RST 08 opcode placed on the data bus is executed as-is.
+#[test]
+fn int_asm() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.load_bin("bin/int.bin", 0).unwrap();
+
+    // LD SP,0xFF00 / LD A,0x0F / JP start / EI / CP B / JP NZ,@loop
+    for _ in 0..6 {
+        c.execute(&mut b);
+    }
+    assert_eq!(c.reg.sp, 0xFF00);
+    assert_eq!(c.reg.a, 0x0F);
+    assert_eq!(c.reg.pc, 0x0011); // spinning on @loop
+    assert!(c.iff1());
+
+    c.int_request(0xCF); // RST 08
+
+    // Acknowledge: 11 (RST 08) + 2 wait states, return address pushed, handler at 0x0008
+    assert_eq!(c.execute(&mut b), 13);
+    assert_eq!(c.reg.pc, 0x0008);
+    assert_eq!(c.reg.sp, 0xFEFE);
+    assert_eq!(b.read_word(0xFEFE), 0x0011);
+    assert!(!c.iff1()); // acknowledging clears both flip-flops
+    assert!(!c.iff2());
+
+    c.execute(&mut b); // LD B,A
+    assert_eq!(c.reg.b, 0x0F);
+    c.execute(&mut b); // RET
+    assert_eq!(c.reg.pc, 0x0011);
+    assert_eq!(c.reg.sp, 0xFF00);
+
+    // CP B now sets Z, the loop is left and the final RET returns to 0x0000
+    c.execute(&mut b); // CP B
+    assert_eq!(c.flags() & ZF, ZF);
+    c.execute(&mut b); // JP NZ,@loop (not taken)
+    assert_eq!(c.reg.pc, 0x0015);
+    c.execute(&mut b); // RET
+    assert_eq!(c.reg.pc, 0x0000);
+    assert_eq!(c.reg.sp, 0xFF02);
+}
+
+// tests/int_im1.asm, IM 1: the vector put on the data bus is ignored, a RST 38 is
+// always forced. The program has a RST 18 handler at 0x0018 (which loads C instead
+// of B) precisely to catch an implementation that would honour the bus value.
+#[test]
+fn int_im1_asm() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.load_bin("bin/int_im1.bin", 0).unwrap();
+
+    // LD SP,0xFF00 / LD A,0x0F / JP start / IM 1 / EI / CP B / JP NZ,@loop
+    for _ in 0..7 {
+        c.execute(&mut b);
+    }
+    assert_eq!(c.im(), 1);
+    assert_eq!(c.reg.pc, 0x0053); // spinning on @loop
+    assert!(c.iff1());
+
+    c.int_request(0xDF); // RST 18: must be ignored in IM 1
+
+    assert_eq!(c.execute(&mut b), 13); // forced RST 38: 11 + 2 wait states
+    assert_eq!(c.reg.pc, 0x0038);
+    assert_eq!(b.read_word(0xFEFE), 0x0053);
+
+    c.execute(&mut b); // LD B,A
+    c.execute(&mut b); // RET
+    assert_eq!(c.reg.b, 0x0F);
+    assert_eq!(c.reg.c, 0x00); // the 0x0018 handler has not been entered
+    assert_eq!(c.reg.pc, 0x0053);
+
+    c.execute(&mut b); // CP B
+    c.execute(&mut b); // JP NZ,@loop (not taken)
+    assert_eq!(c.reg.pc, 0x0057);
+    c.execute(&mut b); // RET
+    assert_eq!(c.reg.pc, 0x0000);
+    assert_eq!(c.reg.sp, 0xFF02);
+}
+
+// tests/int_im2.asm, IM 2: I (0x01) and the bus vector (0x02) build the address of
+// the jump table entry at 0x0102, which points at the handler at 0x0106. The dummy
+// handler at 0x0038 (loading D) catches an implementation falling back to IM 1.
+#[test]
+fn int_im2_asm() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.load_bin("bin/int_im2.bin", 0).unwrap();
+
+    // LD SP,0xFF00 / LD A,0x01 / LD I,A / LD A,0x0F / JP start / IM 2 / EI / CP B / JP NZ,@loop
+    for _ in 0..9 {
+        c.execute(&mut b);
+    }
+    assert_eq!(c.im(), 2);
+    assert_eq!(c.reg.i, 0x01);
+    assert_eq!(c.reg.pc, 0x0053); // spinning on @loop
+    assert!(c.iff1());
+
+    c.int_request(0x02); // vector: table entry at (I << 8) | 0x02 = 0x0102
+
+    assert_eq!(c.execute(&mut b), 19); // IM 2 acknowledge
+    assert_eq!(c.reg.pc, 0x0106); // read from the jump table
+    assert_eq!(b.read_word(0xFEFE), 0x0053);
+
+    c.execute(&mut b); // LD B,A
+    c.execute(&mut b); // RET
+    assert_eq!(c.reg.b, 0x0F);
+    assert_eq!(c.reg.d, 0x00); // the 0x0038 handler has not been entered
+    assert_eq!(c.reg.pc, 0x0053);
+
+    c.execute(&mut b); // CP B
+    c.execute(&mut b); // JP NZ,@loop (not taken)
+    assert_eq!(c.reg.pc, 0x0057);
+    c.execute(&mut b); // RET
+    assert_eq!(c.reg.pc, 0x0000);
+    assert_eq!(c.reg.sp, 0xFF02);
 }
