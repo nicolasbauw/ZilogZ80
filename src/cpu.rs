@@ -1477,6 +1477,23 @@ impl CPU {
         cycles
     }
 
+    /// Termine une itération d'instruction à répétition (LDIR, CPIR, OTIR...).
+    ///
+    /// Si la répétition doit continuer, le PC recule de deux pour que
+    /// l'instruction soit rejouée au prochain appel : c'est exactement ce que
+    /// fait le Z80, et c'est ce qui laisse une interruption s'intercaler entre
+    /// deux itérations. Renvoie la durée de l'itération : 21 cycles quand elle
+    /// se répète, 16 pour la dernière.
+    fn repeat_block(&mut self, again: bool) -> u32 {
+        if again {
+            // Le PC sera avancé de deux en fin d'exécution : on l'annule.
+            self.reg.pc = self.reg.pc.wrapping_sub(2);
+            21
+        } else {
+            16
+        }
+    }
+
     fn execute_2bytes<B: Bus>(&mut self, bus: &mut B) -> u32 {
         let opcode = bus.read_le_word(self.reg.pc);
         let mut cycles = match opcode & 0xFF00 {
@@ -2132,20 +2149,30 @@ impl CPU {
                 self.reg.flags.n = false;
             }
 
+            // Instructions à répétition (LDIR, LDDR, CPIR, CPDR, INIR, INDR,
+            // OTIR, OTDR)
+            // -------------------------------------------------------------------------
+            // Le Z80 ne les exécute PAS d'un seul tenant : il effectue une
+            // itération, et si la condition de répétition tient encore, il
+            // recule PC de deux pour rejouer l'instruction. C'est ce qui les
+            // rend interruptibles entre deux itérations.
+            //
+            // Les dérouler entièrement dans un seul appel paraît équivalent —
+            // le nombre de cycles rendu est le même — mais fige la machine
+            // hôte pendant toute la durée : un LDIR de 16 Ko consomme 344 000
+            // cycles, soit plus de quatre trames d'un CPC, pendant lesquelles
+            // aucune interruption ne peut être acceptée. Toute musique ou
+            // logique de jeu cadencée par les interruptions prend alors du
+            // retard.
+
             // LDIR
             0xEDB0 => {
-                cycles = 16;
-                loop {
-                    self.ldi(bus);
-                    let bc = self.reg.get_bc();
-                    self.reg.flags.h = false;
-                    self.reg.flags.p = bc != 0;
-                    self.reg.flags.n = false;
-                    if bc == 0 {
-                        break;
-                    }
-                    cycles += 21;
-                }
+                self.ldi(bus);
+                let bc = self.reg.get_bc();
+                self.reg.flags.h = false;
+                self.reg.flags.p = bc != 0;
+                self.reg.flags.n = false;
+                cycles = self.repeat_block(bc != 0);
             }
 
             // LDD
@@ -2159,18 +2186,12 @@ impl CPU {
 
             // LDDR
             0xEDB8 => {
-                cycles = 16;
-                loop {
-                    self.ldd(bus);
-                    let bc = self.reg.get_bc();
-                    self.reg.flags.h = false;
-                    self.reg.flags.p = bc != 0;
-                    self.reg.flags.n = false;
-                    if bc == 0 {
-                        break;
-                    }
-                    cycles += 21;
-                }
+                self.ldd(bus);
+                let bc = self.reg.get_bc();
+                self.reg.flags.h = false;
+                self.reg.flags.p = bc != 0;
+                self.reg.flags.n = false;
+                cycles = self.repeat_block(bc != 0);
             }
 
             // CPI
@@ -2178,16 +2199,10 @@ impl CPU {
 
             // CPIR
             0xEDB1 => {
-                // Per Z80 spec: if BC is 0 before execution, the instruction loops through 64 KB (65536 iterations).
-                // Use a do-while pattern so the first iteration always executes.
-                loop {
-                    self.cpi(bus);
-                    // Stop when match found (Z=1) or BC reached 0 after decrement
-                    if self.reg.flags.z || self.reg.get_bc() == 0 {
-                        break;
-                    }
-                    cycles += 16;
-                }
+                self.cpi(bus);
+                // La répétition s'arrête sur une correspondance (Z=1) ou sur BC nul.
+                let again = !self.reg.flags.z && self.reg.get_bc() != 0;
+                cycles = self.repeat_block(again);
             }
 
             // CPD
@@ -2195,16 +2210,10 @@ impl CPU {
 
             // CPDR
             0xEDB9 => {
-                // Per Z80 spec: if BC is 0 before execution, the instruction loops through 64 KB (65536 iterations).
-                // Use a do-while pattern so the first iteration always executes.
-                loop {
-                    self.cpd(bus);
-                    // Stop when match found (Z=1) or BC reached 0 after decrement
-                    if self.reg.flags.z || self.reg.get_bc() == 0 {
-                        break;
-                    }
-                    cycles += 16;
-                }
+                self.cpd(bus);
+                // La répétition s'arrête sur une correspondance (Z=1) ou sur BC nul.
+                let again = !self.reg.flags.z && self.reg.get_bc() != 0;
+                cycles = self.repeat_block(again);
             }
 
             // 8-Bit Arithmetic Group
@@ -3691,23 +3700,15 @@ impl CPU {
 
             // INIR (0xEDB2) : INI répété jusqu'à ce que B devienne 0
             0xEDB2 => {
-                let mut cycles_spent = 0;
-                loop {
-                    let port = self.reg.get_bc();
-                    let data = bus.read_io(port);
-                    bus.write_byte(self.reg.get_hl(), data);
-                    self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
-                    self.reg.b = self.reg.b.wrapping_sub(1);
+                let port = self.reg.get_bc();
+                let data = bus.read_io(port);
+                bus.write_byte(self.reg.get_hl(), data);
+                self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
+                self.reg.b = self.reg.b.wrapping_sub(1);
 
-                    cycles_spent += 21; // 21 cycles par itération (sauf la dernière qui en fait 16)
-                    if self.reg.b == 0 {
-                        cycles_spent -= 5; // Ajustement pour la dernière boucle (16 cycles)
-                        break;
-                    }
-                }
-                self.reg.flags.z = true;
+                self.reg.flags.z = self.reg.b == 0;
                 self.reg.flags.n = true;
-                return cycles_spent; // Retourne directement les cycles consommés
+                cycles = self.repeat_block(self.reg.b != 0);
             }
 
             // IND (0xEDAA) : Lit depuis le port BC, écrit à (HL), décrémente HL, décrémente B
@@ -3724,23 +3725,15 @@ impl CPU {
 
             // INDR (0xEDBA) : IND répété jusqu'à ce que B devienne 0
             0xEDBA => {
-                let mut cycles_spent = 0;
-                loop {
-                    let port = self.reg.get_bc();
-                    let data = bus.read_io(port);
-                    bus.write_byte(self.reg.get_hl(), data);
-                    self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
-                    self.reg.b = self.reg.b.wrapping_sub(1);
+                let port = self.reg.get_bc();
+                let data = bus.read_io(port);
+                bus.write_byte(self.reg.get_hl(), data);
+                self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
+                self.reg.b = self.reg.b.wrapping_sub(1);
 
-                    cycles_spent += 21;
-                    if self.reg.b == 0 {
-                        cycles_spent -= 5;
-                        break;
-                    }
-                }
-                self.reg.flags.z = true;
+                self.reg.flags.z = self.reg.b == 0;
                 self.reg.flags.n = true;
-                return cycles_spent;
+                cycles = self.repeat_block(self.reg.b != 0);
             }
 
             // OUTI (0xEDA3) : Lit depuis (HL), décrémente B, écrit sur le port BC, incrémente HL
@@ -3757,23 +3750,15 @@ impl CPU {
 
             // OTIR (0xEDB3) : OUTI répété jusqu'à ce que B devienne 0
             0xEDB3 => {
-                let mut cycles_spent = 0;
-                loop {
-                    let data = bus.read_byte(self.reg.get_hl());
-                    self.reg.b = self.reg.b.wrapping_sub(1);
-                    let port = self.reg.get_bc();
-                    bus.write_io(port, data);
-                    self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
+                let data = bus.read_byte(self.reg.get_hl());
+                self.reg.b = self.reg.b.wrapping_sub(1);
+                let port = self.reg.get_bc();
+                bus.write_io(port, data);
+                self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
 
-                    cycles_spent += 21;
-                    if self.reg.b == 0 {
-                        cycles_spent -= 5;
-                        break;
-                    }
-                }
-                self.reg.flags.z = true;
+                self.reg.flags.z = self.reg.b == 0;
                 self.reg.flags.n = true;
-                return cycles_spent;
+                cycles = self.repeat_block(self.reg.b != 0);
             }
 
             // OUTD (0xEDAB) : Lit depuis (HL), décrémente B, écrit sur le port BC, décrémente HL
@@ -3790,23 +3775,15 @@ impl CPU {
 
             // OTDR (0xEDBB) : OUTD répété jusqu'à ce que B devienne 0
             0xEDBB => {
-                let mut cycles_spent = 0;
-                loop {
-                    let data = bus.read_byte(self.reg.get_hl());
-                    self.reg.b = self.reg.b.wrapping_sub(1);
-                    let port = self.reg.get_bc();
-                    bus.write_io(port, data);
-                    self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
+                let data = bus.read_byte(self.reg.get_hl());
+                self.reg.b = self.reg.b.wrapping_sub(1);
+                let port = self.reg.get_bc();
+                bus.write_io(port, data);
+                self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
 
-                    cycles_spent += 21;
-                    if self.reg.b == 0 {
-                        cycles_spent -= 5;
-                        break;
-                    }
-                }
-                self.reg.flags.z = true;
+                self.reg.flags.z = self.reg.b == 0;
                 self.reg.flags.n = true;
-                return cycles_spent;
+                cycles = self.repeat_block(self.reg.b != 0);
             }
 
             _ => {

@@ -27,6 +27,139 @@ const ZF: u8 = 1 << 6;
 // sign flag
 const SF: u8 = 1 << 7;
 
+/// Exécute une instruction à répétition (LDIR, CPIR, OTIR...) jusqu'à son
+/// terme, en la rejouant tant que le PC n'a pas dépassé l'opcode.
+///
+/// C'est ainsi qu'une machine réelle la voit : le Z80 n'exécute qu'une
+/// itération par instruction et recule le PC pour la rejouer, ce qui laisse
+/// une interruption s'intercaler entre deux itérations. Renvoie le total des
+/// cycles consommés.
+fn run_block(c: &mut CPU, b: &mut FlatBus) -> u32 {
+    let start = c.reg.pc;
+    let mut total = 0;
+    loop {
+        total += c.execute(b);
+        if c.reg.pc != start {
+            return total;
+        }
+    }
+}
+
+/// Durées de référence du Z80 (T-states), d'après les tables Zilog.
+///
+/// Ce test est un garde-fou : c'est lui qui a mis au jour que toute la plage
+/// IN/OUT préfixée ED était comptée pour zéro. Une durée fausse ne casse rien
+/// visiblement, elle décale seulement le temps émulé — et sur une machine où
+/// la vidéo, les interruptions et le son sont cadencés par ce temps, cela
+/// s'entend avant que cela ne se voie.
+const REFERENCE_TIMINGS: &[(&str, &[u8], u32)] = &[
+    ("NOP", &[0x00], 4),
+    ("LD A,B", &[0x78], 4),
+    ("LD A,(HL)", &[0x7E], 7),
+    ("LD (HL),A", &[0x77], 7),
+    ("INC HL", &[0x23], 6),
+    ("LD HL,nn", &[0x21, 0x34, 0x12], 10),
+    ("PUSH BC", &[0xC5], 11),
+    ("POP BC", &[0xC1], 10),
+    ("CALL nn", &[0xCD, 0x00, 0x90], 17),
+    ("RET", &[0xC9], 10),
+    ("JR d", &[0x18, 0x00], 12),
+    ("EX AF,AF'", &[0x08], 4),
+    ("EXX", &[0xD9], 4),
+    ("IN A,(n)", &[0xDB, 0x00], 11),
+    ("OUT (n),A", &[0xD3, 0x00], 11),
+    ("IN A,(C)", &[0xED, 0x78], 12),
+    ("IN B,(C)", &[0xED, 0x40], 12),
+    ("OUT (C),A", &[0xED, 0x79], 12),
+    ("OUT (C),C", &[0xED, 0x49], 12),
+    ("SBC HL,BC", &[0xED, 0x42], 15),
+    ("LD (nn),BC", &[0xED, 0x43, 0x00, 0x90], 20),
+    ("NEG", &[0xED, 0x44], 8),
+    ("IM 1", &[0xED, 0x56], 8),
+    ("LD A,R", &[0xED, 0x5F], 9),
+    ("RRD", &[0xED, 0x67], 18),
+    ("INC IX", &[0xDD, 0x23], 10),
+    ("LD L,(IX+d)", &[0xDD, 0x6E, 0x02], 19),
+    ("LD (IX+d),A", &[0xDD, 0x77, 0x02], 19),
+    ("ADD IX,DE", &[0xDD, 0x19], 15),
+    ("PUSH IX", &[0xDD, 0xE5], 15),
+    ("BIT 0,(IX+d)", &[0xDD, 0xCB, 0x00, 0x46], 20),
+    ("RES 0,B", &[0xCB, 0x80], 8),
+    ("BIT 0,(HL)", &[0xCB, 0x46], 12),
+    ("LDI", &[0xED, 0xA0], 16),
+    ("INI", &[0xED, 0xA2], 16),
+    ("OUTI", &[0xED, 0xA3], 16),
+];
+
+#[test]
+fn instruction_timings_match_the_zilog_tables() {
+    for (name, bytes, expected) in REFERENCE_TIMINGS {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        for (i, byte) in bytes.iter().enumerate() {
+            b.write_byte(i as u16, *byte);
+        }
+        assert_eq!(c.execute(&mut b), *expected, "duree de {name}");
+    }
+}
+
+/// Les instructions à répétition ne doivent pas s'exécuter d'un seul tenant :
+/// le Z80 en fait une itération, recule le PC et laisse ainsi une interruption
+/// s'intercaler. Un LDIR déroulé d'un bloc gèlerait la machine hôte pendant
+/// des dizaines de milliers de cycles.
+#[test]
+fn repeating_instructions_are_interruptible() {
+    // Les deux familles ne comptent pas sur le même registre : LDIR et
+    // consorts décomptent BC, les transferts par blocs d'I/O décomptent B.
+    const COUNT: u16 = 4;
+    let cases: &[(&[u8], bool)] = &[
+        (&[0xED, 0xB0], false), // LDIR
+        (&[0xED, 0xB8], false), // LDDR
+        (&[0xED, 0xB1], false), // CPIR (aucune correspondance)
+        (&[0xED, 0xB9], false), // CPDR
+        (&[0xED, 0xB2], true),  // INIR
+        (&[0xED, 0xBA], true),  // INDR
+        (&[0xED, 0xB3], true),  // OTIR
+        (&[0xED, 0xBB], true),  // OTDR
+    ];
+
+    for (opcode, counts_on_b) in cases {
+        let count = &COUNT;
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        b.write_byte(0x0000, opcode[0]);
+        b.write_byte(0x0001, opcode[1]);
+        c.reg.set_hl(0x4000);
+        c.reg.set_de(0x5000);
+        if *counts_on_b {
+            c.reg.b = *count as u8;
+            c.reg.c = 0x00;
+        } else {
+            c.reg.set_bc(*count);
+        }
+        c.reg.a = 0xFF; // aucune correspondance possible pour CPIR/CPDR
+
+        let mut iterations = 0;
+        let mut cycles = 0;
+        while c.reg.pc == 0x0000 {
+            cycles += c.execute(&mut b);
+            iterations += 1;
+            assert!(iterations <= 8, "{opcode:02X?} ne se termine pas");
+        }
+
+        assert_eq!(
+            iterations, *count as u32,
+            "{opcode:02X?} doit rendre la main a chaque iteration"
+        );
+        assert_eq!(c.reg.pc, 0x0002, "{opcode:02X?} doit finir par avancer");
+        assert_eq!(
+            cycles,
+            21 * (*count as u32 - 1) + 16,
+            "{opcode:02X?} : 21 cycles par iteration, 16 pour la derniere"
+        );
+    }
+}
+
 #[test]
 fn ld_r_r_asm() {
     let mut c = CPU::new();
@@ -1724,7 +1857,7 @@ fn ldir_asm() {
     for _ in 0..3 {
         c.execute(&mut b);
     }
-    c.execute(&mut b);
+    run_block(&mut c, &mut b);
     assert_eq!(0x1003, c.reg.get_hl());
     assert_eq!(0x2003, c.reg.get_de());
     assert_eq!(0x0000, c.reg.get_bc());
@@ -1747,7 +1880,7 @@ fn ldir_returns_total_cycles() {
     c.reg.set_de(0x2000);
     c.reg.set_bc(0x0003);
 
-    assert_eq!(c.execute(&mut b), 58);
+    assert_eq!(run_block(&mut c, &mut b), 58);
     assert_eq!(c.reg.pc, 0x0002);
     assert_eq!(c.reg.get_hl(), 0x1003);
     assert_eq!(c.reg.get_de(), 0x2003);
@@ -1768,7 +1901,7 @@ fn ldir_with_zero_bc_repeats_64kb() {
     c.reg.set_de(0x0000);
     c.reg.set_bc(0x0000);
 
-    assert_eq!(c.execute(&mut b), 16 + (21_u32 * 0xFFFF));
+    assert_eq!(run_block(&mut c, &mut b), 16 + (21_u32 * 0xFFFF));
     assert_eq!(c.reg.pc, 0x0002);
     assert_eq!(c.reg.get_hl(), 0x0000);
     assert_eq!(c.reg.get_de(), 0x0000);
@@ -1818,7 +1951,7 @@ fn lddr_asm() {
     for _ in 0..3 {
         c.execute(&mut b);
     }
-    c.execute(&mut b);
+    run_block(&mut c, &mut b);
     assert_eq!(0x0FFF, c.reg.get_hl());
     assert_eq!(0x1FFF, c.reg.get_de());
     assert_eq!(0x0000, c.reg.get_bc());
@@ -1841,7 +1974,7 @@ fn lddr_returns_total_cycles() {
     c.reg.set_de(0x2002);
     c.reg.set_bc(0x0003);
 
-    assert_eq!(c.execute(&mut b), 58);
+    assert_eq!(run_block(&mut c, &mut b), 58);
     assert_eq!(c.reg.pc, 0x0002);
     assert_eq!(c.reg.get_hl(), 0x0FFF);
     assert_eq!(c.reg.get_de(), 0x1FFF);
@@ -1863,7 +1996,7 @@ fn lddr_with_zero_bc_repeats_64kb() {
     c.reg.set_de(0xFFFF);
     c.reg.set_bc(0x0000);
 
-    assert_eq!(c.execute(&mut b), 16 + (21_u32 * 0xFFFF));
+    assert_eq!(run_block(&mut c, &mut b), 16 + (21_u32 * 0xFFFF));
     assert_eq!(c.reg.pc, 0x0002);
     assert_eq!(c.reg.get_hl(), 0xFFFF);
     assert_eq!(c.reg.get_de(), 0xFFFF);
@@ -1917,7 +2050,7 @@ fn cpir_asm() {
         c.execute(&mut b);
     }
 
-    c.execute(&mut b);
+    run_block(&mut c, &mut b);
     assert_eq!(0x1003, c.reg.get_hl());
     assert_eq!(0x0001, c.reg.get_bc());
     assert_eq!(c.flags(), ZF | PF | NF);
@@ -3470,7 +3603,7 @@ fn ldir() {
     b.write_byte(0x2223, 0x59);
     b.write_byte(0x1113, 0xA5);
     b.write_byte(0x2224, 0xC5);
-    c.execute(&mut b);
+    run_block(&mut c, &mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1114);
     assert_eq!(b.read_byte(0x1111), 0x88);
@@ -3518,7 +3651,7 @@ fn lddr() {
     b.write_byte(0x2224, 0x59);
     b.write_byte(0x1114, 0xA5);
     b.write_byte(0x2225, 0xC5);
-    c.execute(&mut b);
+    run_block(&mut c, &mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1111);
     assert_eq!(b.read_byte(0x1112), 0x88);
@@ -3561,7 +3694,7 @@ fn cpir() {
     b.write_byte(0x1111, 0x52);
     b.write_byte(0x1112, 0x00);
     b.write_byte(0x1113, 0xF3);
-    c.execute(&mut b);
+    run_block(&mut c, &mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1114);
     assert_eq!(c.reg.get_bc(), 4);
@@ -3599,7 +3732,7 @@ fn cpdr() {
     b.write_byte(0x1116, 0xF3);
     b.write_byte(0x1117, 0x00);
     b.write_byte(0x1118, 0x52);
-    c.execute(&mut b);
+    run_block(&mut c, &mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1115);
     assert_eq!(c.reg.get_bc(), 4);
@@ -5594,9 +5727,16 @@ fn dasm_cb() {
 
 #[test]
 fn ldir_bc_zero() {
-    // When BC = 0 prior to execution, LDIR loops through 64 KB (65536 iterations).
-    // This is documented Z80 behavior: BC wraps from 0 to 0xFFFF on the first
-    // decrement and counts down to 0. The loop completes quickly in practice.
+    // BC = 0 avant exécution : le compteur passe à 0xFFFF au premier
+    // décrément, donc l'instruction se répète (65536 itérations au total).
+    //
+    // On vérifie ici le point essentiel : après une itération, l'instruction
+    // n'est PAS terminée et le PC est resté sur son opcode pour la rejouer.
+    // C'est ce qui la rend interruptible. Le décompte complet des 65536
+    // itérations est couvert par ldir_with_zero_bc_repeats_64kb, qui copie la
+    // mémoire sur elle-même : ici le balayage finirait par écraser l'opcode,
+    // et un vrai Z80, qui le relit à chaque itération, exécuterait alors
+    // n'importe quoi.
     let mut c = CPU::new();
     let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xED);
@@ -5605,16 +5745,14 @@ fn ldir_bc_zero() {
     c.reg.set_de(0x2000);
     c.reg.set_bc(0x0000);
     b.write_byte(0x1000, 0xAB);
-    c.execute(&mut b);
-    // After 65536 iterations, BC wraps back to 0
-    assert_eq!(c.reg.get_bc(), 0x0000);
-    // HL and DE each increment 65536 times, wrapping back to their original values
-    assert_eq!(c.reg.get_hl(), 0x1000);
-    assert_eq!(c.reg.get_de(), 0x2000);
-    // The first byte was copied
-    assert_eq!(b.read_byte(0x2000), 0xAB);
-    // Flags: H=0, P=0 (BC=0), N=0
-    assert_eq!(c.flags() & (HF | PF | NF), 0);
+
+    let cycles = c.execute(&mut b);
+
+    assert_eq!(c.reg.get_bc(), 0xFFFF, "BC doit reboucler a 0xFFFF");
+    assert_eq!(c.reg.pc, 0x0000, "l'instruction doit se rejouer");
+    assert_eq!(cycles, 21, "une iteration qui se repete coute 21 cycles");
+    assert_eq!(b.read_byte(0x2000), 0xAB, "le premier octet est copie");
+    assert_eq!(c.flags() & (HF | NF), 0);
 }
 
 // CPI with no match: Z=0, S set when result is negative, H set on nibble borrow, N=1, C unchanged
@@ -5698,7 +5836,7 @@ fn cpir_bc_exhausted() {
     b.write_byte(0x1000, 0x11);
     b.write_byte(0x1001, 0x22);
     b.write_byte(0x1002, 0x33); // none equal 0xAA
-    c.execute(&mut b);
+    run_block(&mut c, &mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1003); // advanced by 3
     assert_eq!(c.reg.get_bc(), 0x00); // exhausted
@@ -5740,7 +5878,7 @@ fn cpdr_bc_exhausted() {
     b.write_byte(0x1000, 0x11);
     b.write_byte(0x1001, 0x22);
     b.write_byte(0x1002, 0x33); // none equal 0xAA
-    c.execute(&mut b);
+    run_block(&mut c, &mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x0FFF); // decremented by 3
     assert_eq!(c.reg.get_bc(), 0x00); // exhausted
