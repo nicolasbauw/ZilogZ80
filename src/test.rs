@@ -6407,3 +6407,35 @@ fn in_block_instructions_decrement_b_after_the_port_access() {
     assert_eq!(c.reg.b, 0x0F);
     let _ = &b.reads;
 }
+
+/// Le PC d'un Z80 reboucle de 0xFFFF à 0x0000 : aucune adresse ne peut faire
+/// fauter le processeur. Un programme émulé parti à la dérive doit donc mener
+/// l'émulateur n'importe où plutôt que de le faire paniquer, ce qui laisse une
+/// chance de l'observer au débogueur.
+#[test]
+fn program_counter_wraps_around_instead_of_overflowing() {
+    let mut b = FlatBus::new(0xFFFF);
+    let mut c = CPU::new();
+
+    // NOP en toute fin d'espace d'adressage.
+    b.write_byte(0xFFFF, 0x00);
+    c.reg.pc = 0xFFFF;
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0x0000);
+
+    // RST 38 (0xFF, l'octet de remplissage typique) hors contexte d'interruption :
+    // c'est ce que rencontre un programme qui saute dans de la mémoire vierge.
+    b.write_byte(0xFFFF, 0xFF);
+    c.reg.pc = 0xFFFF;
+    c.reg.sp = 0x0001;
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0x0038);
+
+    // JP nn dont l'opérande est à cheval sur la fin de l'espace d'adressage.
+    b.write_byte(0xFFFF, 0xC3);
+    b.write_byte(0x0000, 0x34);
+    b.write_byte(0x0001, 0x12);
+    c.reg.pc = 0xFFFF;
+    c.execute(&mut b);
+    assert_eq!(c.reg.pc, 0x1234);
+}
