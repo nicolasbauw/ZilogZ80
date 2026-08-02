@@ -6312,3 +6312,98 @@ fn int_im2_asm() {
     assert_eq!(c.reg.pc, 0x0000);
     assert_eq!(c.reg.sp, 0xFF02);
 }
+
+/// Les instructions de sortie par bloc décrémentent B AVANT de présenter le
+/// port sur le bus d'adresse : c'est donc B-1 qui apparaît sur A8-A15. Sur une
+/// machine dont l'octet de poids fort sélectionne le périphérique (Amstrad CPC),
+/// se tromper d'un cran envoie l'écriture au mauvais registre matériel.
+#[test]
+fn out_block_instructions_decrement_b_before_the_port_access() {
+    struct IoLog {
+        ram: [u8; 0x10000],
+        writes: Vec<(u16, u8)>,
+    }
+    impl Bus for IoLog {
+        fn read_byte(&self, a: u16) -> u8 {
+            self.ram[a as usize]
+        }
+        fn write_byte(&mut self, a: u16, v: u8) {
+            self.ram[a as usize] = v;
+        }
+        fn write_io(&mut self, port: u16, data: u8) {
+            self.writes.push((port, data));
+        }
+    }
+
+    // L'idiome de l'époque : INC B compense la décrémentation de OUTI, si bien
+    // que le port visé est bien 0xBDxx et non 0xBCxx.
+    //   LD B,0xBC / LD C,0x00 / LD HL,0x0100 / INC B / OUTI / INC B / OUTI
+    let mut b = IoLog {
+        ram: [0; 0x10000],
+        writes: Vec::new(),
+    };
+    for (i, byte) in [
+        0x06, 0xBC, 0x0E, 0x00, 0x21, 0x00, 0x01, 0x04, 0xED, 0xA3, 0x04, 0xED, 0xA3,
+    ]
+    .iter()
+    .enumerate()
+    {
+        b.ram[i] = *byte;
+    }
+    b.ram[0x0100] = 0xAA;
+    b.ram[0x0101] = 0x55;
+
+    let mut c = CPU::new();
+    for _ in 0..7 {
+        c.execute(&mut b);
+    }
+
+    assert_eq!(b.writes, vec![(0xBC00, 0xAA), (0xBC00, 0x55)]);
+    assert_eq!(c.reg.b, 0xBC);
+    assert_eq!(c.reg.get_hl(), 0x0102);
+}
+
+/// À l'inverse, les instructions d'entrée par bloc décrémentent B APRÈS l'accès
+/// et présentent donc B inchangé sur le bus d'adresse.
+#[test]
+fn in_block_instructions_decrement_b_after_the_port_access() {
+    struct IoLog {
+        ram: [u8; 0x10000],
+        reads: Vec<u16>,
+    }
+    impl Bus for IoLog {
+        fn read_byte(&self, a: u16) -> u8 {
+            self.ram[a as usize]
+        }
+        fn write_byte(&mut self, a: u16, v: u8) {
+            self.ram[a as usize] = v;
+        }
+        fn read_io(&self, port: u16) -> u8 {
+            // read_io prend &self : on ne peut pas journaliser ici, on vérifie
+            // donc la valeur lue en la faisant dépendre du port.
+            (port >> 8) as u8
+        }
+    }
+
+    // LD B,0x10 / LD C,0x00 / LD HL,0x0100 / INI
+    let mut b = IoLog {
+        ram: [0; 0x10000],
+        reads: Vec::new(),
+    };
+    for (i, byte) in [0x06, 0x10, 0x0E, 0x00, 0x21, 0x00, 0x01, 0xED, 0xA2]
+        .iter()
+        .enumerate()
+    {
+        b.ram[i] = *byte;
+    }
+
+    let mut c = CPU::new();
+    for _ in 0..4 {
+        c.execute(&mut b);
+    }
+
+    // L'octet rangé en 0x0100 est l'image du poids fort du port : B non décrémenté.
+    assert_eq!(b.ram[0x0100], 0x10);
+    assert_eq!(c.reg.b, 0x0F);
+    let _ = &b.reads;
+}

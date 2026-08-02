@@ -3441,6 +3441,11 @@ impl CPU {
             // -------------------------------------------------------------------------
             // Transferts par Blocs I/O (Opcodes INI, INIR, IND, INDR, OUTI, OTIR, OUTD, OTDR)
             // -------------------------------------------------------------------------
+            // Attention à l'asymétrie entre les deux familles : les instructions
+            // de SORTIE décrémentent B AVANT l'accès au port, donc c'est B-1 qui
+            // est présenté sur A8-A15, alors que les instructions d'ENTRÉE le
+            // décrémentent APRÈS et présentent B inchangé. C'est la raison du
+            // "INC B" qui précède systématiquement OUTI dans le code de l'époque.
 
             // INI (0xEDA2) : Lit depuis le port BC, écrit à (HL), incrémente HL, décrémente B
             0xEDA2 => {
@@ -3508,13 +3513,13 @@ impl CPU {
                 return cycles_spent;
             }
 
-            // OUTI (0xEDA3) : Lit depuis (HL), écrit sur le port BC, incrémente HL, décrémente B
+            // OUTI (0xEDA3) : Lit depuis (HL), décrémente B, écrit sur le port BC, incrémente HL
             0xEDA3 => {
                 let data = bus.read_byte(self.reg.get_hl());
+                self.reg.b = self.reg.b.wrapping_sub(1);
                 let port = self.reg.get_bc();
                 bus.write_io(port, data);
                 self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
-                self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.reg.flags.z = self.reg.b == 0;
                 self.reg.flags.n = true;
@@ -3525,10 +3530,10 @@ impl CPU {
                 let mut cycles_spent = 0;
                 loop {
                     let data = bus.read_byte(self.reg.get_hl());
+                    self.reg.b = self.reg.b.wrapping_sub(1);
                     let port = self.reg.get_bc();
                     bus.write_io(port, data);
                     self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
-                    self.reg.b = self.reg.b.wrapping_sub(1);
 
                     cycles_spent += 21;
                     if self.reg.b == 0 {
@@ -3541,13 +3546,13 @@ impl CPU {
                 return cycles_spent;
             }
 
-            // OUTD (0xEDAB) : Lit depuis (HL), écrit sur le port BC, décrémente HL, décrémente B
+            // OUTD (0xEDAB) : Lit depuis (HL), décrémente B, écrit sur le port BC, décrémente HL
             0xEDAB => {
                 let data = bus.read_byte(self.reg.get_hl());
+                self.reg.b = self.reg.b.wrapping_sub(1);
                 let port = self.reg.get_bc();
                 bus.write_io(port, data);
                 self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
-                self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.reg.flags.z = self.reg.b == 0;
                 self.reg.flags.n = true;
@@ -3558,10 +3563,10 @@ impl CPU {
                 let mut cycles_spent = 0;
                 loop {
                     let data = bus.read_byte(self.reg.get_hl());
+                    self.reg.b = self.reg.b.wrapping_sub(1);
                     let port = self.reg.get_bc();
                     bus.write_io(port, data);
                     self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
-                    self.reg.b = self.reg.b.wrapping_sub(1);
 
                     cycles_spent += 21;
                     if self.reg.b == 0 {
