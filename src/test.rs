@@ -6439,3 +6439,51 @@ fn program_counter_wraps_around_instead_of_overflowing() {
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 0x1234);
 }
+
+/// Un HALT interrompu doit reprendre APRÈS le HALT, pas dessus. Le PC reste sur
+/// l'opcode HALT pendant l'attente ; s'il n'avance pas au moment où
+/// l'interruption est acceptée, l'adresse de retour empilée est celle du HALT
+/// lui-même et le programme y retombe à chaque interruption, définitivement.
+/// C'est le mode de synchronisation trame de la plupart des jeux.
+#[test]
+fn halt_resumes_after_the_halt_instruction() {
+    let mut b = FlatBus::new(0xFFFF);
+    let mut c = CPU::new();
+
+    b.write_byte(0x00FD, 0xED); // IM 1
+    b.write_byte(0x00FE, 0x56);
+    b.write_byte(0x00FF, 0xFB); // EI
+    b.write_byte(0x0100, 0x76); // HALT
+    b.write_byte(0x0101, 0x3C); // INC A
+    b.write_byte(0x0038, 0xFB); // handler : EI
+    b.write_byte(0x0039, 0xC9); //           RET
+
+    c.reg.pc = 0x00FD;
+    c.reg.sp = 0xFF00;
+    c.execute(&mut b); // IM 1
+    c.execute(&mut b); // EI
+    assert_eq!(c.reg.pc, 0x0100);
+
+    c.execute(&mut b); // HALT
+    assert!(c.is_halted());
+    assert_eq!(c.reg.pc, 0x0100);
+
+    // Sans interruption, le CPU patiente sur place.
+    c.execute(&mut b);
+    assert!(c.is_halted());
+    assert_eq!(c.reg.pc, 0x0100);
+
+    c.int_request(0xFF);
+    c.execute(&mut b); // acquittement : RST 38
+    assert!(!c.is_halted());
+    assert_eq!(c.reg.pc, 0x0038);
+    // L'adresse empilée doit être celle de l'instruction qui SUIT le HALT.
+    assert_eq!(b.read_word(c.reg.sp), 0x0101);
+
+    c.execute(&mut b); // EI
+    c.execute(&mut b); // RET
+    assert_eq!(c.reg.pc, 0x0101);
+
+    c.execute(&mut b); // INC A : le programme a bien repris son cours
+    assert_eq!(c.reg.a, 0x01);
+}

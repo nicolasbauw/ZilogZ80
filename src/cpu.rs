@@ -117,6 +117,13 @@ impl CPU {
         if self.halt {
             if self.nmi || has_pending_maskable_interrupt {
                 self.halt = false;
+                // HALT laisse volontairement le PC sur son propre opcode tant que
+                // le CPU patiente. Il faut donc le faire avancer au moment où une
+                // interruption sort le CPU de cet état, pour que l'adresse de
+                // retour empilée soit l'instruction SUIVANTE : sinon le RET du
+                // gestionnaire ramène sur le HALT, et le programme y reste piégé
+                // indéfiniment, une interruption après l'autre.
+                self.reg.pc = self.reg.pc.wrapping_add(1);
             } else {
                 return 4;
             }
