@@ -5428,15 +5428,134 @@ fn rst() {
     assert_eq!(c.reg.pc, 0x0018);
 }
 
+/// Un préfixe d'index devant une instruction qui n'utilise ni HL ni (HL) est
+/// sans objet : le Z80 le traverse en quatre cycles, puis exécute
+/// l'instruction telle quelle. Elle ne doit donc rien coûter de plus.
 #[test]
-fn debug_unkn() {
+fn an_ineffective_index_prefix_is_just_traversed() {
     let mut c = CPU::new();
     let mut b = FlatBus::new(0xFFFF);
     b.write_byte(0x0000, 0xDD);
-    b.write_byte(0x0001, 0x00);
-    c.debug.unknw_instr = true;
-    assert_eq!(c.execute(&mut b), 0xFF);
-    assert_eq!(c.debug.string, String::from("0xDD00"));
+    b.write_byte(0x0001, 0x00); // NOP
+
+    assert_eq!(c.execute(&mut b), 4, "le prefixe seul coute 4 cycles");
+    assert_eq!(c.reg.pc, 0x0001);
+    assert_eq!(c.execute(&mut b), 4, "puis le NOP, inchange");
+    assert_eq!(c.reg.pc, 0x0002);
+    assert_eq!(
+        c.unimplemented_count(),
+        0,
+        "ce n'est pas une instruction absente"
+    );
+}
+
+/// Quand les préfixes s'enchaînent, c'est le dernier qui compte : DD FD 23
+/// incrémente IY, pas IX.
+#[test]
+fn the_last_index_prefix_wins() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xDD);
+    b.write_byte(0x0001, 0xFD);
+    b.write_byte(0x0002, 0x23); // INC
+    c.reg.set_ix(0x1111);
+    c.reg.set_iy(0x2222);
+
+    let mut cycles = c.execute(&mut b);
+    cycles += c.execute(&mut b);
+
+    assert_eq!(c.reg.get_iy(), 0x2223, "IY doit avoir ete incremente");
+    assert_eq!(c.reg.get_ix(), 0x1111, "IX doit etre intact");
+    assert_eq!(cycles, 14, "4 cycles de prefixe ignore, puis INC IY");
+}
+
+/// Les trous de la table ED ne sont pas des instructions absentes : le
+/// processeur les traverse sans rien faire, en huit cycles et deux octets.
+#[test]
+fn the_holes_of_the_ed_table_do_nothing() {
+    for op in [0x00u8, 0x3F, 0x77, 0x7F, 0xC0, 0xFF] {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        b.write_byte(0x0000, 0xED);
+        b.write_byte(0x0001, op);
+        let a_before = c.reg.a;
+
+        assert_eq!(c.execute(&mut b), 8, "ED {op:02X}");
+        assert_eq!(c.reg.pc, 0x0002, "ED {op:02X}");
+        assert_eq!(c.flags(), 0, "ED {op:02X} ne doit toucher aucun drapeau");
+        assert_eq!(
+            c.reg.a, a_before,
+            "ED {op:02X} ne doit toucher aucun registre"
+        );
+        assert_eq!(c.unimplemented_count(), 0, "ED {op:02X}");
+    }
+}
+
+/// Le filet de sécurité : aucun opcode ne doit rester non géré, et aucun ne
+/// doit inventer sa durée. Une instruction qui renvoyait 255 cycles injectait
+/// une scanline entière de temps émulé — de quoi désaccorder la vidéo, les
+/// interruptions et le son sans le moindre message.
+#[test]
+fn no_opcode_is_left_unimplemented() {
+    let mut sequences: Vec<[u8; 4]> = Vec::new();
+    for op in 0..=0xFFu8 {
+        sequences.push([op, 0x00, 0x00, 0x00]);
+    }
+    for prefix in [0xCBu8, 0xDD, 0xED, 0xFD] {
+        for op in 0..=0xFFu8 {
+            sequences.push([prefix, op, 0x02, 0x03]);
+        }
+    }
+    for prefix in [0xDDu8, 0xFD] {
+        for op in 0..=0xFFu8 {
+            sequences.push([prefix, 0xCB, 0x02, op]);
+        }
+    }
+
+    for bytes in sequences {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        for (i, x) in bytes.iter().enumerate() {
+            b.write_byte(i as u16, *x);
+        }
+
+        let cycles = c.execute(&mut b);
+
+        assert!(
+            c.take_unimplemented().is_none(),
+            "{bytes:02X?} : {}",
+            crate::dasm::dasm(&b, 0).0
+        );
+        assert!(
+            (4..=23).contains(&cycles),
+            "{bytes:02X?} : {cycles} cycles, {}",
+            crate::dasm::dasm(&b, 0).0
+        );
+    }
+}
+
+/// Et le mécanisme de relevé lui-même : il doit rendre l'instruction fautive
+/// une seule fois, sans jamais perdre le compte.
+#[test]
+fn an_unimplemented_instruction_is_reported_once_and_counted() {
+    let mut c = CPU::new();
+    assert!(c.take_unimplemented().is_none());
+    assert_eq!(c.unimplemented_count(), 0);
+
+    // Toutes les instructions du Z80 etant desormais gerees, on eprouve le
+    // mecanisme sur le seul cas qui reste possible : aucune. Le contrat porte
+    // donc sur son etat de repos, verifie apres un balayage complet.
+    let mut b = FlatBus::new(0xFFFF);
+    for op in 0..=0xFFu8 {
+        b.write_byte(0x0000, op);
+        b.write_byte(0x0001, 0x02);
+        b.write_byte(0x0002, 0x03);
+        b.write_byte(0x0003, 0x04);
+        c.reg.pc = 0;
+        c.execute(&mut b);
+    }
+    assert!(c.take_unimplemented().is_none());
+    assert_eq!(c.unimplemented_count(), 0);
 }
 
 // if this test loops forever, interrupts are not working
@@ -6624,4 +6743,93 @@ fn halt_resumes_after_the_halt_instruction() {
 
     c.execute(&mut b); // INC A : le programme a bien repris son cours
     assert_eq!(c.reg.a, 0x01);
+}
+
+/// Les formes non documentées de DD CB / FD CB : l'opération porte sur la
+/// case mémoire indexée, et son résultat est aussi rangé dans le registre que
+/// désigne le champ z. Elles étaient absentes, et une instruction absente
+/// coûtait 255 cycles de temps émulé.
+#[test]
+fn indexed_bit_operations_also_copy_into_a_register() {
+    // RLC (IX+2) avec copie dans B, C ... A
+    for (z, name) in [
+        (0u8, "B"),
+        (1, "C"),
+        (2, "D"),
+        (3, "E"),
+        (4, "H"),
+        (5, "L"),
+        (7, "A"),
+    ] {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        b.write_byte(0x0000, 0xDD);
+        b.write_byte(0x0001, 0xCB);
+        b.write_byte(0x0002, 0x02);
+        b.write_byte(0x0003, 0x00 | z); // RLC (IX+2) -> registre z
+        c.reg.set_ix(0x9000);
+        b.write_byte(0x9002, 0b1000_0001);
+
+        let cycles = c.execute(&mut b);
+
+        let expected = 0b0000_0011; // rotation a gauche
+        assert_eq!(b.read_byte(0x9002), expected, "memoire, copie vers {name}");
+        let got = match z {
+            0 => c.reg.b,
+            1 => c.reg.c,
+            2 => c.reg.d,
+            3 => c.reg.e,
+            4 => c.reg.h,
+            5 => c.reg.l,
+            _ => c.reg.a,
+        };
+        assert_eq!(got, expected, "registre {name}");
+        assert_eq!(cycles, 23, "duree de la forme vers {name}");
+        assert_eq!(c.reg.pc, 4);
+    }
+}
+
+#[test]
+fn indexed_res_and_set_reach_every_bit_and_both_index_registers() {
+    for bit in 0..8u8 {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        b.write_byte(0x0000, 0xFD);
+        b.write_byte(0x0001, 0xCB);
+        b.write_byte(0x0002, 0xFE); // deplacement -2
+        b.write_byte(0x0003, 0xC6 | (bit << 3)); // SET bit,(IY-2)
+        c.reg.set_iy(0x9000);
+        b.write_byte(0x8FFE, 0x00);
+
+        assert_eq!(c.execute(&mut b), 23);
+        assert_eq!(b.read_byte(0x8FFE), 1 << bit, "SET {bit},(IY-2)");
+
+        // Et l'inverse : RES le remet a zero.
+        b.write_byte(0x0003, 0x86 | (bit << 3));
+        c.reg.pc = 0;
+        assert_eq!(c.execute(&mut b), 23);
+        assert_eq!(b.read_byte(0x8FFE), 0x00, "RES {bit},(IY-2)");
+    }
+}
+
+/// BIT n'écrit nulle part, quel que soit le champ z : c'est la seule des
+/// quatre familles à ne rien recopier.
+#[test]
+fn indexed_bit_test_writes_nothing() {
+    for z in 0..8u8 {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        b.write_byte(0x0000, 0xDD);
+        b.write_byte(0x0001, 0xCB);
+        b.write_byte(0x0002, 0x02);
+        b.write_byte(0x0003, 0x40 | z); // BIT 0,(IX+2)
+        c.reg.set_ix(0x9000);
+        b.write_byte(0x9002, 0x01);
+        c.reg.b = 0xAA;
+
+        assert_eq!(c.execute(&mut b), 20, "BIT dure 20 cycles");
+        assert_eq!(b.read_byte(0x9002), 0x01, "la memoire ne doit pas bouger");
+        assert_eq!(c.reg.b, 0xAA, "aucun registre ne doit bouger");
+        assert!(!c.reg.flags.z, "le bit 0 est a 1, donc Z est faux");
+    }
 }

@@ -88,7 +88,9 @@ struct Fetch<'a, B: Bus + ?Sized> {
 
 impl<B: Bus + ?Sized> Fetch<'_, B> {
     fn byte(&mut self) -> u8 {
-        let b = self.bus.read_byte(self.address.wrapping_add(self.len as u16));
+        let b = self
+            .bus
+            .read_byte(self.address.wrapping_add(self.len as u16));
         self.len += 1;
         b
     }
@@ -311,9 +313,7 @@ fn decode_cb<B: Bus + ?Sized>(f: &mut Fetch<B>, index: Index) -> String {
 
     let op = f.byte();
     let (x, y, z) = (op >> 6, (op >> 3) & 7, op & 7);
-    let target = indexed
-        .clone()
-        .unwrap_or_else(|| R[z as usize].to_string());
+    let target = indexed.clone().unwrap_or_else(|| R[z as usize].to_string());
 
     let text = match x {
         0 => format!("{} {}", ROT[y as usize], target),
@@ -375,7 +375,9 @@ fn decode_ed<B: Bus + ?Sized>(f: &mut Fetch<B>) -> String {
                 }
             }
             6 => format!("IM {}", IM[y as usize]),
-            _ => ["LD I,A", "LD R,A", "LD A,I", "LD A,R", "RRD", "RLD", "NOP", "NOP"][y as usize]
+            _ => [
+                "LD I,A", "LD R,A", "LD A,I", "LD A,R", "RRD", "RLD", "NOP", "NOP",
+            ][y as usize]
                 .to_string(),
         },
         2 if z <= 3 && y >= 4 => BLI[(y - 4) as usize][z as usize].to_string(),
