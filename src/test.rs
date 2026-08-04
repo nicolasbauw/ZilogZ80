@@ -2210,15 +2210,15 @@ fn ld_a_ir_asm() {
     c.reg.r = 0x34;
     c.reg.i = 0x1;
     c.reg.flags.c = true;
-    assert_eq!(c.execute(&mut b), 4);
-    assert_eq!(c.execute(&mut b), 9);
+    assert_eq!(c.execute(&mut b), 4); // EI : 1 cycle M1, R -> 0x35
+    assert_eq!(c.execute(&mut b), 9); // LD A,I : 2 cycles M1, R -> 0x37
     assert_eq!(0x01, c.reg.a);
     assert_eq!(c.flags(), PF | CF);
-    assert_eq!(c.execute(&mut b), 4);
+    assert_eq!(c.execute(&mut b), 4); // SUB A : 1 cycle M1, R -> 0x38
     assert_eq!(0x00, c.reg.a);
     assert_eq!(c.flags(), ZF | NF);
-    assert_eq!(c.execute(&mut b), 9);
-    assert_eq!(0x34, c.reg.a);
+    assert_eq!(c.execute(&mut b), 9); // LD A,R : 2 cycles M1, R -> 0x3A puis recopie
+    assert_eq!(0x3A, c.reg.a, "0x34 + 6 cycles M1 cumules depuis le depart");
     assert_eq!(c.flags(), PF);
 }
 
@@ -2266,10 +2266,10 @@ fn ld_a_r_interrupt_pending_clears_parity() {
     b.write_byte(0x0003, 0x00); // NOP
     c.reg.r = 0x44;
     c.reg.sp = 0x2000;
-    c.execute(&mut b);
+    c.execute(&mut b); // EI : 1 cycle M1, R -> 0x45
     c.int_request(0xCF);
-    assert_eq!(c.execute(&mut b), 9);
-    assert_eq!(c.reg.a, 0x44);
+    assert_eq!(c.execute(&mut b), 9); // LD A,R : 2 cycles M1, R -> 0x47 puis recopie
+    assert_eq!(c.reg.a, 0x47, "0x44 + 3 cycles M1 cumules depuis le depart");
     // P/V must be cleared when an interrupt is pending during the EI delay window.
     assert_eq!(c.flags() & PF, 0);
     // IM 0 acknowledge: RST 08 fetched from the data bus, 11 + 2 wait states.
@@ -3095,6 +3095,97 @@ fn ld_nn_a() {
     assert_eq!(b.read_byte(0xff00), 0x56);
 }
 
+/// LD A,R lit le compteur de rafraîchissement APRÈS que sa propre recherche
+/// d'opcode l'a fait avancer : une instruction préfixée ED occupe deux cycles
+/// M1 (l'octet ED, puis l'octet 5F), donc R a déjà gagné 2 quand le composant
+/// recopie sa valeur dans A. C'est ainsi que le vrai Z80 se comporte, et
+/// Hotshot en fait un générateur pseudo-aléatoire : un R figé y bloquait tout
+/// tirage sur la même valeur.
+/// Le compteur de rafraîchissement mémoire avance à chaque cycle M1 (lecture
+/// d'un octet d'opcode), et rien d'autre ne le fait bouger. Sans cet
+/// incrément, un jeu qui s'en sert comme source d'aléa (Hotshot, pour choisir
+/// un joueur contrôlé par l'ordinateur) tire indéfiniment la même valeur.
+#[test]
+fn r_advances_by_one_for_a_plain_opcode_fetch() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0x00); // NOP
+    c.reg.r = 0x10;
+    c.execute(&mut b);
+    assert_eq!(c.reg.r, 0x11);
+}
+
+/// Un préfixe CB/ED/DD/FD est lui-même un cycle M1 : l'octet qui le suit en
+/// est un second. Les instructions préfixées avancent donc R de deux, pas
+/// d'un seul.
+#[test]
+fn r_advances_by_two_for_a_prefixed_opcode_fetch() {
+    for bytes in [[0xCBu8, 0x00], [0xED, 0x44], [0xDD, 0x21], [0xFD, 0x21]] {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        b.write_byte(0x0000, bytes[0]);
+        b.write_byte(0x0001, bytes[1]);
+        b.write_byte(0x0002, 0x00);
+        b.write_byte(0x0003, 0x00);
+        c.reg.r = 0x10;
+        c.execute(&mut b);
+        assert_eq!(c.reg.r, 0x12, "prefixe {bytes:02X?}");
+    }
+}
+
+/// Les instructions à quatre octets (DD CB d op / FD CB d op) n'avancent R
+/// que de deux, pas de trois : sur le vrai composant, le déplacement et
+/// l'octet d'opération qui suivent CB sont de simples lectures mémoire, pas
+/// des cycles M1 supplémentaires.
+#[test]
+fn r_advances_by_two_only_for_ddcb_and_fdcb() {
+    for prefix in [0xDDu8, 0xFD] {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        b.write_byte(0x0000, prefix);
+        b.write_byte(0x0001, 0xCB);
+        b.write_byte(0x0002, 0x02); // déplacement
+        b.write_byte(0x0003, 0x06); // RLC (I?+d)
+        c.reg.r = 0x10;
+        c.reg.set_ix(0x9000);
+        c.reg.set_iy(0x9000);
+        c.execute(&mut b);
+        assert_eq!(c.reg.r, 0x12, "prefixe {prefix:02X}, forme a quatre octets");
+    }
+}
+
+/// Seuls les 7 bits de poids faible comptent : l'incrément automatique
+/// reboucle sur lui-même sans jamais toucher au bit 7, qui reste ce qu'une
+/// écriture explicite (LD R,A) y a mis.
+#[test]
+fn r_auto_increment_wraps_at_seven_bits_and_keeps_bit_seven() {
+    for start in [0x7Fu8, 0xFF] {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        b.write_byte(0x0000, 0x00); // NOP
+        c.reg.r = start;
+        c.execute(&mut b);
+        assert_eq!(c.reg.r, start & 0x80, "R = {start:#04X} avant l'increment");
+    }
+}
+
+/// Le Z80 en HALT relit son propre opcode en boucle jusqu'à l'interruption :
+/// chaque tour est un vrai cycle M1, et R continue donc d'avancer même si
+/// rien d'autre ne se passe.
+#[test]
+fn r_keeps_advancing_while_halted() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0x76); // HALT
+    c.reg.r = 0x10;
+    c.execute(&mut b); // execute le HALT lui-meme (1 cycle M1)
+    assert_eq!(c.reg.r, 0x11);
+    c.execute(&mut b); // un tour d'attente supplementaire
+    assert_eq!(c.reg.r, 0x12);
+    c.execute(&mut b);
+    assert_eq!(c.reg.r, 0x13);
+}
+
 #[test]
 fn ld_a_r() {
     let mut c = CPU::new();
@@ -3104,7 +3195,7 @@ fn ld_a_r() {
     c.reg.r = 0x56;
     assert_eq!(c.execute(&mut b), 9);
     assert_eq!(c.reg.pc, 0x0002);
-    assert_eq!(c.reg.a, 0x56);
+    assert_eq!(c.reg.a, 0x58, "0x56 + 2 (les deux cycles M1 de LD A,R)");
 }
 
 #[test]

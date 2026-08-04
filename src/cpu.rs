@@ -146,6 +146,10 @@ impl CPU {
                 // indéfiniment, une interruption après l'autre.
                 self.reg.pc = self.reg.pc.wrapping_add(1);
             } else {
+                // Le Z80 en HALT relit son propre opcode en boucle en
+                // attendant l'interruption : chaque tour est un vrai cycle
+                // M1, et R avance donc même si rien d'autre ne se passe.
+                self.bump_r();
                 return 4;
             }
         };
@@ -154,6 +158,7 @@ impl CPU {
         // and execution restarts at 0x0066. The acknowledge cycle is 11 T-states and consumes the whole
         // call: the first instruction of the handler is fetched by the next execute() call, not by this one.
         if self.nmi {
+            self.bump_r();
             self.iff2 = self.iff1;
             self.iff1 = false;
             self.interrupt_stack_push(bus);
@@ -181,6 +186,7 @@ impl CPU {
         // The acknowledge cycle is 19 T-states and consumes the whole call: the first instruction of the
         // service routine is fetched by the next execute() call, not by this one.
         if has_pending_maskable_interrupt && self.im == 2 {
+            self.bump_r();
             self.interrupt_stack_push(bus);
             let addr = ((self.reg.i as u16) << 8) | (self.int.unwrap() as u16);
             self.reg.pc = bus.read_word(addr);
@@ -203,6 +209,7 @@ impl CPU {
             bus.read_byte(self.reg.pc)
         };
 
+        self.bump_r();
         let mut cycles = match opcode {
             0xDD | 0xFD | 0xED | 0xCB => self.execute_2bytes(bus),
             _ => self.execute_1byte(bus, opcode),
@@ -1517,6 +1524,12 @@ impl CPU {
     }
 
     fn execute_2bytes<B: Bus>(&mut self, bus: &mut B) -> u32 {
+        // Second cycle M1 de la forme préfixée : le composant lit l'octet
+        // qui suit CB/ED/DD/FD comme un second opcode. Les formes DD/FD CB
+        // (execute_4bytes) n'ajoutent rien de plus : sur le vrai Z80, le
+        // déplacement et l'octet final de cette forme à quatre octets sont
+        // de simples lectures mémoire, pas des cycles M1.
+        self.bump_r();
         let opcode = bus.read_le_word(self.reg.pc);
         let mut cycles = match opcode & 0xFF00 {
             0xDD00 | 0xFD00 => CYCLES_DD_FD[(opcode & 0x00FF) as usize].into(),
@@ -3904,6 +3917,16 @@ impl CPU {
             self.set_register(z, result);
         }
         23
+    }
+
+    /// Avance le registre R d'un cycle M1 (recherche d'opcode).
+    ///
+    /// Le Z80 l'incrémente à chaque octet d'opcode lu en mémoire — y compris
+    /// les octets de préfixe CB/ED/DD/FD, qui sont eux-mêmes des cycles M1.
+    /// Seuls les 7 bits de poids faible comptent : le bit 7 n'est modifié que
+    /// par une écriture explicite (LD R,A), jamais par le comptage.
+    fn bump_r(&mut self) {
+        self.reg.r = (self.reg.r & 0x80) | (self.reg.r.wrapping_add(1) & 0x7F);
     }
 
     /// Note l'instruction en cours comme non gérée, sans rien exécuter.
