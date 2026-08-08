@@ -5519,6 +5519,47 @@ fn rst() {
     assert_eq!(c.reg.pc, 0x0018);
 }
 
+/// Une interruption en attente (acceptée plus tard, une fois DI levé) ne doit
+/// pas faire croire à un RST bien réel — lu normalement en mémoire, tant que
+/// les interruptions sont masquées — qu'il a lui-même été injecté par cette
+/// interruption. `int.is_some()` veut seulement dire "une interruption
+/// attend son tour" ; ça n'a rien à voir avec l'origine de l'opcode CET
+/// appel à `execute` précis. Les confondre saute l'incrément du PC avant
+/// l'empilement, et l'adresse de retour empilée redevient celle du RST
+/// lui-même plutôt que celle de l'instruction suivante — trouvé en
+/// diagnostiquant un blocage de WEC Le Mans sous l'émulateur CPC : un far
+/// call standard (RST 18 avec adresse-lointaine en opérande, convention
+/// firmware Amstrad) exécuté juste après qu'une interruption VSYNC se soit
+/// mise en attente pendant une section DI lisait l'opérande décalé d'un
+/// octet, y compris quand ce RST venait du vrai flux d'instructions.
+#[test]
+fn a_pending_but_masked_interrupt_does_not_confuse_a_real_rst() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    c.reg.pc = 0x15B3;
+    c.reg.sp = 0x2000;
+    b.write_byte(0x15B3, 0xDF); // RST 18, un vrai, lu depuis la memoire
+    b.write_byte(0x15B4, 0x00); // l'octet qui suit (jamais execute, juste un marqueur)
+
+    // Interruption demandee mais masquee : IFF1 est faux par defaut a la
+    // creation du CPU (aucun EI execute), donc deja dans l'etat voulu.
+    assert!(!c.iff1(), "IFF1 doit etre a faux par defaut, sans EI");
+    c.int_request(0xFF);
+    assert!(c.has_pending_int(), "la demande doit rester en attente, masquee");
+
+    assert_eq!(c.execute(&mut b), 11, "un vrai RST 18, pas un acquittement");
+    assert_eq!(c.reg.pc, 0x0018);
+    assert_eq!(
+        b.read_word(c.reg.sp),
+        0x15B4,
+        "l'adresse empilee doit suivre le RST, pas le designer lui-meme"
+    );
+    assert!(
+        c.has_pending_int(),
+        "la demande d'interruption reste en attente, ce RST ne l'a pas consommee"
+    );
+}
+
 /// Un préfixe d'index devant une instruction qui n'utilise ni HL ni (HL) est
 /// sans objet : le Z80 le traverse en quatre cycles, puis exécute
 /// l'instruction telle quelle. Elle ne doit donc rien coûter de plus.

@@ -18,6 +18,14 @@ pub struct CPU {
     unimplemented: Option<Unimplemented>,
     unimplemented_count: u64,
     int: Option<u8>,
+    /// Vrai uniquement pendant l'exécution de l'opcode courant quand celui-ci
+    /// vient d'être injecté par une interruption (mode 0/1), plutôt que lu
+    /// normalement en mémoire. À ne pas confondre avec `int.is_some()`, qui
+    /// signifie seulement "une interruption est en attente" : une interruption
+    /// peut rester en attente (masquée par DI) pendant qu'une tout autre
+    /// instruction RST, bien réelle et lue en mémoire, s'exécute — les
+    /// gestionnaires RST doivent incrémenter le PC dans ce cas, pas le sauter.
+    interrupt_acknowledge: bool,
     nmi: bool,
     im: u8,
     iff1: bool,
@@ -41,6 +49,7 @@ impl CPU {
             unimplemented: None,
             unimplemented_count: 0,
             int: None,
+            interrupt_acknowledge: false,
             nmi: false,
             im: 0,
             iff1: false,
@@ -195,13 +204,13 @@ impl CPU {
         };
 
         // We retrieve the opcode, wether it comes from an interrupt request or normal fetch
-        let mut interrupt_acknowledge = false;
+        self.interrupt_acknowledge = false;
         let opcode = if maskable_interrupts_enabled {
             match self.int {
                 None => bus.read_byte(self.reg.pc),
                 Some(o) => {
                     clear_int_request = true;
-                    interrupt_acknowledge = true;
+                    self.interrupt_acknowledge = true;
                     o
                 }
             }
@@ -218,7 +227,7 @@ impl CPU {
         // In IM 0 and IM 1 the opcode comes from the interrupting device instead of memory:
         // the M1 acknowledge cycle is lengthened by two wait states. An IM 1 acknowledge
         // (a forced RST 38) therefore takes 11 + 2 = 13 T-states.
-        if interrupt_acknowledge {
+        if self.interrupt_acknowledge {
             cycles += 2;
         }
 
@@ -1347,97 +1356,88 @@ impl CPU {
 
             // RST 0
             0xC7 => {
-                match self.int {
-                    Some(_) => self.interrupt_stack_push(bus),
-                    None => {
-                        self.reg.pc = self.reg.pc.wrapping_add(1);
-                        self.interrupt_stack_push(bus);
-                    }
+                if self.interrupt_acknowledge {
+                    self.interrupt_stack_push(bus);
+                } else {
+                    self.reg.pc = self.reg.pc.wrapping_add(1);
+                    self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0000;
             }
 
             // RST 08
             0xCF => {
-                match self.int {
-                    Some(_) => self.interrupt_stack_push(bus),
-                    None => {
-                        self.reg.pc = self.reg.pc.wrapping_add(1);
-                        self.interrupt_stack_push(bus);
-                    }
+                if self.interrupt_acknowledge {
+                    self.interrupt_stack_push(bus);
+                } else {
+                    self.reg.pc = self.reg.pc.wrapping_add(1);
+                    self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0008;
             }
 
             // RST 10
             0xD7 => {
-                match self.int {
-                    Some(_) => self.interrupt_stack_push(bus),
-                    None => {
-                        self.reg.pc = self.reg.pc.wrapping_add(1);
-                        self.interrupt_stack_push(bus);
-                    }
+                if self.interrupt_acknowledge {
+                    self.interrupt_stack_push(bus);
+                } else {
+                    self.reg.pc = self.reg.pc.wrapping_add(1);
+                    self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0010;
             }
 
             // RST 18
             0xDF => {
-                match self.int {
-                    Some(_) => self.interrupt_stack_push(bus),
-                    None => {
-                        self.reg.pc = self.reg.pc.wrapping_add(1);
-                        self.interrupt_stack_push(bus);
-                    }
+                if self.interrupt_acknowledge {
+                    self.interrupt_stack_push(bus);
+                } else {
+                    self.reg.pc = self.reg.pc.wrapping_add(1);
+                    self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0018;
             }
 
             // RST 20
             0xE7 => {
-                match self.int {
-                    Some(_) => self.interrupt_stack_push(bus),
-                    None => {
-                        self.reg.pc = self.reg.pc.wrapping_add(1);
-                        self.interrupt_stack_push(bus);
-                    }
+                if self.interrupt_acknowledge {
+                    self.interrupt_stack_push(bus);
+                } else {
+                    self.reg.pc = self.reg.pc.wrapping_add(1);
+                    self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0020;
             }
 
             // RST 28
             0xEF => {
-                match self.int {
-                    Some(_) => self.interrupt_stack_push(bus),
-                    None => {
-                        self.reg.pc = self.reg.pc.wrapping_add(1);
-                        self.interrupt_stack_push(bus);
-                    }
+                if self.interrupt_acknowledge {
+                    self.interrupt_stack_push(bus);
+                } else {
+                    self.reg.pc = self.reg.pc.wrapping_add(1);
+                    self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0028;
             }
 
             // RST 30
             0xF7 => {
-                match self.int {
-                    Some(_) => self.interrupt_stack_push(bus),
-                    None => {
-                        self.reg.pc = self.reg.pc.wrapping_add(1);
-                        self.interrupt_stack_push(bus);
-                    }
+                if self.interrupt_acknowledge {
+                    self.interrupt_stack_push(bus);
+                } else {
+                    self.reg.pc = self.reg.pc.wrapping_add(1);
+                    self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0030;
             }
 
             // RST 38
             0xFF => {
-                match self.int {
-                    Some(_) => self.interrupt_stack_push(bus),
-                    None => {
-                        //println!("PC before add : {:04X}", self.reg.pc);
-                        self.reg.pc = self.reg.pc.wrapping_add(1);
-                        self.interrupt_stack_push(bus);
-                    }
+                if self.interrupt_acknowledge {
+                    self.interrupt_stack_push(bus);
+                } else {
+                    self.reg.pc = self.reg.pc.wrapping_add(1);
+                    self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0038;
             }
