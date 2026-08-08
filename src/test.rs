@@ -5545,7 +5545,10 @@ fn a_pending_but_masked_interrupt_does_not_confuse_a_real_rst() {
     // creation du CPU (aucun EI execute), donc deja dans l'etat voulu.
     assert!(!c.iff1(), "IFF1 doit etre a faux par defaut, sans EI");
     c.int_request(0xFF);
-    assert!(c.has_pending_int(), "la demande doit rester en attente, masquee");
+    assert!(
+        c.has_pending_int(),
+        "la demande doit rester en attente, masquee"
+    );
 
     assert_eq!(c.execute(&mut b), 11, "un vrai RST 18, pas un acquittement");
     assert_eq!(c.reg.pc, 0x0018);
