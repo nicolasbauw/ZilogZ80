@@ -2585,8 +2585,11 @@ impl CPU {
             }
 
             // General-Purpose Arithmetic and CPU Control Groups
-            // NEG
-            0xED44 => {
+            // NEG. Le Z80 ne decode que trois bits de ce champ : les sept
+            // autres combinaisons (0x4C, 0x54...) sont le MEME NEG, non
+            // documente mais bien reel. Les laisser au repli "trou de la
+            // table ED" en ferait des NOP silencieux.
+            0xED44 | 0xED4C | 0xED54 | 0xED5C | 0xED64 | 0xED6C | 0xED74 | 0xED7C => {
                 self.neg();
             }
 
@@ -2596,8 +2599,9 @@ impl CPU {
                 self.call_stack_pop(bus);
             }
 
-            // RETN
-            0xED45 => {
+            // RETN, et ses six doublons non documentes (meme raison que NEG
+            // ci-dessus).
+            0xED45 | 0xED55 | 0xED5D | 0xED65 | 0xED6D | 0xED75 | 0xED7D => {
                 self.iff1 = self.iff2;
                 self.call_stack_pop(bus);
             }
@@ -3377,7 +3381,6 @@ impl CPU {
                 let r = self.inc(n);
                 self.reg.iyl = r;
             }
-
             // DEC IYL
             0xFD2D => {
                 let n = self.reg.iyl;
@@ -3867,7 +3870,8 @@ impl CPU {
         }
 
         match opcode {
-            0xDDE9 | 0xFDE9 | 0xED4D | 0xED45 => {}
+            0xDDE9 | 0xFDE9 | 0xED4D | 0xED45 | 0xED55 | 0xED5D | 0xED65 | 0xED6D | 0xED75
+            | 0xED7D => {}
             0xDD46 | 0xFD46 | 0xDD4E | 0xFD4E | 0xDD56 | 0xFD56 | 0xDD5E | 0xFD5E | 0xDD66
             | 0xFD66 | 0xDD6E | 0xFD6E | 0xDD7E | 0xFD7E | 0xDD70 | 0xDD71 | 0xDD72 | 0xDD73
             | 0xDD74 | 0xDD75 | 0xDD77 | 0xFD70 | 0xFD71 | 0xFD72 | 0xFD73 | 0xFD74 | 0xFD75

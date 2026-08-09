@@ -7021,3 +7021,117 @@ fn the_undocumented_iy_half_register_inc_dec_are_decoded() {
     c.execute(&mut b);
     assert_eq!(c.reg.iyh, 0x40);
 }
+
+/// Garde-fou systematique contre la classe de bug qui a fait derailler WEC
+/// Le Mans : un opcode prefixe `DD`/`FD` que le desassembleur connait mais
+/// que l'executeur ignore.
+///
+/// Sur un vrai Z80, un prefixe `DD`/`FD` ne transforme que les instructions
+/// referencant `H`, `L` ou `(HL)` (qui deviennent `IXH/IYH`, `IXL/IYL`,
+/// `(IX+d)/(IY+d)`). Devant toute autre instruction il est sans effet : le
+/// processeur le consomme en 4 cycles puis execute l'instruction suivante
+/// normalement — c'est ce que fait notre repli, et c'est correct.
+///
+/// Le piege est donc precis : si un opcode qui touche `H`/`L`/`(HL)` tombe
+/// dans ce repli, le prefixe est avale sans rien transformer, `PC` n'avance
+/// que d'un octet, et l'octet suivant s'execute comme une instruction a
+/// part entiere — une instruction differente, sur un autre registre. C'est
+/// exactement ce qui arrivait a `FD 2C` (`INC IYL`), avale puis reexecute
+/// en `INC L`.
+///
+/// Ce test balaie donc tous les opcodes concernes et verifie qu'aucun ne
+/// retombe dans le repli. Verifie efficace : en retirant le gestionnaire de
+/// `0xFD2C`, il le signale bien.
+#[test]
+fn no_meaningful_dd_fd_opcode_falls_through_to_the_prefix_fallback() {
+    /// Vrai si l'instruction de base reference `H`, `L` ou `(HL)`, donc si
+    /// le prefixe `DD`/`FD` doit reellement la transformer.
+    fn touches_hl(op: u8) -> bool {
+        match op {
+            0x09 | 0x19 | 0x29 | 0x39 => true,        // ADD HL,rr
+            0x21 | 0x22 | 0x23 | 0x2A | 0x2B => true, // LD/INC/DEC HL
+            0x24 | 0x25 | 0x26 => true,               // INC/DEC/LD H
+            0x2C | 0x2D | 0x2E => true,               // INC/DEC/LD L
+            0x34 | 0x35 | 0x36 => true,               // INC/DEC/LD (HL)
+            0xE1 | 0xE3 | 0xE5 | 0xE9 | 0xF9 => true, // POP/EX/PUSH/JP/LD SP
+            0xCB => true,                             // prefixe des operations indexees
+            0x40..=0x7F => {
+                if op == 0x76 {
+                    return false; // HALT, pas un LD r,r'
+                }
+                let dest = (op >> 3) & 7;
+                let src = op & 7;
+                (4..=6).contains(&dest) || (4..=6).contains(&src)
+            }
+            0x80..=0xBF => (4..=6).contains(&(op & 7)),
+            _ => false,
+        }
+    }
+
+    let mut ignored: Vec<String> = Vec::new();
+    for prefix in [0xDDu8, 0xFD] {
+        for op in 0u16..=255 {
+            let op = op as u8;
+            // `JP (IX)` modifie PC volontairement ; `DDCB`/`FDCB` forment
+            // des instructions a deplacement, testees ailleurs.
+            if !touches_hl(op) || op == 0xE9 || op == 0xCB {
+                continue;
+            }
+            let mut c = CPU::new();
+            let mut b = FlatBus::new(0xFFFF);
+            let base = 0x0100u16;
+            b.write_byte(base, prefix);
+            b.write_byte(base + 1, op);
+            for k in 2..5u16 {
+                b.write_byte(base + k, 0x00);
+            }
+            c.reg.pc = base;
+            c.execute(&mut b);
+            if c.reg.pc.wrapping_sub(base) == 1 {
+                ignored.push(format!("{prefix:02X} {op:02X}"));
+            }
+        }
+    }
+
+    assert!(
+        ignored.is_empty(),
+        "ces opcodes prefixes touchent H/L/(HL) mais sont avales par le \
+         repli \"prefixe sans effet\", donc executes comme une tout autre \
+         instruction : {ignored:?}"
+    );
+}
+
+/// Le Z80 ne decode pas entierement le champ de certaines instructions `ED` :
+/// `NEG` et `RETN` ont chacun plusieurs encodages equivalents, non
+/// documentes mais bien reels. S'ils tombent dans le repli "trou de la table
+/// ED", ils deviennent des NOP silencieux — meme classe de bug que les
+/// `INC/DEC IYH/IYL` manquants, avec des symptomes tout aussi arbitraires.
+#[test]
+fn the_undocumented_neg_and_retn_duplicates_behave_like_their_originals() {
+    // Les huit encodages de NEG doivent tous nier A.
+    for op in [0x44u8, 0x4C, 0x54, 0x5C, 0x64, 0x6C, 0x74, 0x7C] {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        b.write_byte(0x0000, 0xED);
+        b.write_byte(0x0001, op);
+        c.reg.a = 0x01;
+        c.execute(&mut b);
+        assert_eq!(c.reg.a, 0xFF, "ED {op:02X} doit se comporter comme NEG");
+        assert_eq!(c.reg.pc, 2, "ED {op:02X} fait 2 octets");
+    }
+
+    // Les sept encodages de RETN doivent tous depiler l'adresse de retour
+    // et restaurer IFF1 depuis IFF2.
+    for op in [0x45u8, 0x55, 0x5D, 0x65, 0x6D, 0x75, 0x7D] {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        b.write_byte(0x0000, 0xED);
+        b.write_byte(0x0001, op);
+        c.reg.sp = 0x2000;
+        b.write_byte(0x2000, 0x34);
+        b.write_byte(0x2001, 0x12);
+        c.execute(&mut b);
+        assert_eq!(c.reg.pc, 0x1234, "ED {op:02X} doit se comporter comme RETN");
+        assert_eq!(c.reg.sp, 0x2002, "ED {op:02X} doit depiler");
+    }
+}
