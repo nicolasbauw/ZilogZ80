@@ -1,7 +1,6 @@
 # Reprise : drapeaux non documentés XF/YF (branche `z80-drapeaux-non-documentes`)
 
-**État : implémentation faite et vérifiée, 46 tests existants à recaler.
-La branche est volontairement rouge — ne pas fusionner telle quelle.**
+**État : terminé. Les 325 tests passent, la branche est verte.**
 
 ## Le problème traité
 
@@ -38,6 +37,9 @@ Appliquées avec la source correcte pour chaque famille :
 | `IN r,(C)` et `IN F,(C)` | l'octet lu |
 | `SCF`/`CCF` | `A` (comportement Zilog NMOS, celui du CPC) |
 | `RLD`/`RRD`, `LD A,I`, `LD A,R` | le résultat / la valeur chargée |
+| `CPL` | le résultat (le `A` complémenté) |
+| `RLCA`/`RRCA`/`RLA`/`RRA` | le résultat |
+| E/S par bloc (`INI`/`IND`/`OUTI`/`OUTD`…) | `B` **après** décrémentation |
 
 **Deux trous supplémentaires corrigés au passage** : `BIT` ne posait ni
 `S` ni `P/V`, alors que le Z80 pose `S` quand on teste le bit 7 et qu'il
@@ -51,22 +53,41 @@ bit 3 à 0, bit 5 à 1. Le drapeau correct est donc `SF|VF|YF` = `0xA4`
 (164). Le code produit exactement cette valeur ; l'attente historique de
 `0x84` (132) était incomplète, faute de XF/YF.
 
-## Ce qui reste à faire
+## Trous trouvés et bouchés pendant le recalage
 
-**46 tests existants échouent**, parce qu'ils figent des octets de
-drapeaux calculés à une époque où XF/YF valaient toujours zéro.
+L'audit des tests a mis au jour trois familles que le premier passage avait
+oubliées, et qui ne posaient donc toujours pas XF/YF :
 
-⚠️ **Piège à éviter absolument** : ne PAS recopier mécaniquement ce que
-produit le code dans les attentes — le test ne prouverait plus rien. Pour
-chaque assertion, dériver XF/YF de la **valeur source correcte selon le
-tableau ci-dessus**, en s'appuyant sur la valeur de registre que le test
-affirme juste avant (la plupart le font, cf. l'exemple `0xA2` plus haut).
-Attention aux familles dont la source n'est pas le résultat : `CP`,
-`BIT`, les instructions de bloc, les opérations 16 bits.
+- **`CPL`** : les deux bits viennent du résultat (le `A` complémenté) ;
+- **`RLCA`/`RRCA`/`RLA`/`RRA`** : idem, le résultat — seules les rotations
+  préfixées `CB` avaient été traitées, pas leurs quatre variantes courtes
+  sur l'accumulateur ;
+- **instructions d'E/S par bloc** (`INI`/`IND`/`OUTI`/`OUTD` et leurs
+  formes répétitives) : XF/YF viennent de `B` **après** décrémentation,
+  comme SF et ZF.
 
-Ajouter au passage des constantes `XF`/`YF` à côté des `CF`/`NF`/`VF`
-existantes en tête de `src/test.rs`, pour que les attentes restent
-lisibles.
+## Recalage des tests
+
+Les 46 tests ont été repris assertion par assertion, en dérivant XF/YF de
+la valeur source correcte selon le tableau ci-dessus — jamais en
+recopiant ce que produit le code. La valeur source est presque toujours
+déjà affirmée par le test juste au-dessus de l'assertion de drapeaux ;
+là où elle ne l'est pas (`CP`, instructions de bloc, `RLD`/`RRD`), elle a
+été retrouvée dans le binaire de test et notée en commentaire.
+
+Les constantes `XF`/`YF` sont désormais actives en tête de `src/test.rs`.
+
+Un test dédié, `undocumented_flags_rotations_cpl_block_io`, couvre les
+trois familles ci-dessus : le reste de la suite ne les exerçait sur
+aucune valeur ayant à la fois le bit 3 et le bit 5, si bien qu'un oubli
+n'y aurait rien cassé.
+
+## Reste à faire, hors périmètre de cette branche
+
+Les instructions d'E/S par bloc ne posent toujours pas leurs drapeaux
+**documentés** (S, H, P/V) — seuls Z, N et maintenant XF/YF le sont.
+C'est un manque antérieur à cette branche, et qui ne relève pas des
+drapeaux non documentés ; le test dédié le constate explicitement.
 
 ## Approximation connue, non traitée : MEMPTR/WZ
 
@@ -80,4 +101,4 @@ mis à jour par des dizaines d'instructions (`JP`, `CALL`, `RET`, `RST`,
 `DJNZ` pris, `LD A,(nn)`, `LD (nn),A`, `EX (SP),HL`, `ADD/ADC/SBC HL`,
 accès indexés `(IX+d)`, `IN`/`OUT`, instructions de bloc en répétition…),
 pour une seule manifestation observable : les deux bits de `BIT b,(HL)`.
-À traiter séparément, une fois cette branche terminée et fusionnée.
+À traiter séparément, une fois cette branche fusionnée.

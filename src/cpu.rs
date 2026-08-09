@@ -829,6 +829,7 @@ impl CPU {
                 self.reg.a = !self.reg.a;
                 self.reg.flags.h = true;
                 self.reg.flags.n = true;
+                self.reg.flags.set_undocumented_from(self.reg.a);
             }
 
             // CCF
@@ -3771,6 +3772,8 @@ impl CPU {
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.reg.flags.z = self.reg.b == 0;
+                // XF/YF viennent de B apres decrement, comme SF et ZF.
+                self.reg.flags.set_undocumented_from(self.reg.b);
                 self.reg.flags.n = true; // N est mis à 1 après les opcodes de bloc I/O
             }
 
@@ -3783,6 +3786,8 @@ impl CPU {
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.reg.flags.z = self.reg.b == 0;
+                // XF/YF viennent de B apres decrement, comme SF et ZF.
+                self.reg.flags.set_undocumented_from(self.reg.b);
                 self.reg.flags.n = true;
                 cycles = self.repeat_block(self.reg.b != 0);
             }
@@ -3796,6 +3801,8 @@ impl CPU {
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.reg.flags.z = self.reg.b == 0;
+                // XF/YF viennent de B apres decrement, comme SF et ZF.
+                self.reg.flags.set_undocumented_from(self.reg.b);
                 self.reg.flags.n = true;
             }
 
@@ -3808,6 +3815,8 @@ impl CPU {
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.reg.flags.z = self.reg.b == 0;
+                // XF/YF viennent de B apres decrement, comme SF et ZF.
+                self.reg.flags.set_undocumented_from(self.reg.b);
                 self.reg.flags.n = true;
                 cycles = self.repeat_block(self.reg.b != 0);
             }
@@ -3821,6 +3830,8 @@ impl CPU {
                 self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
 
                 self.reg.flags.z = self.reg.b == 0;
+                // XF/YF viennent de B apres decrement, comme SF et ZF.
+                self.reg.flags.set_undocumented_from(self.reg.b);
                 self.reg.flags.n = true;
             }
 
@@ -3833,6 +3844,8 @@ impl CPU {
                 self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
 
                 self.reg.flags.z = self.reg.b == 0;
+                // XF/YF viennent de B apres decrement, comme SF et ZF.
+                self.reg.flags.set_undocumented_from(self.reg.b);
                 self.reg.flags.n = true;
                 cycles = self.repeat_block(self.reg.b != 0);
             }
@@ -3846,6 +3859,8 @@ impl CPU {
                 self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
 
                 self.reg.flags.z = self.reg.b == 0;
+                // XF/YF viennent de B apres decrement, comme SF et ZF.
+                self.reg.flags.set_undocumented_from(self.reg.b);
                 self.reg.flags.n = true;
             }
 
@@ -3858,6 +3873,8 @@ impl CPU {
                 self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
 
                 self.reg.flags.z = self.reg.b == 0;
+                // XF/YF viennent de B apres decrement, comme SF et ZF.
+                self.reg.flags.set_undocumented_from(self.reg.b);
                 self.reg.flags.n = true;
                 cycles = self.repeat_block(self.reg.b != 0);
             }
@@ -4357,6 +4374,7 @@ impl CPU {
         self.reg.flags.c = bit::get(self.reg.a, 7);
         self.reg.flags.h = false;
         self.reg.flags.n = false;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.a = r;
     }
 
@@ -4383,6 +4401,7 @@ impl CPU {
         };
         self.reg.flags.h = false;
         self.reg.flags.n = false;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.a = r;
     }
 
@@ -4413,6 +4432,7 @@ impl CPU {
             true => (self.reg.a << 1) | 0x01,
             false => self.reg.a << 1,
         };
+        self.reg.flags.set_undocumented_from(r);
         self.reg.a = r;
     }
 
@@ -4443,6 +4463,7 @@ impl CPU {
             true => (self.reg.a >> 1) | 0x80,
             false => self.reg.a >> 1,
         };
+        self.reg.flags.set_undocumented_from(r);
         self.reg.a = r;
     }
 

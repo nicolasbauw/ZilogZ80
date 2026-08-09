@@ -13,13 +13,13 @@ const VF: u8 = 1 << 2;
 const PF: u8 = 1 << 2;
 
 // undocumented 'X' flag
-// const XF: u8 = 1 << 3;
+const XF: u8 = 1 << 3;
 
 // half carry flag
 const HF: u8 = 1 << 4;
 
 // undocumented 'Y' flag
-// const YF: u8 = 1 << 5;
+const YF: u8 = 1 << 5;
 
 // zero flag
 const ZF: u8 = 1 << 6;
@@ -499,12 +499,12 @@ fn add_r_asm() {
     assert_eq!(c.flags(), 0); // LD A,0x0F
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x1E, c.reg.a);
-    assert_eq!(c.flags(), HF); // ADD A,A
+    assert_eq!(c.flags(), HF | XF); // ADD A,A
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xE0, c.reg.b); // LD B,0xE0
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xFE, c.reg.a);
-    assert_eq!(c.flags(), SF); // ADD A,B
+    assert_eq!(c.flags(), SF | YF | XF); // ADD A,B
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x81, c.reg.a); // LD A,0x81
     assert_eq!(c.execute(&mut b), 7);
@@ -531,10 +531,10 @@ fn add_r_asm() {
     assert_eq!(0x33, c.reg.l); // LD L,0x33
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xF3, c.reg.a);
-    assert_eq!(c.flags(), SF); // ADD A,L
+    assert_eq!(c.flags(), SF | YF); // ADD A,L
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x37, c.reg.a);
-    assert_eq!(c.flags(), CF); // ADD A,0x44
+    assert_eq!(c.flags(), YF | CF); // ADD A,0x44
 }
 
 #[test]
@@ -558,10 +558,10 @@ fn add_i_hl_ix_iy_asm() {
     assert_eq!(c.flags(), 0); // ADD A,(HL)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0xA2, c.reg.a);
-    assert_eq!(c.flags(), SF | VF); // ADD A,(IX+1)
+    assert_eq!(c.flags(), SF | YF | VF); // ADD A,(IX+1)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0x23, c.reg.a);
-    assert_eq!(c.flags(), VF | CF); // ADD A,(IY-1)
+    assert_eq!(c.flags(), YF | VF | CF); // ADD A,(IY-1)
 }
 
 #[test]
@@ -574,12 +574,12 @@ fn add_ixh_ixl_asm() {
     assert_eq!(c.flags(), 0); // LD A,0x0F
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x1E, c.reg.a);
-    assert_eq!(c.flags(), HF); // ADD A,A
+    assert_eq!(c.flags(), HF | XF); // ADD A,A
     assert_eq!(c.execute(&mut b), 14);
     assert_eq!(0xE080, c.reg.get_ix(),); // LD  IX,0xE080
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFE, c.reg.a);
-    assert_eq!(c.flags(), SF); // ADD A,IXH
+    assert_eq!(c.flags(), SF | YF | XF); // ADD A,IXH
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x81, c.reg.a); // LD  A,0x81
     assert_eq!(c.execute(&mut b), 8);
@@ -597,12 +597,12 @@ fn add_a_iyh_iyl_asm() {
     assert_eq!(c.flags(), 0); // LD A,0x0F
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x1E, c.reg.a);
-    assert_eq!(c.flags(), HF); // ADD A,A
+    assert_eq!(c.flags(), HF | XF); // ADD A,A
     assert_eq!(c.execute(&mut b), 14);
     assert_eq!(0xE080, c.reg.get_iy()); // LD  IY,0xE080
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFE, c.reg.a);
-    assert_eq!(c.flags(), SF); // ADD A,IYH
+    assert_eq!(c.flags(), SF | YF | XF); // ADD A,IYH
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x81, c.reg.a); // LD  A,0x81
     assert_eq!(c.execute(&mut b), 8);
@@ -627,7 +627,7 @@ fn adc_a_ixh_ixl_asm() {
     assert_eq!(c.flags(), 0); // ADC A,IXH
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xA2, c.reg.a);
-    assert_eq!(c.flags(), SF | VF); // ADC A,IXL
+    assert_eq!(c.flags(), SF | YF | VF); // ADC A,IXL
 }
 
 #[test]
@@ -647,7 +647,7 @@ fn adc_a_iyh_iyl_asm() {
     assert_eq!(c.flags(), 0); // ADC A,IYH
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xA2, c.reg.a);
-    assert_eq!(c.flags(), SF | VF); // ADC A,IYL
+    assert_eq!(c.flags(), SF | YF | VF); // ADC A,IYL
 }
 
 #[test]
@@ -677,13 +677,13 @@ fn adc_r_asm() {
     assert_eq!(c.flags(), 0); // ADC A,B
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xA2, c.reg.a);
-    assert_eq!(c.flags(), SF | VF); // ADC A,C
+    assert_eq!(c.flags(), SF | YF | VF); // ADC A,C
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x23, c.reg.a);
-    assert_eq!(c.flags(), VF | CF); // ADC A,D
+    assert_eq!(c.flags(), YF | VF | CF); // ADC A,D
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x65, c.reg.a);
-    assert_eq!(c.flags(), 0); // ADC A,E
+    assert_eq!(c.flags(), YF); // ADC A,E
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xC6, c.reg.a);
     assert_eq!(c.flags(), SF | VF); // ADC A,H
@@ -692,7 +692,7 @@ fn adc_r_asm() {
     assert_eq!(c.flags(), VF | CF); // ADC A,L
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x49, c.reg.a);
-    assert_eq!(c.flags(), 0); // ADC A,0x01
+    assert_eq!(c.flags(), XF); // ADC A,0x01
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x0F, c.reg.a); // LD A,0x0F
     assert_eq!(c.execute(&mut b), 7);
@@ -724,13 +724,13 @@ fn adc_i_hl_ix_iy_asm() {
     assert_eq!(c.flags(), 0); // ADD A,(HL)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0xA2, c.reg.a);
-    assert_eq!(c.flags(), SF | VF); // ADC A,(IX+1)
+    assert_eq!(c.flags(), SF | YF | VF); // ADC A,(IX+1)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0x23, c.reg.a);
-    assert_eq!(c.flags(), VF | CF); // ADC A,(IY-1)
+    assert_eq!(c.flags(), YF | VF | CF); // ADC A,(IY-1)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0x26, c.reg.a);
-    assert_eq!(c.flags(), 0); // ADC A,(IX+3)
+    assert_eq!(c.flags(), YF); // ADC A,(IX+3)
 }
 
 #[test]
@@ -757,25 +757,25 @@ fn sub_r_asm() {
     assert_eq!(c.flags(), ZF | NF); // SUB A,A
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // SUB A,B
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF); // SUB A,B
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x07, c.reg.a);
     assert_eq!(c.flags(), NF); // SUB A,C
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xF8, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // SUB A,D
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF); // SUB A,D
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x7F, c.reg.a);
-    assert_eq!(c.flags(), HF | VF | NF); // SUB A,E
+    assert_eq!(c.flags(), YF | HF | XF | VF | NF); // SUB A,E
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xBF, c.reg.a);
-    assert_eq!(c.flags(), SF | VF | NF | CF); // SUB A,H
+    assert_eq!(c.flags(), SF | YF | XF | VF | NF | CF); // SUB A,H
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x00, c.reg.a);
     assert_eq!(c.flags(), ZF | NF); // SUB A,L
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // SUB A,0x01
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF); // SUB A,0x01
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x01, c.reg.a);
     assert_eq!(c.flags(), NF); // SUB A,0xFE
@@ -795,7 +795,7 @@ fn sub_ixh_ixl_asm() {
     assert_eq!(c.flags(), ZF | NF); // SUB A,A
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // SUB A,IXH
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF); // SUB A,IXH
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x07, c.reg.a);
     assert_eq!(c.flags(), NF); // SUB A,IXL
@@ -815,7 +815,7 @@ fn sub_iyh_iyl_asm() {
     assert_eq!(c.flags(), ZF | NF); // SUB A,A
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // SUB A,IXH
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF); // SUB A,IXH
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x07, c.reg.a);
     assert_eq!(c.flags(), NF); // SUB A,IXL
@@ -851,16 +851,16 @@ fn cp_r_asm() {
     assert_eq!(c.flags(), NF); // CP C
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x04, c.reg.a);
-    assert_eq!(c.flags(), HF | NF | CF); // CP D
+    assert_eq!(c.flags(), YF | HF | XF | NF | CF); // CP D, XF/YF depuis D = 0xFF
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x04, c.reg.a);
-    assert_eq!(c.flags(), HF | NF | CF); // CP E
+    assert_eq!(c.flags(), YF | HF | XF | NF | CF); // CP E, XF/YF depuis E = 0xAA
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x04, c.reg.a);
     assert_eq!(c.flags(), SF | VF | NF | CF); // CP H
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x04, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // CP L
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF); // CP L, XF/YF depuis L = 0x7F
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x04, c.reg.a);
     assert_eq!(c.flags(), ZF | NF); // CP 0x04
@@ -884,13 +884,13 @@ fn sub_i_hl_ix_iy_asm() {
     assert_eq!(0x00, c.reg.a); // LD A,0x00
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xBF, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // SUB A,(HL)
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF); // SUB A,(HL)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0x5E, c.reg.a);
-    assert_eq!(c.flags(), VF | NF); // SUB A,(IX+1)
+    assert_eq!(c.flags(), XF | VF | NF); // SUB A,(IX+1)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0xFD, c.reg.a);
-    assert_eq!(c.flags(), SF | NF | CF); // SUB A,(IY-2)
+    assert_eq!(c.flags(), SF | YF | XF | NF | CF); // SUB A,(IY-2)
 }
 
 #[test]
@@ -914,10 +914,10 @@ fn cp_i_hl_ix_iy_asm() {
     assert_eq!(c.flags(), ZF | NF); // CP (HL)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0x41, c.reg.a);
-    assert_eq!(c.flags(), SF | NF | CF); // CP (IX+1)
+    assert_eq!(c.flags(), SF | YF | NF | CF); // CP (IX+1), XF/YF depuis (0x1001) = 0x61
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0x41, c.reg.a);
-    assert_eq!(c.flags(), HF | NF); // CP (IY-1)
+    assert_eq!(c.flags(), YF | HF | NF); // CP (IY-1), XF/YF depuis (0x1002) = 0x22
 }
 
 #[test]
@@ -940,28 +940,28 @@ fn sbc_r_asm() {
     assert_eq!(c.flags(), ZF | NF); // SUB A,A
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // SBC A,B (0x00 - 0x01)
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF); // SBC A,B (0x00 - 0x01)
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x06, c.reg.a);
     assert_eq!(c.flags(), NF); // SBC A,C (0xFF - 0xF8 - carry)
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xF7, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // SBC A,D (0x06 - 0x0F)
+    assert_eq!(c.flags(), SF | YF | HF | NF | CF); // SBC A,D (0x06 - 0x0F)
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x7D, c.reg.a);
-    assert_eq!(c.flags(), HF | VF | NF); // SBC A,E (0xF7 - 0x79)
+    assert_eq!(c.flags(), YF | HF | XF | VF | NF); // SBC A,E (0xF7 - 0x79)
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xBD, c.reg.a);
-    assert_eq!(c.flags(), SF | VF | NF | CF); // SBC A,H (0x7D - 0xC0)
+    assert_eq!(c.flags(), SF | YF | XF | VF | NF | CF); // SBC A,H (0x7D - 0xC0)
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xFD, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // SBC A,L (0xBD - 0xBF - carry ) should set HF
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF); // SBC A,L (0xBD - 0xBF - carry ) should set HF
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xFB, c.reg.a);
-    assert_eq!(c.flags(), SF | NF); // SBC A,0x01
+    assert_eq!(c.flags(), SF | YF | XF | NF); // SBC A,0x01
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xFD, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // SBC A,0xFE
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF); // SBC A,0xFE
 }
 
 #[test]
@@ -976,7 +976,7 @@ fn sbc_ixyh_ixyl_asm() {
     assert_eq!(c.flags(), ZF | NF); // SUB A,A
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // SBC A,IXH
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF); // SBC A,IXH
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x06, c.reg.a);
     assert_eq!(c.flags(), NF); // SBC A,IXL
@@ -987,7 +987,7 @@ fn sbc_ixyh_ixyl_asm() {
     assert_eq!(c.flags(), ZF | NF); // SUB A,A
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // SBC A,IYH
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF); // SBC A,IYH
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x06, c.reg.a);
     assert_eq!(c.flags(), NF); // SBC A,IYL
@@ -1011,13 +1011,13 @@ fn sbc_i_hl_ix_iy_asm() {
     assert_eq!(0x00, c.reg.a);
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xBF, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF | CF);
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF);
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0x5D, c.reg.a);
-    assert_eq!(c.flags(), VF | NF);
+    assert_eq!(c.flags(), XF | VF | NF);
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0xFC, c.reg.a);
-    assert_eq!(c.flags(), SF | NF | CF);
+    assert_eq!(c.flags(), SF | YF | XF | NF | CF);
 }
 
 #[test]
@@ -1042,19 +1042,19 @@ fn or_r_asm() {
     assert_eq!(c.flags(), 0); // OR D
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x0F, c.reg.a);
-    assert_eq!(c.flags(), PF); // OR E
+    assert_eq!(c.flags(), XF | PF); // OR E
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x1F, c.reg.a);
-    assert_eq!(c.flags(), 0); // OR H
+    assert_eq!(c.flags(), XF); // OR H
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x3F, c.reg.a);
-    assert_eq!(c.flags(), PF); // OR L
+    assert_eq!(c.flags(), YF | XF | PF); // OR L
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x7F, c.reg.a);
-    assert_eq!(c.flags(), 0); // OR 0x40
+    assert_eq!(c.flags(), YF | XF); // OR 0x40
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | PF); // OR 0x80
+    assert_eq!(c.flags(), SF | YF | XF | PF); // OR 0x80
 }
 
 #[test]
@@ -1079,19 +1079,19 @@ fn xor_r_asm() {
     assert_eq!(c.flags(), PF); // XOR D
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x0A, c.reg.a);
-    assert_eq!(c.flags(), PF); // XOR E
+    assert_eq!(c.flags(), XF | PF); // XOR E
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x15, c.reg.a);
     assert_eq!(c.flags(), 0); // XOR H
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x2A, c.reg.a);
-    assert_eq!(c.flags(), 0); // XOR L
+    assert_eq!(c.flags(), YF | XF); // XOR L
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x55, c.reg.a);
     assert_eq!(c.flags(), PF); // XOR 0x7F
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xAA, c.reg.a);
-    assert_eq!(c.flags(), SF | PF); // XOR 0xFF
+    assert_eq!(c.flags(), SF | YF | XF | PF); // XOR 0xFF
 }
 
 #[test]
@@ -1110,13 +1110,13 @@ fn or_xor_i_hl_ix_iy_asm() {
     assert_eq!(c.flags(), PF); // OR (HL)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0x63, c.reg.a);
-    assert_eq!(c.flags(), PF); // OR (IX+1)
+    assert_eq!(c.flags(), YF | PF); // OR (IX+1)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0xE7, c.reg.a);
-    assert_eq!(c.flags(), SF | PF); // OR (IY-1)
+    assert_eq!(c.flags(), SF | YF | PF); // OR (IY-1)
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xA6, c.reg.a);
-    assert_eq!(c.flags(), SF | PF); // XOR (HL)
+    assert_eq!(c.flags(), SF | YF | PF); // XOR (HL)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0xC4, c.reg.a);
     assert_eq!(c.flags(), SF); // XOR (IX+1)
@@ -1138,46 +1138,46 @@ fn and_r_asm() {
     assert_eq!(c.flags(), HF); // AND B
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | PF); // OR 0xFF
+    assert_eq!(c.flags(), SF | YF | XF | PF); // OR 0xFF
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x03, c.reg.a);
     assert_eq!(c.flags(), HF | PF); // AND C
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | PF); // OR 0xFF
+    assert_eq!(c.flags(), SF | YF | XF | PF); // OR 0xFF
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x04, c.reg.a);
     assert_eq!(c.flags(), HF); // AND D
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | PF); // OR 0xFF
+    assert_eq!(c.flags(), SF | YF | XF | PF); // OR 0xFF
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x08, c.reg.a);
-    assert_eq!(c.flags(), HF); // AND E
+    assert_eq!(c.flags(), HF | XF); // AND E
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | PF); // OR 0xFF
+    assert_eq!(c.flags(), SF | YF | XF | PF); // OR 0xFF
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x10, c.reg.a);
     assert_eq!(c.flags(), HF); // AND H
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | PF); // OR 0xFF
+    assert_eq!(c.flags(), SF | YF | XF | PF); // OR 0xFF
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x20, c.reg.a);
-    assert_eq!(c.flags(), HF); // AND L
+    assert_eq!(c.flags(), YF | HF); // AND L
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | PF); // OR 0xFF
+    assert_eq!(c.flags(), SF | YF | XF | PF); // OR 0xFF
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x40, c.reg.a);
     assert_eq!(c.flags(), HF); // AND 0x40
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF | PF); // OR 0xFF
+    assert_eq!(c.flags(), SF | YF | XF | PF); // OR 0xFF
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xAA, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | PF); // AND 0xAA
+    assert_eq!(c.flags(), SF | YF | HF | XF | PF); // AND 0xAA
 }
 
 #[test]
@@ -1193,13 +1193,13 @@ fn and_i_hl_ix_iy_asm() {
     }
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xFE, c.reg.a);
-    assert_eq!(c.flags(), SF | HF); // AND (HL)
+    assert_eq!(c.flags(), SF | YF | HF | XF); // AND (HL)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0xAA, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | PF); // AND (IX+1)
+    assert_eq!(c.flags(), SF | YF | HF | XF | PF); // AND (IX+1)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0x88, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | PF); // AND (IY-1)
+    assert_eq!(c.flags(), SF | HF | XF | PF); // AND (IY-1)
 }
 
 #[test]
@@ -1221,19 +1221,19 @@ fn inc_dec_r_asm() {
     assert_eq!(c.flags(), ZF | HF); // INC B
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xFF, c.reg.b);
-    assert_eq!(c.flags(), SF | HF | NF); // DEC B
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF); // DEC B
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x10, c.reg.c);
     assert_eq!(c.flags(), HF); // INC C
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x0F, c.reg.c);
-    assert_eq!(c.flags(), HF | NF); // DEC C
+    assert_eq!(c.flags(), HF | XF | NF); // DEC C
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x0F, c.reg.d);
-    assert_eq!(c.flags(), 0); // INC D
+    assert_eq!(c.flags(), XF); // INC D
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x0E, c.reg.d);
-    assert_eq!(c.flags(), NF); // DEC D
+    assert_eq!(c.flags(), XF | NF); // DEC D
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x00, c.reg.a);
     assert_eq!(c.flags(), SF | HF | NF | CF); // CP 0x01   set carry flag (should be preserved)
@@ -1242,19 +1242,19 @@ fn inc_dec_r_asm() {
     assert_eq!(c.flags(), SF | HF | VF | CF); // INC E
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x7F, c.reg.e);
-    assert_eq!(c.flags(), HF | VF | NF | CF); // DEC E
+    assert_eq!(c.flags(), YF | HF | XF | VF | NF | CF); // DEC E
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x3F, c.reg.h);
-    assert_eq!(c.flags(), CF); // INC H
+    assert_eq!(c.flags(), YF | XF | CF); // INC H
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x3E, c.reg.h);
-    assert_eq!(c.flags(), NF | CF); // DEC H
+    assert_eq!(c.flags(), YF | XF | NF | CF); // DEC H
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x24, c.reg.l);
-    assert_eq!(c.flags(), CF); // INC L
+    assert_eq!(c.flags(), YF | CF); // INC L
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x23, c.reg.l);
-    assert_eq!(c.flags(), NF | CF); // DEC L
+    assert_eq!(c.flags(), YF | NF | CF); // DEC L
 }
 
 #[test]
@@ -1270,7 +1270,7 @@ fn inc_dec_i_hl_ix_iy_asm() {
     }
     assert_eq!(c.execute(&mut b), 11);
     assert_eq!(0xFF, b.read_byte(0x1000));
-    assert_eq!(c.flags(), SF | HF | NF); // DEC (HL)
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF); // DEC (HL)
     assert_eq!(c.execute(&mut b), 11);
     assert_eq!(0x00, b.read_byte(0x1000));
     assert_eq!(c.flags(), ZF | HF); // INC (HL)
@@ -1279,13 +1279,13 @@ fn inc_dec_i_hl_ix_iy_asm() {
     assert_eq!(c.flags(), HF); // INC (IX+1)
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(0x3F, b.read_byte(0x1001));
-    assert_eq!(c.flags(), HF | NF); // DEC (IX+1)
+    assert_eq!(c.flags(), YF | HF | XF | NF); // DEC (IX+1)
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(0x80, b.read_byte(0x1002));
     assert_eq!(c.flags(), SF | HF | VF); // INC (IY-1)
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(0x7F, b.read_byte(0x1002));
-    assert_eq!(c.flags(), HF | PF | NF); // DEC (IY-1)
+    assert_eq!(c.flags(), YF | HF | XF | PF | NF); // DEC (IY-1)
 }
 
 #[test]
@@ -1481,22 +1481,103 @@ fn rlca_rla_rrca_rra_asm() {
     c.reg.flags.set_from_byte(0xFF);
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xA0, c.reg.a); // LD A,0xA0
+    // Ces quatre rotations ne touchent que C, H, N et les deux drapeaux non
+    // documentes (pris sur le resultat) : S, Z et P/V restent a 1, comme les
+    // a mis le set_from_byte(0xFF) ci-dessus.
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x41, c.reg.a); // RLCA
+    assert_eq!(c.flags(), SF | ZF | PF | CF);
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x82, c.reg.a); // RLCA
+    assert_eq!(c.flags(), SF | ZF | PF);
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x41, c.reg.a); // RRCA
+    assert_eq!(c.flags(), SF | ZF | PF);
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xA0, c.reg.a); // RRCA
+    assert_eq!(c.flags(), SF | ZF | YF | PF | CF); // 0xA0 : bit 5 -> YF
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x41, c.reg.a); // RLA
+    assert_eq!(c.flags(), SF | ZF | PF | CF);
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x83, c.reg.a); // RLA
+    assert_eq!(c.flags(), SF | ZF | PF);
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x41, c.reg.a); // RRA
+    assert_eq!(c.flags(), SF | ZF | PF | CF);
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xA0, c.reg.a); // RRA
+    assert_eq!(c.flags(), SF | ZF | YF | PF | CF); // 0xA0 : bit 5 -> YF
+}
+
+/// Les familles que le reste de la suite n'exerce jamais sur une valeur ayant
+/// à la fois le bit 3 et le bit 5 : rotations de l'accumulateur, `CPL`, et les
+/// instructions d'entrée/sortie par bloc.
+///
+/// Le programme fait converger chaque famille sur 0x28 (0010_1000), seul
+/// résultat qui distingue « XF/YF recopiés » de « XF/YF laissés à zéro ».
+#[test]
+fn undocumented_flags_rotations_cpl_block_io() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    for (i, byte) in [
+        0x3E, 0x14, // LD A,0x14
+        0x07, // RLCA  -> 0x28
+        0x2F, // CPL   -> 0xD7
+        0x3E, 0x50, // LD A,0x50
+        0x0F, // RRCA  -> 0x28
+        0x3E, 0x14, // LD A,0x14
+        0xA7, // AND A : remet C a zero
+        0x17, // RLA   -> 0x28
+        0x3E, 0x50, // LD A,0x50
+        0xA7, // AND A
+        0x1F, // RRA   -> 0x28
+        0x06, 0x29, // LD B,0x29
+        0x0E, 0x00, // LD C,0x00
+        0x21, 0x00, 0x40, // LD HL,0x4000
+        0xED, 0xA2, // INI   -> B = 0x28
+    ]
+    .iter()
+    .enumerate()
+    {
+        b.write_byte(i as u16, *byte);
+    }
+
+    c.execute(&mut b); // LD A,0x14
+    c.execute(&mut b);
+    assert_eq!(0x28, c.reg.a); // RLCA
+    assert_eq!(c.flags(), YF | XF);
+    c.execute(&mut b);
+    assert_eq!(0xD7, c.reg.a); // CPL : 0xD7 n'a ni bit 3 ni bit 5
+    assert_eq!(c.flags(), HF | NF);
+
+    c.execute(&mut b); // LD A,0x50
+    c.execute(&mut b);
+    assert_eq!(0x28, c.reg.a); // RRCA
+    assert_eq!(c.flags(), YF | XF);
+
+    c.execute(&mut b); // LD A,0x14
+    c.execute(&mut b); // AND A
+    assert_eq!(c.flags(), HF | PF);
+    c.execute(&mut b);
+    assert_eq!(0x28, c.reg.a); // RLA
+    assert_eq!(c.flags(), YF | XF | PF);
+
+    c.execute(&mut b); // LD A,0x50
+    c.execute(&mut b); // AND A
+    assert_eq!(c.flags(), HF | PF);
+    c.execute(&mut b);
+    assert_eq!(0x28, c.reg.a); // RRA
+    assert_eq!(c.flags(), YF | XF | PF);
+
+    for _ in 0..3 {
+        c.execute(&mut b); // LD B,0x29 / LD C,0x00 / LD HL,0x4000
+    }
+    c.execute(&mut b);
+    assert_eq!(0x28, c.reg.b); // INI : XF/YF viennent de B apres decrement
+    // S, H et P/V restent ce que RRA les a laisses : les drapeaux documentes
+    // des instructions d'E/S par bloc ne sont pas encore emules.
+    assert_eq!(c.flags(), YF | XF | PF | NF);
 }
 
 #[test]
@@ -1510,13 +1591,13 @@ fn daa_asm() {
     assert_eq!(0x27, c.reg.b); // LD B,0x27
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x3C, c.reg.a);
-    assert_eq!(c.flags(), 0); // ADD A,B
+    assert_eq!(c.flags(), YF | XF); // ADD A,B
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x42, c.reg.a);
     assert_eq!(c.flags(), HF | PF); // DAA
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x1B, c.reg.a);
-    assert_eq!(c.flags(), HF | NF); // SUB B
+    assert_eq!(c.flags(), HF | XF | NF); // SUB B
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x15, c.reg.a);
     assert_eq!(c.flags(), NF); // DAA
@@ -1528,13 +1609,13 @@ fn daa_asm() {
     assert_eq!(c.flags(), NF); // LD B,0x15
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xA5, c.reg.a);
-    assert_eq!(c.flags(), SF); // ADD A,B
+    assert_eq!(c.flags(), SF | YF); // ADD A,B
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x05, c.reg.a);
     assert_eq!(c.flags(), PF | CF); // DAA
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xF0, c.reg.a);
-    assert_eq!(c.flags(), SF | NF | CF); // SUB B
+    assert_eq!(c.flags(), SF | YF | NF | CF); // SUB B
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x90, c.reg.a);
     assert_eq!(c.flags(), SF | PF | NF | CF); // DAA
@@ -1550,19 +1631,19 @@ fn cpl_asm() {
     assert_eq!(c.flags(), ZF | NF); // SUB A
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), ZF | HF | NF); // CPL
+    assert_eq!(c.flags(), ZF | YF | HF | XF | NF); // CPL
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x00, c.reg.a);
     assert_eq!(c.flags(), ZF | HF | NF); // CPL
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xAA, c.reg.a);
-    assert_eq!(c.flags(), SF); // ADD A,0xAA
+    assert_eq!(c.flags(), SF | YF | XF); // ADD A,0xAA
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x55, c.reg.a);
     assert_eq!(c.flags(), SF | HF | NF); // CPL
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0xAA, c.reg.a);
-    assert_eq!(c.flags(), SF | HF | NF); // CPL
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF); // CPL
 }
 
 #[test]
@@ -1581,13 +1662,13 @@ fn ccf_scf_asm() {
     assert_eq!(c.flags(), ZF | HF); // CCF
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x34, c.reg.a);
-    assert_eq!(c.flags(), HF | NF | CF); // SUB 0xCC
+    assert_eq!(c.flags(), YF | HF | NF | CF); // SUB 0xCC
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x34, c.reg.a);
-    assert_eq!(c.flags(), HF); // CCF
+    assert_eq!(c.flags(), YF | HF); // CCF
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(0x34, c.reg.a);
-    assert_eq!(c.flags(), CF); // SCF
+    assert_eq!(c.flags(), YF | CF); // SCF
 }
 
 #[test]
@@ -1776,7 +1857,7 @@ fn jp_cc_nn_asm() {
     assert_eq!(0x021D, c.reg.pc);
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0xFF, c.reg.a);
-    assert_eq!(c.flags(), SF);
+    assert_eq!(c.flags(), SF | YF | XF);
     assert_eq!(c.execute(&mut b), 10);
     assert_eq!(0x0222, c.reg.pc);
     assert_eq!(c.execute(&mut b), 10);
@@ -1831,19 +1912,19 @@ fn ldi_asm() {
     assert_eq!(0x2001, c.reg.get_de());
     assert_eq!(0x0002, c.reg.get_bc());
     assert_eq!(0x01, b.read_byte(0x2000));
-    assert_eq!(c.flags(), PF);
+    assert_eq!(c.flags(), PF); // A + n = 0x00 + 0x01 : ni bit 3 ni bit 1
     assert_eq!(c.execute(&mut b), 16);
     assert_eq!(0x1002, c.reg.get_hl());
     assert_eq!(0x2002, c.reg.get_de());
     assert_eq!(0x0001, c.reg.get_bc());
     assert_eq!(0x02, b.read_byte(0x2001));
-    assert_eq!(c.flags(), PF);
+    assert_eq!(c.flags(), YF | PF); // A + n = 0x00 + 0x02 : bit 1 -> YF
     assert_eq!(c.execute(&mut b), 16);
     assert_eq!(0x1003, c.reg.get_hl());
     assert_eq!(0x2003, c.reg.get_de());
     assert_eq!(0x0000, c.reg.get_bc());
     assert_eq!(0x03, b.read_byte(0x2002));
-    assert_eq!(c.flags(), 0);
+    assert_eq!(c.flags(), YF); // A + n = 0x00 + 0x03 : bit 1 -> YF
 }
 
 #[test]
@@ -1862,7 +1943,7 @@ fn ldir_asm() {
     assert_eq!(0x2003, c.reg.get_de());
     assert_eq!(0x0000, c.reg.get_bc());
     assert_eq!(0x03, b.read_byte(0x2002));
-    assert_eq!(c.flags(), 0);
+    assert_eq!(c.flags(), YF); // A + dernier n = 0x00 + 0x03 : bit 1 -> YF
     c.execute(&mut b);
     assert_eq!(0x33, c.reg.a);
 }
@@ -1888,7 +1969,7 @@ fn ldir_returns_total_cycles() {
     assert_eq!(b.read_byte(0x2000), 0x01);
     assert_eq!(b.read_byte(0x2001), 0x02);
     assert_eq!(b.read_byte(0x2002), 0x03);
-    assert_eq!(c.flags(), 0);
+    assert_eq!(c.flags(), YF); // A + dernier n = 0x00 + 0x03 : bit 1 -> YF
 }
 
 #[test]
@@ -1925,13 +2006,13 @@ fn ldd_asm() {
     assert_eq!(0x2001, c.reg.get_de());
     assert_eq!(0x0002, c.reg.get_bc());
     assert_eq!(0x03, b.read_byte(0x2002));
-    assert_eq!(c.flags(), PF);
+    assert_eq!(c.flags(), YF | PF); // A + n = 0x00 + 0x03 : bit 1 -> YF
     assert_eq!(c.execute(&mut b), 16);
     assert_eq!(0x1000, c.reg.get_hl());
     assert_eq!(0x2000, c.reg.get_de());
     assert_eq!(0x0001, c.reg.get_bc());
     assert_eq!(0x02, b.read_byte(0x2001));
-    assert_eq!(c.flags(), PF);
+    assert_eq!(c.flags(), YF | PF); // A + n = 0x00 + 0x02 : bit 1 -> YF
     assert_eq!(c.execute(&mut b), 16);
     assert_eq!(0x0FFF, c.reg.get_hl());
     assert_eq!(0x1FFF, c.reg.get_de());
@@ -2002,7 +2083,7 @@ fn lddr_with_zero_bc_repeats_64kb() {
     assert_eq!(c.reg.get_de(), 0xFFFF);
     assert_eq!(c.reg.get_bc(), 0x0000);
     assert_eq!(b.read_byte(0xFFFF), 0xAA);
-    assert_eq!(c.flags(), 0);
+    assert_eq!(c.flags(), XF); // A + dernier n = 0x00 + 0xED : bit 3 -> XF
 }
 
 #[test]
@@ -2020,7 +2101,7 @@ fn cpi_asm() {
     assert_eq!(c.execute(&mut b), 16);
     assert_eq!(0x1001, c.reg.get_hl());
     assert_eq!(0x0003, c.reg.get_bc());
-    assert_eq!(c.flags(), PF | NF);
+    assert_eq!(c.flags(), YF | PF | NF); // n = 0x03 - 0x01 - 0 = 0x02 : bit 1 -> YF
     let f = c.flags() | CF;
     c.reg.flags.set_from_byte(f);
     assert_eq!(c.execute(&mut b), 16);
@@ -2034,7 +2115,8 @@ fn cpi_asm() {
     assert_eq!(c.execute(&mut b), 16);
     assert_eq!(0x1004, c.reg.get_hl());
     assert_eq!(0x0000, c.reg.get_bc());
-    assert_eq!(c.flags(), SF | HF | NF | CF);
+    // n = 0x03 - 0x04 - 1 (demi-report) = 0xFE : bits 3 et 1 -> XF et YF
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF);
 }
 
 #[test]
@@ -2058,7 +2140,8 @@ fn cpir_asm() {
     c.execute(&mut b);
     assert_eq!(0x1004, c.reg.get_hl());
     assert_eq!(0x0000, c.reg.get_bc());
-    assert_eq!(c.flags(), SF | HF | NF);
+    // n = 0x03 - 0x04 - 1 (demi-report) = 0xFE : bits 3 et 1 -> XF et YF
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF);
 }
 
 #[test]
@@ -2076,7 +2159,8 @@ fn cpd_asm() {
     assert_eq!(c.execute(&mut b), 16);
     assert_eq!(0x1002, c.reg.get_hl());
     assert_eq!(0x0003, c.reg.get_bc());
-    assert_eq!(c.flags(), SF | HF | PF | NF);
+    // n = 0x03 - 0x04 - 1 (demi-report) = 0xFE : bits 3 et 1 -> XF et YF
+    assert_eq!(c.flags(), SF | YF | HF | XF | PF | NF);
     assert_eq!(c.execute(&mut b), 16);
     assert_eq!(0x1001, c.reg.get_hl());
     assert_eq!(0x0002, c.reg.get_bc());
@@ -2088,7 +2172,7 @@ fn cpd_asm() {
     assert_eq!(c.execute(&mut b), 16);
     assert_eq!(0x0FFF, c.reg.get_hl());
     assert_eq!(0x0000, c.reg.get_bc());
-    assert_eq!(c.flags(), NF);
+    assert_eq!(c.flags(), YF | NF); // n = 0x03 - 0x01 - 0 = 0x02 : bit 1 -> YF
 }
 
 #[test]
@@ -2159,7 +2243,7 @@ fn add_adc_sbc_16_asm() {
     assert_eq!(c.flags(), SF | HF | PF);
     assert_eq!(c.execute(&mut b), 15);
     assert_eq!(0x7FFF, c.reg.get_hl());
-    assert_eq!(c.flags(), NF | HF | PF);
+    assert_eq!(c.flags(), YF | HF | XF | PF | NF);
 }
 
 #[test]
@@ -2219,7 +2303,7 @@ fn ld_a_ir_asm() {
     assert_eq!(c.flags(), ZF | NF);
     assert_eq!(c.execute(&mut b), 9); // LD A,R : 2 cycles M1, R -> 0x3A puis recopie
     assert_eq!(0x3A, c.reg.a, "0x34 + 6 cycles M1 cumules depuis le depart");
-    assert_eq!(c.flags(), PF);
+    assert_eq!(c.flags(), YF | XF | PF);
 }
 
 #[test]
@@ -2293,10 +2377,10 @@ fn rlc_rl_rrc_rr_r_asm() {
     assert_eq!(c.flags(), CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFF, c.reg.b);
-    assert_eq!(c.flags(), SF | PF | CF);
+    assert_eq!(c.flags(), SF | YF | XF | PF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFF, c.reg.b);
-    assert_eq!(c.flags(), SF | PF | CF);
+    assert_eq!(c.flags(), SF | YF | XF | PF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x06, c.reg.c);
     assert_eq!(c.flags(), PF);
@@ -2305,28 +2389,28 @@ fn rlc_rl_rrc_rr_r_asm() {
     assert_eq!(c.flags(), PF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFD, c.reg.d);
-    assert_eq!(c.flags(), SF | CF);
+    assert_eq!(c.flags(), SF | YF | XF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFE, c.reg.d);
-    assert_eq!(c.flags(), SF | CF);
+    assert_eq!(c.flags(), SF | YF | XF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x88, c.reg.e);
-    assert_eq!(c.flags(), SF | PF | CF);
+    assert_eq!(c.flags(), SF | XF | PF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x11, c.reg.e);
     assert_eq!(c.flags(), PF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x7E, c.reg.h);
-    assert_eq!(c.flags(), PF);
+    assert_eq!(c.flags(), YF | XF | PF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x3F, c.reg.h);
-    assert_eq!(c.flags(), PF);
+    assert_eq!(c.flags(), YF | XF | PF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xE0, c.reg.l);
-    assert_eq!(c.flags(), SF);
+    assert_eq!(c.flags(), SF | YF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x70, c.reg.l);
-    assert_eq!(c.flags(), 0);
+    assert_eq!(c.flags(), YF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x00, c.reg.a);
     assert_eq!(c.flags(), ZF | PF | CF);
@@ -2335,10 +2419,10 @@ fn rlc_rl_rrc_rr_r_asm() {
     assert_eq!(c.flags(), 0);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x7F, c.reg.b);
-    assert_eq!(c.flags(), CF);
+    assert_eq!(c.flags(), YF | XF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFF, c.reg.b);
-    assert_eq!(c.flags(), SF | PF);
+    assert_eq!(c.flags(), SF | YF | XF | PF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x06, c.reg.c);
     assert_eq!(c.flags(), PF);
@@ -2347,28 +2431,28 @@ fn rlc_rl_rrc_rr_r_asm() {
     assert_eq!(c.flags(), PF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFC, c.reg.d);
-    assert_eq!(c.flags(), SF | PF | CF);
+    assert_eq!(c.flags(), SF | YF | XF | PF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFE, c.reg.d);
-    assert_eq!(c.flags(), SF);
+    assert_eq!(c.flags(), SF | YF | XF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x08, c.reg.e);
-    assert_eq!(c.flags(), CF);
+    assert_eq!(c.flags(), XF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x11, c.reg.e);
     assert_eq!(c.flags(), PF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x7E, c.reg.h);
-    assert_eq!(c.flags(), PF);
+    assert_eq!(c.flags(), YF | XF | PF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x3F, c.reg.h);
-    assert_eq!(c.flags(), PF);
+    assert_eq!(c.flags(), YF | XF | PF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xE0, c.reg.l);
-    assert_eq!(c.flags(), SF);
+    assert_eq!(c.flags(), SF | YF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x70, c.reg.l);
-    assert_eq!(c.flags(), 0);
+    assert_eq!(c.flags(), YF);
 }
 
 #[test]
@@ -2394,17 +2478,17 @@ fn rrc_rlc_rr_rl_i_hl_ix_iy_asm() {
     assert_eq!(0x01, c.reg.a); // LD A,(HL)
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(0xFF, b.read_byte(0x1001));
-    assert_eq!(c.flags(), SF | PF | CF); // RRC (IX+1)
+    assert_eq!(c.flags(), SF | YF | XF | PF | CF); // RRC (IX+1)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0xFF, c.reg.a); // LD A,(IX+1)
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(0xFF, b.read_byte(0x1001));
-    assert_eq!(c.flags(), SF | PF | CF); // RLC (IX+1)
+    assert_eq!(c.flags(), SF | YF | XF | PF | CF); // RLC (IX+1)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0xFF, c.reg.a); // LD A,(IX+1)
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(0x88, b.read_byte(0x1002));
-    assert_eq!(c.flags(), SF | PF | CF); // RRC (IY-1)
+    assert_eq!(c.flags(), SF | XF | PF | CF); // RRC (IY-1)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0x88, c.reg.a); // LD A,(IY-1)
     assert_eq!(c.execute(&mut b), 23);
@@ -2424,17 +2508,17 @@ fn rrc_rlc_rr_rl_i_hl_ix_iy_asm() {
     assert_eq!(0x01, c.reg.a); // LD A,(HL)
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(0xFF, b.read_byte(0x1001));
-    assert_eq!(c.flags(), SF | PF | CF); // RR (IX+1)
+    assert_eq!(c.flags(), SF | YF | XF | PF | CF); // RR (IX+1)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0xFF, c.reg.a); // LD A,(IX+1)
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(0xFF, b.read_byte(0x1001));
-    assert_eq!(c.flags(), SF | PF | CF); // RL (IX+1)
+    assert_eq!(c.flags(), SF | YF | XF | PF | CF); // RL (IX+1)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0xFF, c.reg.a); // LD A,(IX+1)
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(0x23, b.read_byte(0x1002));
-    assert_eq!(c.flags(), 0); // RL (IY-1)
+    assert_eq!(c.flags(), YF); // RL (IY-1)
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(0x23, c.reg.a); // LD A,(IY-1)
     assert_eq!(c.execute(&mut b), 23);
@@ -2463,13 +2547,13 @@ fn sla_r_asm() {
     assert_eq!(c.flags(), CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFC, c.reg.d);
-    assert_eq!(c.flags(), SF | PF | CF);
+    assert_eq!(c.flags(), SF | YF | XF | PF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFE, c.reg.e);
-    assert_eq!(c.flags(), SF);
+    assert_eq!(c.flags(), SF | YF | XF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x22, c.reg.h);
-    assert_eq!(c.flags(), PF);
+    assert_eq!(c.flags(), YF | PF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x00, c.reg.l);
     assert_eq!(c.flags(), ZF | PF);
@@ -2494,13 +2578,13 @@ fn sra_r_asm() {
     assert_eq!(c.flags(), SF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0xFF, c.reg.d);
-    assert_eq!(c.flags(), SF | PF);
+    assert_eq!(c.flags(), SF | YF | XF | PF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x3F, c.reg.e);
-    assert_eq!(c.flags(), PF | CF);
+    assert_eq!(c.flags(), YF | XF | PF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x08, c.reg.h);
-    assert_eq!(c.flags(), CF);
+    assert_eq!(c.flags(), XF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x00, c.reg.l);
     assert_eq!(c.flags(), ZF | PF);
@@ -2525,13 +2609,13 @@ fn srl_r_asm() {
     assert_eq!(c.flags(), PF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x7F, c.reg.d);
-    assert_eq!(c.flags(), 0);
+    assert_eq!(c.flags(), YF | XF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x3F, c.reg.e);
-    assert_eq!(c.flags(), PF | CF);
+    assert_eq!(c.flags(), YF | XF | PF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x08, c.reg.h);
-    assert_eq!(c.flags(), CF);
+    assert_eq!(c.flags(), XF | CF);
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(0x00, c.reg.l);
     assert_eq!(c.flags(), ZF | PF);
@@ -2647,11 +2731,11 @@ fn rld_rrd_asm() {
     assert_eq!(c.execute(&mut b), 18);
     assert_eq!(0xF0, c.reg.a);
     assert_eq!(0x0E, b.read_byte(0x1000));
-    assert_eq!(c.flags(), SF | PF);
+    assert_eq!(c.flags(), SF | YF | PF); // XF/YF depuis A = 0xF0
     assert_eq!(c.execute(&mut b), 18);
     assert_eq!(0xFE, c.reg.a);
     assert_eq!(0x00, b.read_byte(0x1000));
-    assert_eq!(c.flags(), SF);
+    assert_eq!(c.flags(), SF | YF | XF); // XF/YF depuis A = 0xFE
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(0x00, c.reg.a);
     assert_eq!(c.execute(&mut b), 7);
@@ -4546,7 +4630,7 @@ fn neg_asm() {
     assert_eq!(c.reg.a, 0x01); // LD A,0x01
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(c.reg.a, 0xFF);
-    assert_eq!(c.flags(), SF | HF | NF | CF); // NEG
+    assert_eq!(c.flags(), SF | YF | HF | XF | NF | CF); // NEG
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(c.reg.a, 0x00);
     assert_eq!(c.flags(), ZF | HF | CF); // ADD A,0x01
@@ -6419,9 +6503,9 @@ fn cpc_di_ex_exx_ei_sequence() {
     assert_eq!(c.reg.a, 0xBC);
     assert_eq!(c.reg.pc, 0xB947);
 
-    // SCF
+    // SCF : XF/YF viennent de A = 0xBC
     assert_eq!(c.execute(&mut b), 4);
-    assert_eq!(c.flags(), CF);
+    assert_eq!(c.flags(), YF | XF | CF);
     assert_eq!(c.reg.pc, 0xB948);
 
     // EI : IFF1/IFF2 set, but interrupts are not acknowledged yet
@@ -6433,7 +6517,7 @@ fn cpc_di_ex_exx_ei_sequence() {
     // EX AF,AF' : back to the caller's AF, the modified one is parked in AF'
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.get_af(), 0x1100);
-    assert_eq!(c.alt.get_af(), 0xBC00 | CF as u16);
+    assert_eq!(c.alt.get_af(), 0xBC00 | (YF | XF | CF) as u16);
     assert_eq!(c.reg.pc, 0xB94A);
 
     // DI : closes the one-instruction window opened by EI
