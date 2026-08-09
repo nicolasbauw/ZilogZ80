@@ -836,6 +836,9 @@ impl CPU {
                 self.reg.flags.h = self.reg.flags.c;
                 self.reg.flags.c = !self.reg.flags.c;
                 self.reg.flags.n = false;
+                // Sur un Zilog NMOS (celui du CPC), SCF/CCF prennent leurs
+                // deux drapeaux non documentes directement sur A.
+                self.reg.flags.set_undocumented_from(self.reg.a);
             }
 
             // SCF
@@ -843,6 +846,7 @@ impl CPU {
                 self.reg.flags.c = true;
                 self.reg.flags.h = false;
                 self.reg.flags.n = false;
+                self.reg.flags.set_undocumented_from(self.reg.a);
             }
 
             // NOP
@@ -2017,6 +2021,7 @@ impl CPU {
             0xED57 => {
                 self.reg.a = self.reg.i;
                 self.reg.flags.s = self.reg.i & 0x80 == 0x80;
+                self.reg.flags.set_undocumented_from(self.reg.i);
                 self.reg.flags.z = self.reg.i == 0;
                 self.reg.flags.h = false;
                 // Le flag P/V copie IFF2.
@@ -2033,6 +2038,7 @@ impl CPU {
             0xED5F => {
                 self.reg.a = self.reg.r;
                 self.reg.flags.s = self.reg.r & 0x80 == 0x80;
+                self.reg.flags.set_undocumented_from(self.reg.r);
                 self.reg.flags.z = self.reg.r == 0;
                 self.reg.flags.h = false;
                 self.reg.flags.p = if self.interrupt_pending_during_instruction() {
@@ -3095,6 +3101,7 @@ impl CPU {
                 self.reg.a = r;
                 bus.write_byte(self.reg.get_hl(), (hl_contents << 4) | (a_contents & 0x0F));
                 self.reg.flags.s = r & 0x80 == 0x80;
+                self.reg.flags.set_undocumented_from(r);
                 self.reg.flags.z = r == 0x00;
                 self.reg.flags.h = false;
                 self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
@@ -3113,6 +3120,7 @@ impl CPU {
                     ((a_contents & 0x0F) << 4) | ((hl_contents & 0xF0) >> 4),
                 );
                 self.reg.flags.s = r & 0x80 == 0x80;
+                self.reg.flags.set_undocumented_from(r);
                 self.reg.flags.z = r == 0x00;
                 self.reg.flags.h = false;
                 self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
@@ -3704,6 +3712,7 @@ impl CPU {
 
                 // Mise à jour des flags
                 self.reg.flags.s = (data & 0x80) != 0;
+                self.reg.flags.set_undocumented_from(data);
                 self.reg.flags.z = data == 0;
                 self.reg.flags.h = false;
                 self.reg.flags.p = data.count_ones() % 2 == 0; // Parité
@@ -3715,6 +3724,7 @@ impl CPU {
                 let port = self.reg.get_bc();
                 let data = bus.read_io(port);
                 self.reg.flags.s = (data & 0x80) != 0;
+                self.reg.flags.set_undocumented_from(data);
                 self.reg.flags.z = data == 0;
                 self.reg.flags.h = false;
                 self.reg.flags.p = data.count_ones() % 2 == 0;
@@ -3998,20 +4008,34 @@ impl CPU {
         let bc = self.reg.get_bc();
         let de = self.reg.get_de();
         let hl = self.reg.get_hl();
-        bus.write_byte(de, bus.read_byte(hl));
+        let transferred = bus.read_byte(hl);
+        bus.write_byte(de, transferred);
         self.reg.set_de(de.wrapping_add(1));
         self.reg.set_hl(hl.wrapping_add(1));
         self.reg.set_bc(bc.wrapping_sub(1));
+        // Les deux drapeaux non documentes viennent de A + l'octet
+        // transfere, avec la regle propre aux instructions de bloc : bit 3
+        // pour XF, mais bit 1 pour YF.
+        self.reg
+            .flags
+            .set_undocumented_from_block(self.reg.a.wrapping_add(transferred));
     }
 
     fn ldd<B: Bus>(&mut self, bus: &mut B) {
         let bc = self.reg.get_bc();
         let de = self.reg.get_de();
         let hl = self.reg.get_hl();
-        bus.write_byte(de, bus.read_byte(hl));
+        let transferred = bus.read_byte(hl);
+        bus.write_byte(de, transferred);
         self.reg.set_de(de.wrapping_sub(1));
         self.reg.set_hl(hl.wrapping_sub(1));
         self.reg.set_bc(bc.wrapping_sub(1));
+        // Les deux drapeaux non documentes viennent de A + l'octet
+        // transfere, avec la regle propre aux instructions de bloc : bit 3
+        // pour XF, mais bit 1 pour YF.
+        self.reg
+            .flags
+            .set_undocumented_from_block(self.reg.a.wrapping_add(transferred));
     }
 
     // Returns A - (HL)
@@ -4029,6 +4053,10 @@ impl CPU {
         self.reg.flags.h = (self.reg.a as i8 & 0x0F) < (h as i8 & 0x0F);
         self.reg.flags.p = self.reg.get_bc() != 0;
         self.reg.flags.n = true;
+        // Regle de bloc : la source est le resultat MOINS le demi-report,
+        // et YF vient du bit 1 (voir set_undocumented_from_block).
+        let n = r.wrapping_sub(u8::from(self.reg.flags.h));
+        self.reg.flags.set_undocumented_from_block(n);
     }
 
     // Returns A - (HL)
@@ -4046,6 +4074,10 @@ impl CPU {
         self.reg.flags.h = (self.reg.a as i8 & 0x0F) < (h as i8 & 0x0F);
         self.reg.flags.p = self.reg.get_bc() != 0;
         self.reg.flags.n = true;
+        // Regle de bloc : la source est le resultat MOINS le demi-report,
+        // et YF vient du bit 1 (voir set_undocumented_from_block).
+        let n = r.wrapping_sub(u8::from(self.reg.flags.h));
+        self.reg.flags.set_undocumented_from_block(n);
     }
 
     // ADD A,r
@@ -4054,6 +4086,7 @@ impl CPU {
         let r = a.wrapping_add(n);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.p = check_add_overflow(self.reg.a, n);
         self.reg.flags.h = (a & 0x0f) + (n & 0x0f) > 0x0f;
         self.reg.flags.c = u16::from(a) + u16::from(n) > 0xff;
@@ -4071,6 +4104,7 @@ impl CPU {
         let r = a.wrapping_add(n).wrapping_add(c);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.p = ((a ^ r) & (n ^ r)) & 0x80 != 0;
         self.reg.flags.h = (a & 0x0f) + (n & 0x0f) + c > 0x0f;
         self.reg.flags.c = u16::from(a) + u16::from(n) + u16::from(c) > 0xff;
@@ -4084,6 +4118,7 @@ impl CPU {
         let r = a.wrapping_sub(n);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.p = check_sub_overflow(self.reg.a, n);
         self.reg.flags.h = (a as i8 & 0x0f) < (n as i8 & 0x0f);
         self.reg.flags.c = u16::from(a) < u16::from(n);
@@ -4101,6 +4136,7 @@ impl CPU {
         let r = a.wrapping_sub(n).wrapping_sub(c);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.p = ((a ^ n) & (a ^ r)) & 0x80 != 0;
         self.reg.flags.h = (a & 0x0f) < (n & 0x0f) + c;
         self.reg.flags.c = u16::from(a) < (u16::from(n) + u16::from(c));
@@ -4113,6 +4149,7 @@ impl CPU {
         let r = self.reg.a & n;
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         self.reg.flags.h = true;
         self.reg.flags.c = false;
@@ -4125,6 +4162,7 @@ impl CPU {
         let r = self.reg.a | n;
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         self.reg.flags.h = false;
         self.reg.flags.c = false;
@@ -4138,6 +4176,7 @@ impl CPU {
         let r = a ^ n;
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         self.reg.flags.h = false;
         self.reg.flags.c = false;
@@ -4150,6 +4189,11 @@ impl CPU {
         let r = self.reg.a;
         self.sub(n);
         self.reg.a = r;
+        // Exception la plus connue du Z80 : `CP` tire ses deux drapeaux non
+        // documentés de l'OPÉRANDE, pas du résultat de la soustraction —
+        // contrairement à `SUB`, dont il partage pourtant tout le reste.
+        // C'est ce qui permet de distinguer les deux à l'exécution.
+        self.reg.flags.set_undocumented_from(n);
     }
 
     // Increment
@@ -4157,6 +4201,7 @@ impl CPU {
         let r = n.wrapping_add(1);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.p = n == 0x7F;
         self.reg.flags.h = (n & 0x0f) + 0x01 > 0x0f;
         self.reg.flags.n = false;
@@ -4168,6 +4213,7 @@ impl CPU {
         let r = n.wrapping_sub(1);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.p = n == 0x80;
         self.reg.flags.h = ((n & 0x0f) as i8) < 1;
         self.reg.flags.n = true;
@@ -4227,6 +4273,7 @@ impl CPU {
 
         self.reg.flags.z = self.reg.a == 0x00;
         self.reg.flags.s = bit::get(self.reg.a, 7);
+        self.reg.flags.set_undocumented_from(self.reg.a);
         self.reg.flags.p = self.reg.a.count_ones() & 0x01 == 0x00;
     }
 
@@ -4238,6 +4285,7 @@ impl CPU {
         self.reg.flags.c = self.reg.a != 0;
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.h = 0 < (self.reg.a & 0x0F);
         self.reg.flags.n = true;
         self.reg.a = r;
@@ -4249,6 +4297,10 @@ impl CPU {
         self.reg.flags.c = u32::from(n1) + u32::from(n2) > 0xffff;
         self.reg.flags.h = (n1 & 0x0FFF) + (n2 & 0x0FFF) > 0x0FFF;
         self.reg.flags.n = false;
+        // `ADD HL,rr` ne touche ni S ni Z (contrairement à `ADC`/`SBC HL`),
+        // mais il laisse bien transparaître les deux bits non documentés,
+        // pris sur l'octet de poids fort du résultat.
+        self.reg.flags.set_undocumented_from((r >> 8) as u8);
         r
     }
 
@@ -4262,6 +4314,9 @@ impl CPU {
         let r = h.wrapping_add(n).wrapping_add(c);
         self.reg.set_hl(r);
         self.reg.flags.s = r & 0x8000 == 0x8000;
+        // Sur les operations 16 bits, les deux drapeaux non documentes
+        // viennent de l'octet de POIDS FORT du resultat.
+        self.reg.flags.set_undocumented_from((r >> 8) as u8);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.c = u32::from(h) + u32::from(n) + c as u32 > 0xffff;
         self.reg.flags.h = (h & 0x0FFF) + (n & 0x0FFF) + c > 0x0FFF;
@@ -4283,6 +4338,9 @@ impl CPU {
         self.reg.set_hl(r);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x8000 == 0x8000;
+        // Sur les operations 16 bits, les deux drapeaux non documentes
+        // viennent de l'octet de POIDS FORT du resultat.
+        self.reg.flags.set_undocumented_from((r >> 8) as u8);
         self.reg.flags.h = (h & 0x0fff) < (n & 0x0fff) + c;
         self.reg.flags.c = u32::from(h) < u32::from(n) + c as u32;
         self.reg.flags.n = true;
@@ -4308,6 +4366,7 @@ impl CPU {
         let r = (n << 1) | u8::from(self.reg.flags.c);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.h = false;
         self.reg.flags.n = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
@@ -4337,6 +4396,7 @@ impl CPU {
         };
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.h = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         self.reg.flags.n = false;
@@ -4368,6 +4428,7 @@ impl CPU {
         };
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         r
     }
@@ -4397,6 +4458,7 @@ impl CPU {
         };
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         r
     }
@@ -4405,6 +4467,7 @@ impl CPU {
     fn sla(&mut self, n: u8) -> u8 {
         let r = n << 1;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.h = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
@@ -4417,6 +4480,7 @@ impl CPU {
     fn sll(&mut self, n: u8) -> u8 {
         let r = (n << 1) | 0x01;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.h = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
@@ -4431,6 +4495,7 @@ impl CPU {
         // *** Arithmetic right shift on signed integer types, logical right shift on unsigned integer types.
         let r = ((n as i8) >> 1) as u8;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.h = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
@@ -4445,6 +4510,7 @@ impl CPU {
         // *** Arithmetic right shift on signed integer types, logical right shift on unsigned integer types.
         let r = n >> 1;
         self.reg.flags.s = r & 0x80 == 0x80;
+        self.reg.flags.set_undocumented_from(r);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.h = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
@@ -4471,6 +4537,26 @@ impl CPU {
         self.reg.flags.z = !r;
         self.reg.flags.h = true;
         self.reg.flags.n = false;
+        // S et P/V manquaient : le Z80 pose S quand on teste le bit 7 et
+        // qu'il vaut 1, et recopie Z dans P/V.
+        self.reg.flags.s = r && bit == 7;
+        self.reg.flags.p = !r;
+        // Les deux drapeaux non documentés viennent de la VALEUR TESTÉE.
+        // Exception : `BIT b,(HL)` les prend sur l'octet de poids fort de
+        // MEMPTR, registre interne que nous ne modélisons pas encore — d'où
+        // l'approximation par la valeur lue, seule différence connue qui
+        // subsiste ici (voir la note dans le TODO du projet).
+        let tested = match register {
+            0 => self.reg.b,
+            1 => self.reg.c,
+            2 => self.reg.d,
+            3 => self.reg.e,
+            4 => self.reg.h,
+            5 => self.reg.l,
+            6 => bus.read_byte(self.reg.get_hl()),
+            _ => self.reg.a,
+        };
+        self.reg.flags.set_undocumented_from(tested);
     }
 
     // Bit set

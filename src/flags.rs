@@ -30,6 +30,33 @@ impl Flags {
         }
     }
 
+    /// Recopie les deux drapeaux non documentés (bits 3 et 5, dits XF et YF)
+    /// depuis une valeur — le résultat de l'opération dans la grande
+    /// majorité des cas.
+    ///
+    /// Ces bits n'ont aucune signification propre : le Z80 y laisse
+    /// simplement transparaître les bits correspondants de sa dernière
+    /// opération. Ils ne sont observables qu'en passant par `PUSH AF`, mais
+    /// certaines protections de copie s'en servent précisément pour cette
+    /// raison — d'où l'intérêt de les émuler fidèlement.
+    ///
+    /// Attention aux exceptions, qui ne prennent pas le résultat comme
+    /// source : `CP` les tire de l'opérande, `BIT n,(HL)` de `MEMPTR`, et
+    /// les instructions de bloc d'une somme intermédiaire (voir
+    /// `set_undocumented_from_block`).
+    pub fn set_undocumented_from(&mut self, value: u8) {
+        self.b3 = value & 0x08 != 0;
+        self.b5 = value & 0x20 != 0;
+    }
+
+    /// Variante propre aux instructions de bloc (`LDI`/`LDD`, `CPI`/`CPD` et
+    /// leurs formes répétitives) : là, le bit 3 de la valeur donne XF, mais
+    /// c'est le **bit 1** qui donne YF, et non le bit 5.
+    pub fn set_undocumented_from_block(&mut self, value: u8) {
+        self.b3 = value & 0x08 != 0;
+        self.b5 = value & 0x02 != 0;
+    }
+
     /// Converts Status Indicator Flags to a byte.
     pub fn to_byte(&self) -> u8 {
         let s = if self.s { 1 << 7 } else { 0 };
