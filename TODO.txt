@@ -1,0 +1,8 @@
+- Debut plantage en chargeant Cauldron.cdt:
+Tape CDT Loaded: bin/Cauldron.cdt
+>
+thread 'main' (30843) panicked at /home/nicolasb/Dev/ZilogZ80/src/cpu.rs:4342:48:
+attempt to add with overflow
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+- nettoyer les warnings de test.rs
