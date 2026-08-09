@@ -3357,6 +3357,34 @@ impl CPU {
                 self.reg.ixl = r;
             }
 
+            // INC IYH
+            0xFD24 => {
+                let n = self.reg.iyh;
+                let r = self.inc(n);
+                self.reg.iyh = r;
+            }
+
+            // DEC IYH
+            0xFD25 => {
+                let n = self.reg.iyh;
+                let r = self.dec(n);
+                self.reg.iyh = r;
+            }
+
+            // INC IYL
+            0xFD2C => {
+                let n = self.reg.iyl;
+                let r = self.inc(n);
+                self.reg.iyl = r;
+            }
+
+            // DEC IYL
+            0xFD2D => {
+                let n = self.reg.iyl;
+                let r = self.dec(n);
+                self.reg.iyl = r;
+            }
+
             // LD IXH,n
             0xDD26 => {
                 let n = bus.read_byte(self.reg.pc.wrapping_add(2));

@@ -6968,3 +6968,56 @@ fn indexed_bit_test_writes_nothing() {
         assert!(!c.reg.flags.z, "le bit 0 est a 1, donc Z est faux");
     }
 }
+
+/// Les moities de IY (`INC/DEC IYH/IYL`, prefixe 0xFD) etaient tout
+/// simplement absentes du decodeur, alors que leurs equivalents IX
+/// (0xDD) etaient bien la. Consequence : le prefixe 0xFD n'etait pas
+/// consomme, PC n'avancait que d'un octet, et le CPU executait ensuite
+/// l'octet 0x2C tout seul (`INC L`) — une instruction totalement
+/// differente, sur un autre registre.
+///
+/// Trouve en comparant instruction par instruction une trace de PC avec
+/// Caprice32 depuis un etat identique : premiere divergence sur
+/// `FD 2C` en plein WEC Le Mans, d'ou un plantage ~1,2 s plus tard.
+#[test]
+fn the_undocumented_iy_half_register_inc_dec_are_decoded() {
+    for (opcode, name) in [
+        (0x24u8, "INC IYH"),
+        (0x25u8, "DEC IYH"),
+        (0x2Cu8, "INC IYL"),
+        (0x2Du8, "DEC IYL"),
+    ] {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        b.write_byte(0x0000, 0xFD);
+        b.write_byte(0x0001, opcode);
+        // Octet suivant : un INC L bien visible. S'il est execute, c'est
+        // que le prefixe n'a pas ete consomme.
+        b.write_byte(0x0002, 0x2C);
+        c.reg.iyh = 0x10;
+        c.reg.iyl = 0x20;
+        c.reg.l = 0x77;
+
+        c.execute(&mut b);
+
+        assert_eq!(c.reg.pc, 2, "{name} doit faire avancer PC de 2 octets");
+        assert_eq!(c.reg.l, 0x77, "{name} ne doit pas toucher a L");
+    }
+
+    // Et les valeurs elles-memes, sur un cas de chaque sens.
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xFD);
+    b.write_byte(0x0001, 0x2C); // INC IYL
+    c.reg.iyl = 0x41;
+    c.execute(&mut b);
+    assert_eq!(c.reg.iyl, 0x42);
+
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    b.write_byte(0x0000, 0xFD);
+    b.write_byte(0x0001, 0x25); // DEC IYH
+    c.reg.iyh = 0x41;
+    c.execute(&mut b);
+    assert_eq!(c.reg.iyh, 0x40);
+}
