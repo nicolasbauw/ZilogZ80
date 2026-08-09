@@ -4,5 +4,6 @@ Tape CDT Loaded: bin/Cauldron.cdt
 thread 'main' (30843) panicked at /home/nicolasb/Dev/ZilogZ80/src/cpu.rs:4342:48:
 attempt to add with overflow
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+--> flag p de adc_16; sbc_16 doit souffrir du même défaut. J'abais déjà apporté une correction, elle semble ne pas être suffisante.
 
 - nettoyer les warnings de test.rs
