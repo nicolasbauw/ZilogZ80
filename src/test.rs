@@ -6435,7 +6435,7 @@ fn djnz_dasm() {
     b.write_byte(0x0100, 0x10);
     b.write_byte(0x0101, 0x03);
     assert_eq!(
-        crate::dasm::dasm(&mut b, 0x0100),
+        crate::dasm::dasm(&b, 0x0100),
         (String::from("10 03         DJNZ $0105"), 2)
     );
 
@@ -6443,7 +6443,7 @@ fn djnz_dasm() {
     b.write_byte(0x0200, 0x10);
     b.write_byte(0x0201, 0xFE);
     assert_eq!(
-        crate::dasm::dasm(&mut b, 0x0200),
+        crate::dasm::dasm(&b, 0x0200),
         (String::from("10 FE         DJNZ $0200"), 2)
     );
 }
@@ -7046,7 +7046,7 @@ fn indexed_bit_operations_also_copy_into_a_register() {
         b.write_byte(0x0000, 0xDD);
         b.write_byte(0x0001, 0xCB);
         b.write_byte(0x0002, 0x02);
-        b.write_byte(0x0003, 0x00 | z); // RLC (IX+2) -> registre z
+        b.write_byte(0x0003, z); // RLC (IX+2) -> registre z
         c.reg.set_ix(0x9000);
         b.write_byte(0x9002, 0b1000_0001);
 
