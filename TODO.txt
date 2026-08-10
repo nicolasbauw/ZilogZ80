@@ -1,9 +1,58 @@
-- Debut plantage en chargeant Cauldron.cdt:
-Tape CDT Loaded: bin/Cauldron.cdt
->
-thread 'main' (30843) panicked at /home/nicolasb/Dev/ZilogZ80/src/cpu.rs:4342:48:
-attempt to add with overflow
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
---> flag p de adc_16; sbc_16 doit souffrir du même défaut. J'abais déjà apporté une correction, elle semble ne pas être suffisante. Faire le point des autres instructions ou un cas similaire pourrait être peoblématique.
+FAIT - Plantage au chargement de Cauldron.cdt (panique dans adc_16)
 
-- nettoyer les warnings de test.rs
+  Le calcul du drapeau P/V de adc_16 faisait `n + c` sur des u16 : panique
+  en debug des que l'operande valait 0xFFFF avec la retenue a 1. sbc_16
+  souffrait du meme defaut sous une autre forme (pas de panique, mais un
+  `as i16` qui tronquait `n + c` a zero, donc un P/V faux).
+
+  Les deux passent maintenant par les formules XOR canoniques, celles que
+  les versions 8 bits adc/sbc utilisaient deja :
+    ADC : V = (h ^ r) & (n ^ r) & 0x8000
+    SBC : V = (h ^ n) & (h ^ r) & 0x8000
+  Regression : adc_sbc_16_with_ffff_operand_and_carry.
+
+FAIT - Meme classe de bug trouvee a l'audit : sauts relatifs arriere
+
+  JR e, JR cc,e et DJNZ faisaient `pc + 2 - deplacement` sans protection
+  sur des u16 (6 sites). Un saut arriere depuis le tout debut de la
+  memoire paniquait en debug au lieu de reboucler par le haut comme le
+  fait la machine. Passes en wrapping_sub.
+  Regression : backward_relative_jumps_wrap_below_address_zero.
+
+  A noter : le commit c8e0814 « Wrap 16 bit address arithmetic instead of
+  overflowing » visait deja cette classe de bug, mais avait laisse ces six
+  sites de cote.
+
+  Reste de l'audit, sans suite a donner :
+  - adc/sbc/add/sub 8 bits : deja corrects (formules XOR, elargissement en
+    u16 pour la retenue).
+  - demi-retenues et retenues 16 bits : toutes les sommes restent dans le
+    type ou sont elargies en u32.
+  - decalages `n << 1` : en Rust, seul un decalage superieur a la largeur
+    du type panique, pas la perte du bit de poids fort. Rien a faire.
+  - signed_to_abs(n) = !n + 1 paniquerait pour n = 0, mais tous ses appels
+    sont gardes par un test du bit 7. Laisse tel quel.
+
+FAIT - Warnings de test.rs
+
+  dasm_cb construisait un CPU inutilise : `dasm` lit le bus a l'adresse
+  qu'on lui passe. Plus aucun warning a la compilation des tests.
+
+A FAIRE (optionnel) - Lints clippy de test.rs
+
+  113 occurrences de `assert_eq!(x, true)` que clippy voudrait voir en
+  `assert!(x)` (lint bool_assert_comparison). C'est du style, anterieur a
+  tout ce qui precede, et le diff toucherait beaucoup de lignes : a faire
+  d'un bloc si on le decide, pas au fil de l'eau.
+
+A FAIRE - MEMPTR/WZ
+
+  Voir doc/REPRISE-drapeaux-non-documentes.md : `BIT b,(HL)` approxime ses
+  deux drapeaux non documentes par la valeur lue, la ou le Z80 les prend
+  sur l'octet de poids fort de MEMPTR.
+
+A FAIRE - Drapeaux documentes des instructions d'E/S par bloc
+
+  INI/IND/OUTI/OUTD ne posent ni S, ni H, ni P/V. Manque anterieur aux
+  drapeaux non documentes, constate explicitement par le test
+  undocumented_flags_rotations_cpl_block_io.

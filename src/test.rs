@@ -2246,6 +2246,68 @@ fn add_adc_sbc_16_asm() {
     assert_eq!(c.flags(), YF | HF | XF | PF | NF);
 }
 
+/// Un saut relatif arrière depuis le tout début de la mémoire repasse sous
+/// l'adresse 0 et doit reboucler par le haut, comme sur la machine. Le calcul
+/// faisait `pc + 2 - déplacement` sans protection : même classe de panique que
+/// `ADC HL,rr` ci-dessous, sur une soustraction cette fois.
+#[test]
+fn backward_relative_jumps_wrap_below_address_zero() {
+    // JR -128 depuis 0x0000 : 0x0000 + 2 - 128 = 0xFF82
+    for (program, instructions, expected) in [
+        (vec![0x18, 0x80], 1, 0xFF82_u16),             // JR -128
+        (vec![0x37, 0x38, 0x80], 2, 0xFF83_u16),       // SCF puis JR C,-128 depuis 0x0001
+        (vec![0x06, 0x02, 0x10, 0x80], 2, 0xFF84_u16), // LD B,2 puis DJNZ -128 depuis 0x0002
+    ] {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        for (i, byte) in program.iter().enumerate() {
+            b.write_byte(i as u16, *byte);
+        }
+        for _ in 0..instructions {
+            c.execute(&mut b);
+        }
+        assert_eq!(c.reg.pc, expected);
+    }
+}
+
+/// `ADC HL,rr` avec l'opérande à 0xFFFF et la retenue à 1 : le calcul du
+/// drapeau P/V faisait `n + c` sur des `u16`, ce qui paniquait en debug
+/// (« attempt to add with overflow »). Le plantage se déclenchait pour de
+/// vrai, au chargement de Cauldron.cdt.
+///
+/// Les deux cas ci-dessous ne débordent pas au sens signé : 0 + (-1) + 1 = 0
+/// et 0 - (-1) - 1 = 0 tiennent tous les deux dans un i16. P/V doit donc
+/// rester à zéro, et c'est l'occasion de vérifier que la retenue sortante,
+/// elle, est bien positionnée.
+#[test]
+fn adc_sbc_16_with_ffff_operand_and_carry() {
+    for (opcode, expected) in [
+        (0x4A, ZF | HF | CF),      // ADC HL,BC
+        (0x42, ZF | HF | NF | CF), // SBC HL,BC
+    ] {
+        let mut c = CPU::new();
+        let mut b = FlatBus::new(0xFFFF);
+        for (i, byte) in [
+            0x21, 0x00, 0x00, // LD HL,0x0000
+            0x01, 0xFF, 0xFF, // LD BC,0xFFFF
+            0x37, // SCF : retenue entrante a 1
+            0xED, opcode,
+        ]
+        .iter()
+        .enumerate()
+        {
+            b.write_byte(i as u16, *byte);
+        }
+
+        for _ in 0..3 {
+            c.execute(&mut b);
+        }
+        c.execute(&mut b);
+        assert_eq!(0x0000, c.reg.get_hl());
+        assert_eq!(c.flags(), expected);
+    }
+}
+
 #[test]
 fn ld_inn_hl_dd_ix_iy_asm() {
     let mut c = CPU::new();
@@ -6046,9 +6108,8 @@ fn jr_nz_neg_false() {
 
 #[test]
 fn dasm_cb() {
-    let mut c = CPU::new();
+    // `dasm` lit le bus a l'adresse qu'on lui passe : aucun CPU n'est requis.
     let mut b = FlatBus::new(0xFFFF);
-    c.reg.pc = 0x0274;
     b.write_byte(0x0274, 0xCB); // RLC B
     b.write_byte(0x0275, 0x00);
     b.write_byte(0x0276, 0xCB); // BIT 1,B

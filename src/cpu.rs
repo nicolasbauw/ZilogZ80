@@ -1051,7 +1051,11 @@ impl CPU {
             0x18 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(1));
                 if bit::get(displacement, 7) {
-                    self.reg.pc = self.reg.pc.wrapping_add(2) - (signed_to_abs(displacement) as u16)
+                    self.reg.pc = self
+                        .reg
+                        .pc
+                        .wrapping_add(2)
+                        .wrapping_sub(signed_to_abs(displacement) as u16)
                 } else {
                     self.reg.pc = self
                         .reg
@@ -1066,8 +1070,11 @@ impl CPU {
                 if self.reg.flags.c {
                     let displacement = bus.read_byte(self.reg.pc.wrapping_add(1));
                     if bit::get(displacement, 7) {
-                        self.reg.pc =
-                            self.reg.pc.wrapping_add(2) - (signed_to_abs(displacement) as u16)
+                        self.reg.pc = self
+                            .reg
+                            .pc
+                            .wrapping_add(2)
+                            .wrapping_sub(signed_to_abs(displacement) as u16)
                     } else {
                         self.reg.pc = self
                             .reg
@@ -1087,8 +1094,11 @@ impl CPU {
                 if !self.reg.flags.c {
                     let displacement = bus.read_byte(self.reg.pc.wrapping_add(1));
                     if bit::get(displacement, 7) {
-                        self.reg.pc =
-                            self.reg.pc.wrapping_add(2) - (signed_to_abs(displacement) as u16)
+                        self.reg.pc = self
+                            .reg
+                            .pc
+                            .wrapping_add(2)
+                            .wrapping_sub(signed_to_abs(displacement) as u16)
                     } else {
                         self.reg.pc = self
                             .reg
@@ -1108,8 +1118,11 @@ impl CPU {
                 if self.reg.flags.z {
                     let displacement = bus.read_byte(self.reg.pc.wrapping_add(1));
                     if bit::get(displacement, 7) {
-                        self.reg.pc =
-                            self.reg.pc.wrapping_add(2) - (signed_to_abs(displacement) as u16)
+                        self.reg.pc = self
+                            .reg
+                            .pc
+                            .wrapping_add(2)
+                            .wrapping_sub(signed_to_abs(displacement) as u16)
                     } else {
                         self.reg.pc = self
                             .reg
@@ -1129,8 +1142,11 @@ impl CPU {
                 if !self.reg.flags.z {
                     let displacement = bus.read_byte(self.reg.pc.wrapping_add(1));
                     if bit::get(displacement, 7) {
-                        self.reg.pc =
-                            self.reg.pc.wrapping_add(2) - (signed_to_abs(displacement) as u16)
+                        self.reg.pc = self
+                            .reg
+                            .pc
+                            .wrapping_add(2)
+                            .wrapping_sub(signed_to_abs(displacement) as u16)
                     } else {
                         self.reg.pc = self
                             .reg
@@ -1156,8 +1172,11 @@ impl CPU {
                 if self.reg.b != 0 {
                     let displacement = bus.read_byte(self.reg.pc.wrapping_add(1));
                     if bit::get(displacement, 7) {
-                        self.reg.pc =
-                            self.reg.pc.wrapping_add(2) - (signed_to_abs(displacement) as u16)
+                        self.reg.pc = self
+                            .reg
+                            .pc
+                            .wrapping_add(2)
+                            .wrapping_sub(signed_to_abs(displacement) as u16)
                     } else {
                         self.reg.pc = self
                             .reg
@@ -4338,10 +4357,13 @@ impl CPU {
         self.reg.flags.c = u32::from(h) + u32::from(n) + c as u32 > 0xffff;
         self.reg.flags.h = (h & 0x0FFF) + (n & 0x0FFF) + c > 0x0FFF;
         self.reg.flags.n = false;
-        self.reg.flags.p = {
-            let r = (h as i16).overflowing_add((n + c) as i16);
-            r.1
-        }
+        // Débordement signé : il y a débordement quand les deux opérandes ont
+        // le même signe et que le résultat en a un autre. Passer par
+        // `overflowing_add` sur `n + c` était doublement faux — `n + c`
+        // débordait pour `n = 0xFFFF` avec retenue (panique en debug), et le
+        // débordement d'une somme à trois termes n'est pas celui de la somme
+        // partielle.
+        self.reg.flags.p = (h ^ r) & (n ^ r) & 0x8000 != 0;
     }
 
     // Register pair substraction with carry
@@ -4361,10 +4383,11 @@ impl CPU {
         self.reg.flags.h = (h & 0x0fff) < (n & 0x0fff) + c;
         self.reg.flags.c = u32::from(h) < u32::from(n) + c as u32;
         self.reg.flags.n = true;
-        self.reg.flags.p = {
-            let r = (h as i16).overflowing_sub((u32::from(n) + u32::from(c)) as i16);
-            r.1
-        }
+        // Débordement signé d'une soustraction : les opérandes sont de signes
+        // opposés et le résultat prend celui du soustracteur. Même remarque
+        // que pour `adc_16` : la version passant par `n + c` tronqué en `i16`
+        // donnait un résultat faux dès que `n + c` dépassait 0xFFFF.
+        self.reg.flags.p = (h ^ n) & (h ^ r) & 0x8000 != 0;
     }
 
     // Rotate Accumulator left
