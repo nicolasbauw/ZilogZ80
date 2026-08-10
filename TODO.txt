@@ -61,10 +61,21 @@ FAIT - MEMPTR/WZ
   extension de signe suffit. Factorises dans ix_d/iy_d, qui sont aussi le
   point d'accroche de MEMPTR. 400 lignes de moins.
 
-A FAIRE - Passer zexall
+FAIT - Passer zexall
 
-  bin/zexdoc.com passe ses 67 tests, mais il masque justement les deux
-  drapeaux non documentes : il ne valide pas le travail XF/YF ni MEMPTR.
-  Le banc qui le ferait est zexall, qui controle tous les bits de F et
-  n'est pas dans le depot. Tant qu'il n'y sera pas passe, XF/YF et MEMPTR
-  ne reposent que sur des tests derives a la main des regles publiees.
+  bin/zexall.com passe ses 67 tests, sans erreur. C'est le banc qui
+  controle tous les bits de F, drapeaux non documentes compris, la ou
+  zexdoc les masque et ne validait donc rien du travail XF/YF ni MEMPTR.
+
+  Verifie par controle negatif : en retablissant l'ancienne approximation
+  de BIT b,(HL), zexall signale bien la ligne correspondante en erreur.
+
+  Reserve : zexall ne couvre ni les E/S ni les interruptions. Les regles
+  MEMPTR de IN/OUT, des E/S par bloc et de l'acquittement d'interruption,
+  ainsi que les drapeaux documentes des E/S par bloc, ne reposent que sur
+  les tests derives a la main des regles publiees.
+
+  Reste ouvert, signale precedemment : les formes repetitives d'E/S par
+  bloc (INIR/OTIR...) ne suivent pas la regle « MEMPTR = PC + 1 » des
+  LDIR/CPIR, ce qui est le choix des coeurs de reference mais que zexall
+  ne verifie pas.

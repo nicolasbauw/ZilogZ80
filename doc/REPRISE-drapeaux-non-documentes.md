@@ -132,11 +132,25 @@ l'adressage indexé : les 50 accès `(IX+d)`/`(IY+d)` répétaient chacun un
 de signe suffit. Ils passent par `ix_d`/`iy_d`, qui sont aussi le point
 d'accroche de MEMPTR.
 
-## Limite de la validation
+## Validation
 
-`bin/zexdoc.com` passe ses 67 tests, mais il masque justement les deux
-drapeaux non documentés : il valide le reste de l'émulation, pas ce
-travail-ci. Le banc qui vérifierait XF/YF et MEMPTR est **zexall**, qui
-contrôle tous les bits du registre F et n'est pas présent dans le dépôt.
-Tant qu'il n'y aura pas été passé, XF/YF et MEMPTR ne reposent que sur
-les tests écrits ici, dérivés à la main des règles publiées.
+`bin/zexall.com` passe ses 67 tests, sans erreur. C'est le banc qui
+contrôle **tous** les bits du registre F, drapeaux non documentés
+compris — contrairement à `zexdoc.com`, qui les masque et ne validait
+donc rien de ce travail-ci. Les lignes qui comptent ici sont
+`bit n,<b,c,d,e,h,l,(hl),a>` et `bit n,(<ix,iy>+1)` pour MEMPTR,
+`<daa,cpl,scf,ccf>` et `<rlca,rrca,rla,rra>` pour les trous bouchés au
+recalage, et les quatre lignes `cpi<r>`/`cpd<r>`/`ldi<r>`/`ldd<r>` pour
+la règle de bloc.
+
+Ce résultat a été soumis à un contrôle négatif : en rétablissant
+l'ancienne approximation de `BIT b,(HL)` (les deux bits pris sur la
+valeur lue au lieu du poids fort de MEMPTR), zexall signale bien
+`bit n,<b,c,d,e,h,l,(hl),a>` en erreur, CRC à l'appui. Le « OK » n'est
+donc pas vide de sens.
+
+Une réserve subsiste malgré tout : zexall ne teste pas les instructions
+d'E/S ni les interruptions. Les règles MEMPTR de `IN`/`OUT`, des E/S par
+bloc et de l'acquittement d'interruption, ainsi que les drapeaux
+documentés des E/S par bloc, ne reposent donc que sur les tests écrits
+ici, dérivés à la main des règles publiées.
