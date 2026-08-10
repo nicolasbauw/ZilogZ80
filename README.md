@@ -26,7 +26,7 @@ loop {
 }
 ```
 
-For IO and MMIO examples see my [demonstration TRS-80 emulator.](https://github.com/nicolasbauw/TRS-80)
+For IO examples see my [Amstrad CPC emulator.](https://github.com/nicolasbauw/amstrad_cpc)
 
 The library provides a disassembler method:
 
