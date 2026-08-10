@@ -3915,8 +3915,8 @@ fn cpi() {
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1112);
     assert_eq!(c.reg.get_bc(), 0);
-    assert_eq!(c.reg.flags.z, true);
-    assert_eq!(c.reg.flags.p, false);
+    assert!(c.reg.flags.z);
+    assert!(!c.reg.flags.p);
 }
 
 #[test]
@@ -3935,8 +3935,8 @@ fn cpir() {
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1114);
     assert_eq!(c.reg.get_bc(), 4);
-    assert_eq!(c.reg.flags.z, true);
-    assert_eq!(c.reg.flags.p, true);
+    assert!(c.reg.flags.z);
+    assert!(c.reg.flags.p);
 }
 
 #[test]
@@ -3953,8 +3953,8 @@ fn cpd() {
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1110);
     assert_eq!(c.reg.get_bc(), 0);
-    assert_eq!(c.reg.flags.z, true);
-    assert_eq!(c.reg.flags.p, false);
+    assert!(c.reg.flags.z);
+    assert!(!c.reg.flags.p);
 }
 
 #[test]
@@ -3973,8 +3973,8 @@ fn cpdr() {
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1115);
     assert_eq!(c.reg.get_bc(), 4);
-    assert_eq!(c.reg.flags.z, true);
-    assert_eq!(c.reg.flags.p, true);
+    assert!(c.reg.flags.z);
+    assert!(c.reg.flags.p);
 }
 
 #[test]
@@ -4126,7 +4126,7 @@ fn sbc_a_r_ovf() {
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(c.reg.a, 0x7E);
-    assert_eq!(c.reg.flags.p, true);
+    assert!(c.reg.flags.p);
 }
 
 #[test]
@@ -4309,8 +4309,8 @@ fn cp_r() {
     c.reg.e = 0x05;
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 1);
-    assert_eq!(c.reg.flags.z, false);
-    assert_eq!(c.reg.flags.c, false);
+    assert!(!c.reg.flags.z);
+    assert!(!c.reg.flags.c);
 }
 
 #[test]
@@ -4322,8 +4322,8 @@ fn cp_n() {
     c.reg.a = 0x0A;
     assert_eq!(c.execute(&mut b), 7);
     assert_eq!(c.reg.pc, 2);
-    assert_eq!(c.reg.flags.z, false);
-    assert_eq!(c.reg.flags.c, false);
+    assert!(!c.reg.flags.z);
+    assert!(!c.reg.flags.c);
 }
 
 #[test]
@@ -4337,8 +4337,8 @@ fn cp_ix_d() {
     c.reg.a = 0x0A;
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(c.reg.pc, 3);
-    assert_eq!(c.reg.flags.z, false);
-    assert_eq!(c.reg.flags.c, false);
+    assert!(!c.reg.flags.z);
+    assert!(!c.reg.flags.c);
 }
 
 #[test]
@@ -4352,8 +4352,8 @@ fn cp_iy_d() {
     c.reg.a = 0x0A;
     assert_eq!(c.execute(&mut b), 19);
     assert_eq!(c.reg.pc, 3);
-    assert_eq!(c.reg.flags.z, false);
-    assert_eq!(c.reg.flags.c, false);
+    assert!(!c.reg.flags.z);
+    assert!(!c.reg.flags.c);
 }
 
 #[test]
@@ -4365,7 +4365,7 @@ fn inc_b() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 0x0001);
     assert_eq!(0, c.reg.b);
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
 }
 
 #[test]
@@ -4377,7 +4377,7 @@ fn inc_c() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 0x0001);
     assert_eq!(0, c.reg.c);
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
 }
 
 #[test]
@@ -4389,7 +4389,7 @@ fn inc_d() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 0x0001);
     assert_eq!(0, c.reg.d);
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
 }
 
 #[test]
@@ -4401,7 +4401,7 @@ fn inc_e() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 0x0001);
     assert_eq!(0, c.reg.e);
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
 }
 
 #[test]
@@ -4413,7 +4413,7 @@ fn inc_h() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 0x0001);
     assert_eq!(0, c.reg.h);
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
 }
 
 #[test]
@@ -4425,7 +4425,7 @@ fn inc_l() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 0x0001);
     assert_eq!(0, c.reg.l);
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
 }
 
 #[test]
@@ -4439,11 +4439,11 @@ fn inc_c_hl() {
     assert_eq!(c.execute(&mut b), 11);
     assert_eq!(c.reg.pc, 0x0001);
     assert_eq!(0, b.read_byte(0x100));
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 0x0002);
     assert_eq!(1, b.read_byte(0x100));
-    assert_eq!(false, c.reg.flags.z);
+    assert!(!c.reg.flags.z);
 }
 
 #[test]
@@ -4455,8 +4455,8 @@ fn inc_a() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 0x0001);
     assert_eq!(0x10, c.reg.a);
-    assert_eq!(false, c.reg.flags.z);
-    assert_eq!(true, c.reg.flags.h);
+    assert!(!c.reg.flags.z);
+    assert!(c.reg.flags.h);
 }
 
 #[test]
@@ -4471,7 +4471,7 @@ fn inc_ix_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 0x03);
     assert_eq!(0, b.read_byte(0x105));
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
 }
 
 #[test]
@@ -4486,7 +4486,7 @@ fn inc_iy_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 0x03);
     assert_eq!(0, b.read_byte(0x105));
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
 }
 
 #[test]
@@ -4499,11 +4499,11 @@ fn dcr_b() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(0, c.reg.b);
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(0xff, c.reg.b);
-    assert_eq!(false, c.reg.flags.z);
+    assert!(!c.reg.flags.z);
 }
 
 #[test]
@@ -4516,11 +4516,11 @@ fn dcr_c() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(0, c.reg.c);
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(0xff, c.reg.c);
-    assert_eq!(false, c.reg.flags.z);
+    assert!(!c.reg.flags.z);
 }
 
 #[test]
@@ -4533,11 +4533,11 @@ fn dcr_d() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(0, c.reg.d);
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(0xff, c.reg.d);
-    assert_eq!(false, c.reg.flags.z);
+    assert!(!c.reg.flags.z);
 }
 
 #[test]
@@ -4550,11 +4550,11 @@ fn dcr_e() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(0, c.reg.e);
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(0xff, c.reg.e);
-    assert_eq!(false, c.reg.flags.z);
+    assert!(!c.reg.flags.z);
 }
 
 #[test]
@@ -4567,11 +4567,11 @@ fn dcr_h() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(0, c.reg.h);
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(0xff, c.reg.h);
-    assert_eq!(false, c.reg.flags.z);
+    assert!(!c.reg.flags.z);
 }
 
 #[test]
@@ -4584,11 +4584,11 @@ fn dcr_l() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(0, c.reg.l);
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(0xff, c.reg.l);
-    assert_eq!(false, c.reg.flags.z);
+    assert!(!c.reg.flags.z);
 }
 
 #[test]
@@ -4602,11 +4602,11 @@ fn dcr_m() {
     assert_eq!(c.execute(&mut b), 11);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(0x54, b.read_byte(0x0100));
-    assert_eq!(false, c.reg.flags.z);
+    assert!(!c.reg.flags.z);
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(0x53, b.read_byte(0x0100));
-    assert_eq!(false, c.reg.flags.z);
+    assert!(!c.reg.flags.z);
 }
 
 #[test]
@@ -4619,11 +4619,11 @@ fn dcr_a() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(0, c.reg.a);
-    assert_eq!(true, c.reg.flags.z);
+    assert!(c.reg.flags.z);
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(0xff, c.reg.a);
-    assert_eq!(false, c.reg.flags.z);
+    assert!(!c.reg.flags.z);
 }
 
 #[test]
@@ -4638,7 +4638,7 @@ fn dec_ix_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 0x03);
     assert_eq!(0xFE, b.read_byte(0x105));
-    assert_eq!(false, c.reg.flags.z);
+    assert!(!c.reg.flags.z);
 }
 
 #[test]
@@ -4653,7 +4653,7 @@ fn dec_iy_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 0x03);
     assert_eq!(0xFE, b.read_byte(0x105));
-    assert_eq!(false, c.reg.flags.z);
+    assert!(!c.reg.flags.z);
 }
 
 #[test]
@@ -4667,8 +4667,8 @@ fn daa() {
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(c.reg.a, 1);
-    assert_eq!(c.reg.flags.h, true);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.h);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -4720,10 +4720,10 @@ fn ccf() {
     b.write_byte(0x0000, 0x3f);
     b.write_byte(0x0001, 0x3f);
     assert_eq!(c.execute(&mut b), 4);
-    assert_eq!(true, c.reg.flags.c);
+    assert!(c.reg.flags.c);
     assert_eq!(c.reg.pc, 0x0001);
     c.execute(&mut b);
-    assert_eq!(false, c.reg.flags.c);
+    assert!(!c.reg.flags.c);
     assert_eq!(c.reg.pc, 0x0002);
 }
 
@@ -4735,10 +4735,10 @@ fn scf() {
     b.write_byte(0x0001, 0x37);
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 0x0001);
-    assert_eq!(true, c.reg.flags.c);
+    assert!(c.reg.flags.c);
     c.execute(&mut b);
     assert_eq!(c.reg.pc, 0x0002);
-    assert_eq!(true, c.reg.flags.c);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -4751,7 +4751,7 @@ fn add_hl_b() {
     assert_eq!(c.execute(&mut b), 11);
     assert_eq!(c.reg.h, 0xD5);
     assert_eq!(c.reg.l, 0x1A);
-    assert_eq!(c.reg.flags.c, false);
+    assert!(!c.reg.flags.c);
     assert_eq!(c.reg.pc, 1);
 }
 
@@ -4765,7 +4765,7 @@ fn add_hl_d() {
     assert_eq!(c.execute(&mut b), 11);
     assert_eq!(c.reg.h, 0xD5);
     assert_eq!(c.reg.l, 0x1A);
-    assert_eq!(c.reg.flags.c, false);
+    assert!(!c.reg.flags.c);
     assert_eq!(c.reg.pc, 1);
 }
 
@@ -4778,7 +4778,7 @@ fn add_hl_h() {
     assert_eq!(c.execute(&mut b), 11);
     assert_eq!(c.reg.h, 0x67);
     assert_eq!(c.reg.l, 0x3e);
-    assert_eq!(c.reg.flags.c, false);
+    assert!(!c.reg.flags.c);
     assert_eq!(c.reg.pc, 1);
 }
 
@@ -4792,7 +4792,7 @@ fn add_hl_sp() {
     assert_eq!(c.execute(&mut b), 11);
     assert_eq!(c.reg.h, 0xD5);
     assert_eq!(c.reg.l, 0x1A);
-    assert_eq!(c.reg.flags.c, false);
+    assert!(!c.reg.flags.c);
     assert_eq!(c.reg.pc, 1);
 }
 
@@ -4824,7 +4824,7 @@ fn adc_hl_d_ovf() {
     assert_eq!(c.reg.h, 0x80);
     assert_eq!(c.reg.l, 0x00);
     assert_eq!(c.reg.pc, 2);
-    assert_eq!(c.reg.flags.p, true);
+    assert!(c.reg.flags.p);
 }
 
 #[test]
@@ -4839,7 +4839,7 @@ fn adc_hl_h_ovf() {
     assert_eq!(c.reg.h, 0x00);
     assert_eq!(c.reg.l, 0x1F);
     assert_eq!(c.reg.pc, 2);
-    assert_eq!(c.reg.flags.p, false);
+    assert!(!c.reg.flags.p);
 }
 
 #[test]
@@ -4855,7 +4855,7 @@ fn adc_hl_sp_ovf() {
     assert_eq!(c.reg.h, 0x80);
     assert_eq!(c.reg.l, 0x00);
     assert_eq!(c.reg.pc, 2);
-    assert_eq!(c.reg.flags.p, true);
+    assert!(c.reg.flags.p);
 }
 
 #[test]
@@ -4978,7 +4978,7 @@ fn rlca() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(c.reg.a, 0b00010001);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -4991,7 +4991,7 @@ fn rla() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(c.reg.a, 0b11101101);
-    assert_eq!(c.reg.flags.c, false);
+    assert!(!c.reg.flags.c);
 }
 
 #[test]
@@ -5003,7 +5003,7 @@ fn rrca() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(c.reg.a, 0b10001000);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5016,7 +5016,7 @@ fn rra() {
     assert_eq!(c.execute(&mut b), 4);
     assert_eq!(c.reg.pc, 1);
     assert_eq!(c.reg.a, 0b01110000);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5029,7 +5029,7 @@ fn rlc_a() {
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.a, 0b00010001);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5043,7 +5043,7 @@ fn rlc_hl() {
     assert_eq!(c.execute(&mut b), 15);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(b.read_byte(0x2828), 0b00010001);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5059,7 +5059,7 @@ fn rlc_ix_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 4);
     assert_eq!(b.read_byte(0x1002), 0b00010001);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5075,7 +5075,7 @@ fn rlc_iy_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 4);
     assert_eq!(b.read_byte(0x1002), 0b00010001);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5089,7 +5089,7 @@ fn rl_d() {
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.d, 0b00011110);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5106,7 +5106,7 @@ fn rl_ix_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 4);
     assert_eq!(b.read_byte(0x1002), 0b00011110);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5123,7 +5123,7 @@ fn rl_iy_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 4);
     assert_eq!(b.read_byte(0x1002), 0b00011110);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5146,7 +5146,7 @@ fn rrc_a() {
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.a, 0b10011000);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5163,7 +5163,7 @@ fn rrc_ix_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 4);
     assert_eq!(b.read_byte(0x1002), 0b10011000);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5180,7 +5180,7 @@ fn rrc_iy_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 4);
     assert_eq!(b.read_byte(0x1002), 0b10011000);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5194,7 +5194,7 @@ fn rr_hl() {
     assert_eq!(c.execute(&mut b), 15);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(b.read_byte(0x4343), 0b01101110);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5211,7 +5211,7 @@ fn rr_ix_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 4);
     assert_eq!(b.read_byte(0x1002), 0b01101110);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5228,7 +5228,7 @@ fn rr_iy_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 4);
     assert_eq!(b.read_byte(0x1002), 0b01101110);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5241,7 +5241,7 @@ fn sla_l() {
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.l, 0b01100010);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5258,7 +5258,7 @@ fn sla_ix_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 4);
     assert_eq!(b.read_byte(0x1002), 0b01100010);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5275,7 +5275,7 @@ fn sla_iy_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 4);
     assert_eq!(b.read_byte(0x1002), 0b01100010);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5292,7 +5292,7 @@ fn sra_ix_d() {
     assert_eq!(c.execute(&mut b), 23);
     assert_eq!(c.reg.pc, 4);
     assert_eq!(b.read_byte(0x1002), 0b11011100);
-    assert_eq!(c.reg.flags.c, false);
+    assert!(!c.reg.flags.c);
 }
 
 #[test]
@@ -5305,7 +5305,7 @@ fn srl_b() {
     assert_eq!(c.execute(&mut b), 8);
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.b, 0b01000111);
-    assert_eq!(c.reg.flags.c, true);
+    assert!(c.reg.flags.c);
 }
 
 #[test]
@@ -5348,7 +5348,7 @@ fn bit_4_hl() {
     c.reg.set_hl(0x4444);
     assert_eq!(c.execute(&mut b), 12);
     assert_eq!(c.reg.pc, 2);
-    assert_eq!(c.reg.flags.z, false);
+    assert!(!c.reg.flags.z);
     assert_eq!(b.read_byte(0x4444), 0x10);
 }
 
@@ -5365,7 +5365,7 @@ fn bit_6_ix_d() {
     assert_eq!(c.execute(&mut b), 20);
     assert_eq!(c.reg.pc, 4);
     assert_eq!(b.read_byte(0x2004), 0x40);
-    assert_eq!(c.reg.flags.z, false);
+    assert!(!c.reg.flags.z);
 }
 
 #[test]
@@ -5381,7 +5381,7 @@ fn bit_6_iy_d() {
     assert_eq!(c.execute(&mut b), 20);
     assert_eq!(c.reg.pc, 4);
     assert_eq!(b.read_byte(0x2004), 0x40);
-    assert_eq!(c.reg.flags.z, false);
+    assert!(!c.reg.flags.z);
 }
 
 #[test]
@@ -6171,12 +6171,12 @@ fn cpi_no_match() {
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x2001);
     assert_eq!(c.reg.get_bc(), 0x02);
-    assert_eq!(c.reg.flags.z, false); // no match
-    assert_eq!(c.reg.flags.s, true); // result 0xFF has bit 7 set
-    assert_eq!(c.reg.flags.h, true); // borrow from bit 4 (0x1 < 0x2)
-    assert_eq!(c.reg.flags.n, true); // subtraction
-    assert_eq!(c.reg.flags.p, true); // BC=2 after decrement ≠ 0
-    assert_eq!(c.reg.flags.c, true); // C must be unchanged
+    assert!(!c.reg.flags.z); // no match
+    assert!(c.reg.flags.s); // result 0xFF has bit 7 set
+    assert!(c.reg.flags.h); // borrow from bit 4 (0x1 < 0x2)
+    assert!(c.reg.flags.n); // subtraction
+    assert!(c.reg.flags.p); // BC=2 after decrement ≠ 0
+    assert!(c.reg.flags.c); // C must be unchanged
 }
 
 // CPI: no half-carry when no nibble borrow
@@ -6192,10 +6192,10 @@ fn cpi_no_half_carry() {
     c.reg.set_bc(0x02);
     b.write_byte(0x2000, 0x10);
     assert_eq!(c.execute(&mut b), 16);
-    assert_eq!(c.reg.flags.z, false);
-    assert_eq!(c.reg.flags.s, false); // result 0x10 is positive
-    assert_eq!(c.reg.flags.h, false); // 0x0 >= 0x0, no borrow
-    assert_eq!(c.reg.flags.n, true);
+    assert!(!c.reg.flags.z);
+    assert!(!c.reg.flags.s); // result 0x10 is positive
+    assert!(!c.reg.flags.h); // 0x0 >= 0x0, no borrow
+    assert!(c.reg.flags.n);
 }
 
 // CPD with no match: same flag rules as CPI but HL decremented
@@ -6214,12 +6214,12 @@ fn cpd_no_match() {
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1FFF); // decremented
     assert_eq!(c.reg.get_bc(), 0x02);
-    assert_eq!(c.reg.flags.z, false);
-    assert_eq!(c.reg.flags.s, true);
-    assert_eq!(c.reg.flags.h, true);
-    assert_eq!(c.reg.flags.n, true);
-    assert_eq!(c.reg.flags.p, true);
-    assert_eq!(c.reg.flags.c, false); // C unchanged
+    assert!(!c.reg.flags.z);
+    assert!(c.reg.flags.s);
+    assert!(c.reg.flags.h);
+    assert!(c.reg.flags.n);
+    assert!(c.reg.flags.p);
+    assert!(!c.reg.flags.c); // C unchanged
 }
 
 // CPIR terminated because BC reaches 0 with no match: Z=0, P=0
@@ -6239,9 +6239,9 @@ fn cpir_bc_exhausted() {
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x1003); // advanced by 3
     assert_eq!(c.reg.get_bc(), 0x00); // exhausted
-    assert_eq!(c.reg.flags.z, false); // no match found
-    assert_eq!(c.reg.flags.p, false); // BC=0
-    assert_eq!(c.reg.flags.n, true);
+    assert!(!c.reg.flags.z); // no match found
+    assert!(!c.reg.flags.p); // BC=0
+    assert!(c.reg.flags.n);
 }
 
 // CPIR match found on very first iteration
@@ -6259,9 +6259,9 @@ fn cpir_first_match() {
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x3001); // one increment
     assert_eq!(c.reg.get_bc(), 0x04); // one decrement (5-1=4)
-    assert_eq!(c.reg.flags.z, true); // match
-    assert_eq!(c.reg.flags.p, true); // BC=4 ≠ 0
-    assert_eq!(c.reg.flags.n, true);
+    assert!(c.reg.flags.z); // match
+    assert!(c.reg.flags.p); // BC=4 ≠ 0
+    assert!(c.reg.flags.n);
 }
 
 // CPDR terminated because BC reaches 0 with no match: Z=0, P=0
@@ -6281,9 +6281,9 @@ fn cpdr_bc_exhausted() {
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x0FFF); // decremented by 3
     assert_eq!(c.reg.get_bc(), 0x00); // exhausted
-    assert_eq!(c.reg.flags.z, false); // no match found
-    assert_eq!(c.reg.flags.p, false); // BC=0
-    assert_eq!(c.reg.flags.n, true);
+    assert!(!c.reg.flags.z); // no match found
+    assert!(!c.reg.flags.p); // BC=0
+    assert!(c.reg.flags.n);
 }
 
 // CPDR match found on very first iteration
@@ -6301,9 +6301,9 @@ fn cpdr_first_match() {
     assert_eq!(c.reg.pc, 2);
     assert_eq!(c.reg.get_hl(), 0x2FFF); // one decrement
     assert_eq!(c.reg.get_bc(), 0x04); // one decrement (5-1=4)
-    assert_eq!(c.reg.flags.z, true); // match
-    assert_eq!(c.reg.flags.p, true); // BC=4 ≠ 0
-    assert_eq!(c.reg.flags.n, true);
+    assert!(c.reg.flags.z); // match
+    assert!(c.reg.flags.p); // BC=4 ≠ 0
+    assert!(c.reg.flags.n);
 }
 
 // DJNZ inline tests (no bin fixture required)
