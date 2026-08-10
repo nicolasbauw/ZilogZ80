@@ -1575,9 +1575,71 @@ fn undocumented_flags_rotations_cpl_block_io() {
     }
     c.execute(&mut b);
     assert_eq!(0x28, c.reg.b); // INI : XF/YF viennent de B apres decrement
-    // S, H et P/V restent ce que RRA les a laisses : les drapeaux documentes
-    // des instructions d'E/S par bloc ne sont pas encore emules.
-    assert_eq!(c.flags(), YF | XF | PF | NF);
+    // FlatBus rend 0xFF sur un port flottant, et C vaut 0 : k = 0xFF + 1 =
+    // 0x100, donc H et C. N recopie le bit 7 de 0xFF. P/V est la parite de
+    // (k & 7) ^ B = 0x28, qui a deux bits a 1.
+    assert_eq!(c.flags(), YF | HF | XF | PF | NF | CF);
+}
+
+/// Les drapeaux **documentés** des huit instructions d'E/S par bloc, qui
+/// n'étaient pas posés du tout : seuls Z et N l'étaient, et N à tort.
+///
+/// La règle : S, Z (et XF/YF) viennent de `B` après décrémentation ; `N`
+/// recopie le bit 7 de l'octet transféré ; H, C et P/V se déduisent d'une
+/// somme intermédiaire `k` entre cet octet et un second terme propre à la
+/// famille — `C + 1` pour `INI`, `C - 1` pour `IND`, `L` après mise à jour
+/// pour les sorties. H et C valent le débordement de `k`, et P/V la parité
+/// de `(k & 7) ^ B`.
+#[test]
+fn block_io_documented_flags() {
+    struct Io {
+        ram: [u8; 0x10000],
+        port_value: u8,
+    }
+    impl Bus for Io {
+        fn read_byte(&self, a: u16) -> u8 {
+            self.ram[a as usize]
+        }
+        fn write_byte(&mut self, a: u16, v: u8) {
+            self.ram[a as usize] = v;
+        }
+        fn read_io(&self, _port: u16) -> u8 {
+            self.port_value
+        }
+        fn write_io(&mut self, _port: u16, _data: u8) {}
+    }
+
+    // (nom, opcode apres ED, octet transfere, B de depart, drapeaux attendus)
+    for (name, opcode, byte, b0, expected) in [
+        // k = 0x01 + (C+1) = 0x02 : pas de debordement. (k&7)^B = 0x03, parite paire.
+        ("INI", 0xA2_u8, 0x01_u8, 0x02_u8, PF),
+        // k = 0x01 + (C-1) = 0x100 : debordement. (k&7)^B = 0x01, parite impaire.
+        ("IND", 0xAA, 0x01, 0x02, HF | CF),
+        // L vaut 0x01 apres incrementation : k = 0x81. N recopie le bit 7 de 0x80.
+        ("OUTI", 0xA3, 0x80, 0x02, PF | NF),
+        // L vaut 0xFF apres decrementation : k = 0x17F, donc debordement.
+        ("OUTD", 0xAB, 0x80, 0x02, HF | PF | NF | CF),
+        // B tombe a zero : Z. (k&7)^B = 0x02, parite impaire.
+        ("INI (B -> 0)", 0xA2, 0x01, 0x01, ZF),
+        // B tombe a 0x80 : S. (k&7)^B = 0x82, parite paire.
+        ("INI (B -> 0x80)", 0xA2, 0x01, 0x81, SF | PF),
+    ] {
+        let mut b = Io {
+            ram: [0; 0x10000],
+            port_value: byte,
+        };
+        b.ram[0] = 0xED;
+        b.ram[1] = opcode;
+        b.ram[0x4000] = byte; // source des instructions de sortie
+
+        let mut c = CPU::new();
+        c.reg.b = b0;
+        c.reg.c = 0x00;
+        c.reg.set_hl(0x4000);
+        c.execute(&mut b);
+
+        assert_eq!(c.flags(), expected, "{name}");
+    }
 }
 
 #[test]

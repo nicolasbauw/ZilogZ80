@@ -3790,10 +3790,7 @@ impl CPU {
                 self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
-                self.reg.flags.z = self.reg.b == 0;
-                // XF/YF viennent de B apres decrement, comme SF et ZF.
-                self.reg.flags.set_undocumented_from(self.reg.b);
-                self.reg.flags.n = true; // N est mis à 1 après les opcodes de bloc I/O
+                self.block_io_flags(data, self.reg.c.wrapping_add(1));
             }
 
             // INIR (0xEDB2) : INI répété jusqu'à ce que B devienne 0
@@ -3804,10 +3801,7 @@ impl CPU {
                 self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
-                self.reg.flags.z = self.reg.b == 0;
-                // XF/YF viennent de B apres decrement, comme SF et ZF.
-                self.reg.flags.set_undocumented_from(self.reg.b);
-                self.reg.flags.n = true;
+                self.block_io_flags(data, self.reg.c.wrapping_add(1));
                 cycles = self.repeat_block(self.reg.b != 0);
             }
 
@@ -3819,10 +3813,7 @@ impl CPU {
                 self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
-                self.reg.flags.z = self.reg.b == 0;
-                // XF/YF viennent de B apres decrement, comme SF et ZF.
-                self.reg.flags.set_undocumented_from(self.reg.b);
-                self.reg.flags.n = true;
+                self.block_io_flags(data, self.reg.c.wrapping_sub(1));
             }
 
             // INDR (0xEDBA) : IND répété jusqu'à ce que B devienne 0
@@ -3833,10 +3824,7 @@ impl CPU {
                 self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
-                self.reg.flags.z = self.reg.b == 0;
-                // XF/YF viennent de B apres decrement, comme SF et ZF.
-                self.reg.flags.set_undocumented_from(self.reg.b);
-                self.reg.flags.n = true;
+                self.block_io_flags(data, self.reg.c.wrapping_sub(1));
                 cycles = self.repeat_block(self.reg.b != 0);
             }
 
@@ -3848,10 +3836,7 @@ impl CPU {
                 bus.write_io(port, data);
                 self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
 
-                self.reg.flags.z = self.reg.b == 0;
-                // XF/YF viennent de B apres decrement, comme SF et ZF.
-                self.reg.flags.set_undocumented_from(self.reg.b);
-                self.reg.flags.n = true;
+                self.block_io_flags(data, self.reg.l);
             }
 
             // OTIR (0xEDB3) : OUTI répété jusqu'à ce que B devienne 0
@@ -3862,10 +3847,7 @@ impl CPU {
                 bus.write_io(port, data);
                 self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
 
-                self.reg.flags.z = self.reg.b == 0;
-                // XF/YF viennent de B apres decrement, comme SF et ZF.
-                self.reg.flags.set_undocumented_from(self.reg.b);
-                self.reg.flags.n = true;
+                self.block_io_flags(data, self.reg.l);
                 cycles = self.repeat_block(self.reg.b != 0);
             }
 
@@ -3877,10 +3859,7 @@ impl CPU {
                 bus.write_io(port, data);
                 self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
 
-                self.reg.flags.z = self.reg.b == 0;
-                // XF/YF viennent de B apres decrement, comme SF et ZF.
-                self.reg.flags.set_undocumented_from(self.reg.b);
-                self.reg.flags.n = true;
+                self.block_io_flags(data, self.reg.l);
             }
 
             // OTDR (0xEDBB) : OUTD répété jusqu'à ce que B devienne 0
@@ -3891,10 +3870,7 @@ impl CPU {
                 bus.write_io(port, data);
                 self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
 
-                self.reg.flags.z = self.reg.b == 0;
-                // XF/YF viennent de B apres decrement, comme SF et ZF.
-                self.reg.flags.set_undocumented_from(self.reg.b);
-                self.reg.flags.n = true;
+                self.block_io_flags(data, self.reg.l);
                 cycles = self.repeat_block(self.reg.b != 0);
             }
 
@@ -4038,6 +4014,35 @@ impl CPU {
             7 => self.reg.a = value,
             _ => unreachable!("le code 6 n'est pas un registre"),
         }
+    }
+
+    /// Drapeaux communs aux huit instructions d'E/S par bloc (`INI`, `IND`,
+    /// `OUTI`, `OUTD` et leurs formes répétitives).
+    ///
+    /// S, Z et les deux drapeaux non documentés viennent de `B` **après**
+    /// décrémentation. Les trois autres se déduisent d'une somme
+    /// intermédiaire que le Z80 forme entre l'octet transféré et un second
+    /// terme propre à la famille : `C + 1` pour `INI`, `C - 1` pour `IND`, et
+    /// `L` (après mise à jour de `HL`) pour les deux instructions de sortie.
+    /// C'est cet `addend` que l'appelant fournit.
+    ///
+    /// Ces règles n'ont rien d'arbitraire vu du silicium — elles décrivent
+    /// une addition interne dont le résultat n'est jamais rangé nulle part —
+    /// mais elles sont reproductibles, et c'est à ce titre que la suite
+    /// `zexall` les vérifie.
+    fn block_io_flags(&mut self, data: u8, addend: u8) {
+        let b = self.reg.b;
+        self.reg.flags.s = b & 0x80 != 0;
+        self.reg.flags.z = b == 0;
+        self.reg.flags.set_undocumented_from(b);
+        // Seul cas de la machine où N ne vaut pas systématiquement 1 après
+        // une opération qui le pose : il recopie le bit 7 de l'octet
+        // transféré.
+        self.reg.flags.n = data & 0x80 != 0;
+        let k = u16::from(data) + u16::from(addend);
+        self.reg.flags.h = k > 0xFF;
+        self.reg.flags.c = k > 0xFF;
+        self.reg.flags.p = ((k & 0x07) as u8 ^ b).count_ones() % 2 == 0;
     }
 
     fn ldi<B: Bus>(&mut self, bus: &mut B) {
