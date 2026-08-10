@@ -39,8 +39,8 @@ cargo run --example disassembler -- bin/inc_dec_ss_ix_iy.bin
 11 FF FF      LD DE,$FFFF
 21 FF 00      LD HL,$00FF
 31 11 11      LD SP,$1111
-DD21 FF 0F    LD IX,nn
-FD21 34 12    LD IY,nn
+DD21 FF 0F    LD IX,$0FFF
+FD21 34 12    LD IY,$1234
 0B            DEC BC
 03            INC BC
 13            INC DE
