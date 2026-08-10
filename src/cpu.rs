@@ -172,6 +172,7 @@ impl CPU {
             self.iff1 = false;
             self.interrupt_stack_push(bus);
             self.reg.pc = 0x0066;
+            self.reg.wz = self.reg.pc;
             self.nmi = false;
             return 11;
         }
@@ -199,6 +200,7 @@ impl CPU {
             self.interrupt_stack_push(bus);
             let addr = ((self.reg.i as u16) << 8) | (self.int.unwrap() as u16);
             self.reg.pc = bus.read_word(addr);
+            self.reg.wz = self.reg.pc;
             self.int = None;
             return 19;
         };
@@ -457,36 +459,42 @@ impl CPU {
             0x0A => {
                 let addr = self.reg.get_bc();
                 self.reg.a = bus.read_byte(addr);
+                self.wz_after(addr);
             }
 
             // LD A,(DE)
             0x1A => {
                 let addr = self.reg.get_de();
                 self.reg.a = bus.read_byte(addr);
+                self.wz_after(addr);
             }
 
             // LD A,(nn)
             0x3A => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
                 self.reg.a = bus.read_byte(addr);
+                self.wz_after(addr);
             }
 
             // LD (BC),A
             0x02 => {
                 let addr = self.reg.get_bc();
                 bus.write_byte(addr, self.reg.a);
+                self.wz_after_write_a(addr);
             }
 
             // LD (DE),A
             0x12 => {
                 let addr = self.reg.get_de();
                 bus.write_byte(addr, self.reg.a);
+                self.wz_after_write_a(addr);
             }
 
             // LD (nn),A
             0x32 => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
                 bus.write_byte(addr, self.reg.a);
+                self.wz_after_write_a(addr);
             }
 
             // 16-Bit Load Group
@@ -517,6 +525,7 @@ impl CPU {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
                 let d = bus.read_word(addr);
                 self.reg.set_hl(d);
+                self.wz_after(addr);
             }
 
             // LD (nn),HL
@@ -524,6 +533,7 @@ impl CPU {
                 let d = self.reg.get_hl();
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
                 bus.write_word(addr, d);
+                self.wz_after(addr);
             }
 
             // LD SP,HL
@@ -618,6 +628,7 @@ impl CPU {
                 let hl = self.reg.get_hl();
                 bus.write_word(self.reg.sp, hl);
                 self.reg.set_hl(pointed_by_sp);
+                self.reg.wz = pointed_by_sp;
             }
 
             // 8-Bit Arithmetic Group
@@ -964,12 +975,14 @@ impl CPU {
             // JP nn
             0xC3 => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 self.reg.pc = addr;
             }
 
             // JP C,nn
             0xDA => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if self.reg.flags.c {
                     self.reg.pc = addr;
                 } else {
@@ -980,6 +993,7 @@ impl CPU {
             // JP NC,nn
             0xD2 => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if !self.reg.flags.c {
                     self.reg.pc = addr;
                 } else {
@@ -990,6 +1004,7 @@ impl CPU {
             // JP Z,nn
             0xCA => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if self.reg.flags.z {
                     self.reg.pc = addr;
                 } else {
@@ -1000,6 +1015,7 @@ impl CPU {
             // JP NZ,nn
             0xC2 => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if !self.reg.flags.z {
                     self.reg.pc = addr;
                 } else {
@@ -1010,6 +1026,7 @@ impl CPU {
             // JP M,nn
             0xFA => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if self.reg.flags.s {
                     self.reg.pc = addr;
                 } else {
@@ -1020,6 +1037,7 @@ impl CPU {
             // JP P,nn
             0xF2 => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if !self.reg.flags.s {
                     self.reg.pc = addr;
                 } else {
@@ -1030,6 +1048,7 @@ impl CPU {
             // JP PE,nn
             0xEA => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if self.reg.flags.p {
                     self.reg.pc = addr;
                 } else {
@@ -1040,6 +1059,7 @@ impl CPU {
             // JP PO,nn
             0xE2 => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if !self.reg.flags.p {
                     self.reg.pc = addr;
                 } else {
@@ -1050,38 +1070,14 @@ impl CPU {
             // JR e
             0x18 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(1));
-                if bit::get(displacement, 7) {
-                    self.reg.pc = self
-                        .reg
-                        .pc
-                        .wrapping_add(2)
-                        .wrapping_sub(signed_to_abs(displacement) as u16)
-                } else {
-                    self.reg.pc = self
-                        .reg
-                        .pc
-                        .wrapping_add(displacement as u16)
-                        .wrapping_add(2)
-                }
+                self.reg.pc = self.relative_target(displacement);
             }
 
             // JR C,e
             0x38 => {
                 if self.reg.flags.c {
                     let displacement = bus.read_byte(self.reg.pc.wrapping_add(1));
-                    if bit::get(displacement, 7) {
-                        self.reg.pc = self
-                            .reg
-                            .pc
-                            .wrapping_add(2)
-                            .wrapping_sub(signed_to_abs(displacement) as u16)
-                    } else {
-                        self.reg.pc = self
-                            .reg
-                            .pc
-                            .wrapping_add(displacement as u16)
-                            .wrapping_add(2)
-                    }
+                    self.reg.pc = self.relative_target(displacement);
                     cycles += 5;
                 } else {
                     self.reg.pc = self.reg.pc.wrapping_add(2)
@@ -1093,19 +1089,7 @@ impl CPU {
             0x30 => {
                 if !self.reg.flags.c {
                     let displacement = bus.read_byte(self.reg.pc.wrapping_add(1));
-                    if bit::get(displacement, 7) {
-                        self.reg.pc = self
-                            .reg
-                            .pc
-                            .wrapping_add(2)
-                            .wrapping_sub(signed_to_abs(displacement) as u16)
-                    } else {
-                        self.reg.pc = self
-                            .reg
-                            .pc
-                            .wrapping_add(displacement as u16)
-                            .wrapping_add(2)
-                    }
+                    self.reg.pc = self.relative_target(displacement);
                     cycles += 5;
                 } else {
                     self.reg.pc = self.reg.pc.wrapping_add(2)
@@ -1117,19 +1101,7 @@ impl CPU {
             0x28 => {
                 if self.reg.flags.z {
                     let displacement = bus.read_byte(self.reg.pc.wrapping_add(1));
-                    if bit::get(displacement, 7) {
-                        self.reg.pc = self
-                            .reg
-                            .pc
-                            .wrapping_add(2)
-                            .wrapping_sub(signed_to_abs(displacement) as u16)
-                    } else {
-                        self.reg.pc = self
-                            .reg
-                            .pc
-                            .wrapping_add(displacement as u16)
-                            .wrapping_add(2)
-                    }
+                    self.reg.pc = self.relative_target(displacement);
                     cycles += 5;
                 } else {
                     self.reg.pc = self.reg.pc.wrapping_add(2)
@@ -1141,19 +1113,7 @@ impl CPU {
             0x20 => {
                 if !self.reg.flags.z {
                     let displacement = bus.read_byte(self.reg.pc.wrapping_add(1));
-                    if bit::get(displacement, 7) {
-                        self.reg.pc = self
-                            .reg
-                            .pc
-                            .wrapping_add(2)
-                            .wrapping_sub(signed_to_abs(displacement) as u16)
-                    } else {
-                        self.reg.pc = self
-                            .reg
-                            .pc
-                            .wrapping_add(displacement as u16)
-                            .wrapping_add(2)
-                    }
+                    self.reg.pc = self.relative_target(displacement);
                     cycles += 5;
                 } else {
                     self.reg.pc = self.reg.pc.wrapping_add(2)
@@ -1171,19 +1131,7 @@ impl CPU {
                 self.reg.b = (self.reg.b).wrapping_sub(1);
                 if self.reg.b != 0 {
                     let displacement = bus.read_byte(self.reg.pc.wrapping_add(1));
-                    if bit::get(displacement, 7) {
-                        self.reg.pc = self
-                            .reg
-                            .pc
-                            .wrapping_add(2)
-                            .wrapping_sub(signed_to_abs(displacement) as u16)
-                    } else {
-                        self.reg.pc = self
-                            .reg
-                            .pc
-                            .wrapping_add(displacement as u16)
-                            .wrapping_add(2)
-                    }
+                    self.reg.pc = self.relative_target(displacement);
                     cycles += 5;
                 } else {
                     self.reg.pc = self.reg.pc.wrapping_add(2)
@@ -1195,6 +1143,7 @@ impl CPU {
             // CALL nn
             0xCD => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 self.call_stack_push(bus);
                 self.reg.pc = addr;
             }
@@ -1202,6 +1151,7 @@ impl CPU {
             // CALL C,nn
             0xDC => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if self.reg.flags.c {
                     self.call_stack_push(bus);
                     self.reg.pc = addr;
@@ -1214,6 +1164,7 @@ impl CPU {
             // CALL NC,nn
             0xD4 => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if !self.reg.flags.c {
                     self.call_stack_push(bus);
                     self.reg.pc = addr;
@@ -1226,6 +1177,7 @@ impl CPU {
             // CALL Z,nn
             0xCC => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if self.reg.flags.z {
                     self.call_stack_push(bus);
                     self.reg.pc = addr;
@@ -1238,6 +1190,7 @@ impl CPU {
             // CALL NZ,nn
             0xC4 => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if !self.reg.flags.z {
                     self.call_stack_push(bus);
                     self.reg.pc = addr;
@@ -1250,6 +1203,7 @@ impl CPU {
             // CALL M,nn
             0xFC => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if self.reg.flags.s {
                     self.call_stack_push(bus);
                     self.reg.pc = addr;
@@ -1262,6 +1216,7 @@ impl CPU {
             // CALL P,nn
             0xF4 => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if !self.reg.flags.s {
                     self.call_stack_push(bus);
                     self.reg.pc = addr;
@@ -1274,6 +1229,7 @@ impl CPU {
             // CALL PE,nn
             0xEC => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if self.reg.flags.p {
                     self.call_stack_push(bus);
                     self.reg.pc = addr;
@@ -1286,6 +1242,7 @@ impl CPU {
             // CALL PO,nn
             0xE4 => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(1));
+                self.reg.wz = addr;
                 if !self.reg.flags.p {
                     self.call_stack_push(bus);
                     self.reg.pc = addr;
@@ -1387,6 +1344,7 @@ impl CPU {
                     self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0000;
+                self.reg.wz = self.reg.pc;
             }
 
             // RST 08
@@ -1398,6 +1356,7 @@ impl CPU {
                     self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0008;
+                self.reg.wz = self.reg.pc;
             }
 
             // RST 10
@@ -1409,6 +1368,7 @@ impl CPU {
                     self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0010;
+                self.reg.wz = self.reg.pc;
             }
 
             // RST 18
@@ -1420,6 +1380,7 @@ impl CPU {
                     self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0018;
+                self.reg.wz = self.reg.pc;
             }
 
             // RST 20
@@ -1431,6 +1392,7 @@ impl CPU {
                     self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0020;
+                self.reg.wz = self.reg.pc;
             }
 
             // RST 28
@@ -1442,6 +1404,7 @@ impl CPU {
                     self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0028;
+                self.reg.wz = self.reg.pc;
             }
 
             // RST 30
@@ -1453,6 +1416,7 @@ impl CPU {
                     self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0030;
+                self.reg.wz = self.reg.pc;
             }
 
             // RST 38
@@ -1464,6 +1428,7 @@ impl CPU {
                     self.interrupt_stack_push(bus);
                 }
                 self.reg.pc = 0x0038;
+                self.reg.wz = self.reg.pc;
             }
 
             // OUT (n), A (Opcode 0xD3)
@@ -1472,6 +1437,8 @@ impl CPU {
                 // Le port d'I/O Z80 sur 16 bits : A sur le poids fort, n sur le poids faible.
                 let port = ((self.reg.a as u16) << 8) | (n as u16);
                 bus.write_io(port, self.reg.a);
+                // OUT (n),A suit la meme regle batarde que LD (nn),A.
+                self.wz_after_write_a(port);
             }
 
             // IN A, (n) (Opcode 0xDB)
@@ -1479,6 +1446,7 @@ impl CPU {
                 let n = bus.read_byte(self.reg.pc.wrapping_add(1));
                 let port = ((self.reg.a as u16) << 8) | (n as u16);
                 self.reg.a = bus.read_io(port);
+                self.wz_after(port);
             }
 
             _ => {
@@ -1537,6 +1505,17 @@ impl CPU {
     /// fait le Z80, et c'est ce qui laisse une interruption s'intercaler entre
     /// deux itérations. Renvoie la durée de l'itération : 21 cycles quand elle
     /// se répète, 16 pour la dernière.
+    /// Variante de `repeat_block` pour `LDIR`/`LDDR`/`CPIR`/`CPDR` : tant
+    /// qu'elles se repetent, elles rechargent MEMPTR avec l'adresse de leur
+    /// propre opcode augmentee de un, le processeur s'appretant a le relire.
+    /// Les formes repetitives d'E/S par bloc ne suivent pas cette regle.
+    fn repeat_block_wz(&mut self, again: bool) -> u32 {
+        if again {
+            self.reg.wz = self.reg.pc.wrapping_add(1);
+        }
+        self.repeat_block(again)
+    }
+
     fn repeat_block(&mut self, again: bool) -> u32 {
         if again {
             // Le PC sera avancé de deux en fin d'exécution : on l'annule.
@@ -1812,6 +1791,7 @@ impl CPU {
             0xED4B => {
                 // LD BC,(nn)
                 let addr = bus.read_word(self.reg.pc.wrapping_add(2));
+                self.wz_after(addr);
                 let d = bus.read_word(addr);
                 self.reg.set_bc(d);
             }
@@ -1819,6 +1799,7 @@ impl CPU {
             0xED5B => {
                 // LD DE,(nn)
                 let addr = bus.read_word(self.reg.pc.wrapping_add(2));
+                self.wz_after(addr);
                 let d = bus.read_word(addr);
                 self.reg.set_de(d);
             }
@@ -1826,6 +1807,7 @@ impl CPU {
             0xED6B => {
                 // LD HL,(nn)
                 let addr = bus.read_word(self.reg.pc.wrapping_add(2));
+                self.wz_after(addr);
                 let d = bus.read_word(addr);
                 self.reg.set_hl(d);
             }
@@ -1833,6 +1815,7 @@ impl CPU {
             0xED7B => {
                 // LD SP,(nn)
                 let addr = bus.read_word(self.reg.pc.wrapping_add(2));
+                self.wz_after(addr);
                 let d = bus.read_word(addr);
                 self.reg.sp = d;
             }
@@ -1840,6 +1823,7 @@ impl CPU {
             // LD IX,(nn)
             0xDD2A => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(2));
+                self.wz_after(addr);
                 let d = bus.read_word(addr);
                 self.reg.set_ix(d);
             }
@@ -1847,6 +1831,7 @@ impl CPU {
             // LD IY,(nn)
             0xFD2A => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(2));
+                self.wz_after(addr);
                 let d = bus.read_word(addr);
                 self.reg.set_iy(d);
             }
@@ -1855,36 +1840,42 @@ impl CPU {
             0xED43 => {
                 // LD (nn),BC
                 let addr = bus.read_word(self.reg.pc.wrapping_add(2));
+                self.wz_after(addr);
                 bus.write_word(addr, self.reg.get_bc());
             }
 
             0xED53 => {
                 // LD (nn),DE
                 let addr = bus.read_word(self.reg.pc.wrapping_add(2));
+                self.wz_after(addr);
                 bus.write_word(addr, self.reg.get_de());
             }
 
             0xED63 => {
                 // LD (nn),HL
                 let addr = bus.read_word(self.reg.pc.wrapping_add(2));
+                self.wz_after(addr);
                 bus.write_word(addr, self.reg.get_hl());
             }
 
             0xED73 => {
                 // LD (nn),SP
                 let addr = bus.read_word(self.reg.pc.wrapping_add(2));
+                self.wz_after(addr);
                 bus.write_word(addr, self.reg.sp);
             }
 
             // LD (nn),IX
             0xDD22 => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(2));
+                self.wz_after(addr);
                 bus.write_word(addr, self.reg.get_ix());
             }
 
             // LD (nn),IY
             0xFD22 => {
                 let addr = bus.read_word(self.reg.pc.wrapping_add(2));
+                self.wz_after(addr);
                 bus.write_word(addr, self.reg.get_iy());
             }
 
@@ -1924,6 +1915,7 @@ impl CPU {
                 let pointed_by_sp = bus.read_word(self.reg.sp);
                 bus.write_word(self.reg.sp, self.reg.get_ix());
                 self.reg.set_ix(pointed_by_sp);
+                self.reg.wz = pointed_by_sp;
             }
 
             // EX (SP),IY
@@ -1931,6 +1923,7 @@ impl CPU {
                 let pointed_by_sp = bus.read_word(self.reg.sp);
                 bus.write_word(self.reg.sp, self.reg.get_iy());
                 self.reg.set_iy(pointed_by_sp);
+                self.reg.wz = pointed_by_sp;
             }
 
             // LDI
@@ -1965,7 +1958,7 @@ impl CPU {
                 self.reg.flags.h = false;
                 self.reg.flags.p = bc != 0;
                 self.reg.flags.n = false;
-                cycles = self.repeat_block(bc != 0);
+                cycles = self.repeat_block_wz(bc != 0);
             }
 
             // LDD
@@ -1984,7 +1977,7 @@ impl CPU {
                 self.reg.flags.h = false;
                 self.reg.flags.p = bc != 0;
                 self.reg.flags.n = false;
-                cycles = self.repeat_block(bc != 0);
+                cycles = self.repeat_block_wz(bc != 0);
             }
 
             // CPI
@@ -1995,7 +1988,7 @@ impl CPU {
                 self.cpi(bus);
                 // La répétition s'arrête sur une correspondance (Z=1) ou sur BC nul.
                 let again = !self.reg.flags.z && self.reg.get_bc() != 0;
-                cycles = self.repeat_block(again);
+                cycles = self.repeat_block_wz(again);
             }
 
             // CPD
@@ -2006,7 +1999,7 @@ impl CPU {
                 self.cpd(bus);
                 // La répétition s'arrête sur une correspondance (Z=1) ou sur BC nul.
                 let again = !self.reg.flags.z && self.reg.get_bc() != 0;
-                cycles = self.repeat_block(again);
+                cycles = self.repeat_block_wz(again);
             }
 
             // 8-Bit Arithmetic Group
@@ -3305,6 +3298,7 @@ impl CPU {
                 self.reg.flags.h = false;
                 self.reg.flags.p = data.count_ones() % 2 == 0; // Parité
                 self.reg.flags.n = false;
+                self.wz_after(port);
             }
 
             // IN F, (C) - Opcode 0xED70 (Undocumented) : affecte seulement les flags
@@ -3317,6 +3311,7 @@ impl CPU {
                 self.reg.flags.h = false;
                 self.reg.flags.p = data.count_ones() % 2 == 0;
                 self.reg.flags.n = false;
+                self.wz_after(port);
             }
 
             // OUT (C), r - Écrit la valeur du registre spécifié sur le port BC.
@@ -3333,12 +3328,14 @@ impl CPU {
                     _ => 0,
                 };
                 bus.write_io(port, data);
+                self.wz_after(port);
             }
 
             // OUT (C), 0 - Opcode 0xED71 (Undocumented) : Écrit un octet nul sur le port BC.
             0xED71 => {
                 let port = self.reg.get_bc();
                 bus.write_io(port, 0);
+                self.wz_after(port);
             }
 
             // -------------------------------------------------------------------------
@@ -3359,6 +3356,7 @@ impl CPU {
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.block_io_flags(data, self.reg.c.wrapping_add(1));
+                self.reg.wz = self.reg.get_bc().wrapping_add(1);
             }
 
             // INIR (0xEDB2) : INI répété jusqu'à ce que B devienne 0
@@ -3370,6 +3368,7 @@ impl CPU {
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.block_io_flags(data, self.reg.c.wrapping_add(1));
+                self.reg.wz = self.reg.get_bc().wrapping_add(1);
                 cycles = self.repeat_block(self.reg.b != 0);
             }
 
@@ -3382,6 +3381,7 @@ impl CPU {
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.block_io_flags(data, self.reg.c.wrapping_sub(1));
+                self.reg.wz = self.reg.get_bc().wrapping_sub(1);
             }
 
             // INDR (0xEDBA) : IND répété jusqu'à ce que B devienne 0
@@ -3393,6 +3393,7 @@ impl CPU {
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.block_io_flags(data, self.reg.c.wrapping_sub(1));
+                self.reg.wz = self.reg.get_bc().wrapping_sub(1);
                 cycles = self.repeat_block(self.reg.b != 0);
             }
 
@@ -3405,6 +3406,7 @@ impl CPU {
                 self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
 
                 self.block_io_flags(data, self.reg.l);
+                self.reg.wz = self.reg.get_bc().wrapping_add(1);
             }
 
             // OTIR (0xEDB3) : OUTI répété jusqu'à ce que B devienne 0
@@ -3416,6 +3418,7 @@ impl CPU {
                 self.reg.set_hl(self.reg.get_hl().wrapping_add(1));
 
                 self.block_io_flags(data, self.reg.l);
+                self.reg.wz = self.reg.get_bc().wrapping_add(1);
                 cycles = self.repeat_block(self.reg.b != 0);
             }
 
@@ -3428,6 +3431,7 @@ impl CPU {
                 self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
 
                 self.block_io_flags(data, self.reg.l);
+                self.reg.wz = self.reg.get_bc().wrapping_sub(1);
             }
 
             // OTDR (0xEDBB) : OUTD répété jusqu'à ce que B devienne 0
@@ -3439,6 +3443,7 @@ impl CPU {
                 self.reg.set_hl(self.reg.get_hl().wrapping_sub(1));
 
                 self.block_io_flags(data, self.reg.l);
+                self.reg.wz = self.reg.get_bc().wrapping_sub(1);
                 cycles = self.repeat_block(self.reg.b != 0);
             }
 
@@ -3524,9 +3529,18 @@ impl CPU {
             1 => {
                 // BIT ne modifie que les drapeaux : ni la mémoire ni un
                 // registre, et le champ z est sans effet.
-                self.reg.flags.z = !bit::get(value, y);
+                let r = bit::get(value, y);
+                self.reg.flags.z = !r;
                 self.reg.flags.h = true;
                 self.reg.flags.n = false;
+                self.reg.flags.s = r && y == 7;
+                self.reg.flags.p = !r;
+                // Comme `BIT b,(HL)`, la forme indexée prend ses deux
+                // drapeaux non documentés sur le poids fort de MEMPTR — que
+                // `ix_d`/`iy_d` viennent de charger avec l'adresse visée.
+                self.reg
+                    .flags
+                    .set_undocumented_from((self.reg.wz >> 8) as u8);
                 return 20;
             }
             2 => bit::reset(value, y),
@@ -3581,6 +3595,38 @@ impl CPU {
             7 => self.reg.a = value,
             _ => unreachable!("le code 6 n'est pas un registre"),
         }
+    }
+
+    /// Destination d'un saut relatif : `PC + 2 + e`, le déplacement étant
+    /// signé.
+    ///
+    /// Un saut relatif **pris** charge MEMPTR avec sa destination ; un saut
+    /// non pris le laisse intact, d'où l'appel depuis la seule branche prise.
+    fn relative_target(&mut self, displacement: u8) -> u16 {
+        let target = self
+            .reg
+            .pc
+            .wrapping_add(2)
+            .wrapping_add(displacement as i8 as u16);
+        self.reg.wz = target;
+        target
+    }
+
+    /// MEMPTR après un accès mémoire à `address` : le registre retient
+    /// l'adresse *suivante*. C'est le cas de loin le plus courant.
+    fn wz_after(&mut self, address: u16) {
+        self.reg.wz = address.wrapping_add(1);
+    }
+
+    /// MEMPTR après `LD (nn),A`, `LD (BC),A`, `LD (DE),A` et `OUT (n),A`.
+    ///
+    /// Ces quatre-là ne suivent pas la règle générale : seul l'octet de poids
+    /// faible avance d'un, tandis que le poids fort reçoit `A`. La bizarrerie
+    /// est bien celle du composant, pas une simplification — elle vient de ce
+    /// que le Z80 présente `A` sur la moitié haute du bus d'adresse pendant
+    /// ce cycle.
+    fn wz_after_write_a(&mut self, address: u16) {
+        self.reg.wz = u16::from(self.reg.a) << 8 | u16::from((address as u8).wrapping_add(1));
     }
 
     /// Adresse visée par un accès indexé `(IX+d)`, le déplacement étant lu
@@ -3667,6 +3713,7 @@ impl CPU {
 
     // Returns A - (HL)
     fn cpi<B: Bus>(&mut self, bus: &mut B) {
+        self.reg.wz = self.reg.wz.wrapping_add(1);
         let bc = self.reg.get_bc();
         let hl = self.reg.get_hl();
         let h = bus.read_byte(hl);
@@ -3688,6 +3735,7 @@ impl CPU {
 
     // Returns A - (HL)
     fn cpd<B: Bus>(&mut self, bus: &mut B) {
+        self.reg.wz = self.reg.wz.wrapping_sub(1);
         let bc = self.reg.get_bc();
         let hl = self.reg.get_hl();
         let h = bus.read_byte(hl);
@@ -3921,6 +3969,9 @@ impl CPU {
     // 16 bits add
     fn add_16(&mut self, n1: u16, n2: u16) -> u16 {
         let r = n1.wrapping_add(n2);
+        // MEMPTR prend la valeur du registre destination AVANT l'addition,
+        // augmentee de un — pour ADD HL,rr comme pour ADD IX/IY,rr.
+        self.reg.wz = n1.wrapping_add(1);
         self.reg.flags.c = u32::from(n1) + u32::from(n2) > 0xffff;
         self.reg.flags.h = (n1 & 0x0FFF) + (n2 & 0x0FFF) > 0x0FFF;
         self.reg.flags.n = false;
@@ -3940,6 +3991,7 @@ impl CPU {
         let h = self.reg.get_hl();
         let r = h.wrapping_add(n).wrapping_add(c);
         self.reg.set_hl(r);
+        self.reg.wz = h.wrapping_add(1);
         self.reg.flags.s = r & 0x8000 == 0x8000;
         // Sur les operations 16 bits, les deux drapeaux non documentes
         // viennent de l'octet de POIDS FORT du resultat.
@@ -3966,6 +4018,7 @@ impl CPU {
         let h = self.reg.get_hl();
         let r = h.wrapping_sub(n).wrapping_sub(c);
         self.reg.set_hl(r);
+        self.reg.wz = h.wrapping_add(1);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x8000 == 0x8000;
         // Sur les operations 16 bits, les deux drapeaux non documentes
@@ -4176,11 +4229,10 @@ impl CPU {
         // qu'il vaut 1, et recopie Z dans P/V.
         self.reg.flags.s = r && bit == 7;
         self.reg.flags.p = !r;
-        // Les deux drapeaux non documentés viennent de la VALEUR TESTÉE.
-        // Exception : `BIT b,(HL)` les prend sur l'octet de poids fort de
-        // MEMPTR, registre interne que nous ne modélisons pas encore — d'où
-        // l'approximation par la valeur lue, seule différence connue qui
-        // subsiste ici (voir la note dans le TODO du projet).
+        // Les deux drapeaux non documentés viennent de la VALEUR TESTÉE —
+        // sauf pour `BIT b,(HL)`, qui les prend sur l'octet de poids fort de
+        // MEMPTR. C'est la seule manifestation observable de ce registre
+        // interne, et la raison pour laquelle il est modélisé.
         let tested = match register {
             0 => self.reg.b,
             1 => self.reg.c,
@@ -4188,7 +4240,7 @@ impl CPU {
             3 => self.reg.e,
             4 => self.reg.h,
             5 => self.reg.l,
-            6 => bus.read_byte(self.reg.get_hl()),
+            6 => (self.reg.wz >> 8) as u8,
             _ => self.reg.a,
         };
         self.reg.flags.set_undocumented_from(tested);
@@ -4244,6 +4296,9 @@ impl CPU {
     fn call_stack_pop<B: Bus>(&mut self, bus: &mut B) {
         self.reg.pc = bus.read_word(self.reg.sp);
         self.reg.sp = self.reg.sp.wrapping_add(2);
+        // Tous les retours (RET, RET cc pris, RETI, RETN) passent par ici, et
+        // tous chargent MEMPTR avec l'adresse de retour.
+        self.reg.wz = self.reg.pc;
     }
 
     // interrupt stack push

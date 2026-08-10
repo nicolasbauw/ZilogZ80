@@ -34,6 +34,23 @@ const SF: u8 = 1 << 7;
 /// itération par instruction et recule le PC pour la rejouer, ce qui laisse
 /// une interruption s'intercaler entre deux itérations. Renvoie le total des
 /// cycles consommés.
+/// Charge `program` en 0x0000, garnit la mémoire des couples `(adresse,
+/// valeur)` donnés, puis exécute `instructions` instructions.
+fn run(program: &[u8], memory: &[(u16, u8)], instructions: usize) -> (CPU, FlatBus) {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    for (i, byte) in program.iter().enumerate() {
+        b.write_byte(i as u16, *byte);
+    }
+    for (address, value) in memory {
+        b.write_byte(*address, *value);
+    }
+    for _ in 0..instructions {
+        c.execute(&mut b);
+    }
+    (c, b)
+}
+
 fn run_block(c: &mut CPU, b: &mut FlatBus) -> u32 {
     let start = c.reg.pc;
     let mut total = 0;
@@ -7341,4 +7358,175 @@ fn the_undocumented_neg_and_retn_duplicates_behave_like_their_originals() {
         assert_eq!(c.reg.pc, 0x1234, "ED {op:02X} doit se comporter comme RETN");
         assert_eq!(c.reg.sp, 0x2002, "ED {op:02X} doit depiler");
     }
+}
+
+/// Les règles de mise à jour de MEMPTR (WZ).
+///
+/// Aucune instruction ne lit ce registre, et sa seule manifestation visible
+/// — les deux drapeaux non documentés de `BIT b,(HL)` — n'en révèle que
+/// l'octet de poids fort. On l'observe donc ici directement sur le registre
+/// modélisé, faute de quoi il faudrait le sonder un bit à la fois.
+#[test]
+fn memptr_update_rules() {
+    /// Nom, programme, mémoire préchargée, nombre d'instructions à exécuter,
+    /// puis MEMPTR attendu.
+    type Case<'a> = (&'a str, &'a [u8], &'a [(u16, u8)], usize, u16);
+
+    let cases: &[Case] = &[
+        // Regle generale : MEMPTR retient l'adresse SUIVANTE.
+        ("LD A,(nn)", &[0x3A, 0x34, 0x12], &[], 1, 0x1235),
+        ("LD HL,(nn)", &[0x2A, 0x34, 0x12], &[], 1, 0x1235),
+        ("LD BC,(nn)", &[0xED, 0x4B, 0x34, 0x12], &[], 1, 0x1235),
+        // LD A,(BC) et LD A,(DE) suivent la meme regle.
+        ("LD A,(BC)", &[0x01, 0x34, 0x12, 0x0A], &[], 2, 0x1235),
+        // Exception : le poids fort recoit A, seul le poids faible avance.
+        ("LD (nn),A", &[0x3E, 0x7F, 0x32, 0x34, 0x12], &[], 2, 0x7F35),
+        (
+            "LD (BC),A",
+            &[0x3E, 0x7F, 0x01, 0xFF, 0x12, 0x02],
+            &[],
+            3,
+            0x7F00,
+        ),
+        // Un saut absolu charge MEMPTR avec sa cible, pris ou non.
+        ("JP nn", &[0xC3, 0x34, 0x12], &[], 1, 0x1234),
+        (
+            "JP NZ,nn non pris",
+            &[0xAF, 0xC2, 0x34, 0x12],
+            &[],
+            2,
+            0x1234,
+        ),
+        // Un saut relatif ne le charge que s'il est pris.
+        ("JR e pris", &[0x18, 0x10], &[], 1, 0x0012),
+        // Non pris, il doit laisser intact le MEMPTR que LD A,(nn) a pose.
+        (
+            "JR NZ,e non pris",
+            &[0x3A, 0x34, 0x12, 0xAF, 0x20, 0x10],
+            &[],
+            3,
+            0x1235,
+        ),
+        // CALL le charge toujours, RET avec l'adresse de retour.
+        (
+            "CALL nn",
+            &[0x31, 0x00, 0x80, 0xCD, 0x34, 0x12],
+            &[],
+            2,
+            0x1234,
+        ),
+        (
+            "RET",
+            &[0x31, 0x00, 0x80, 0xC9],
+            &[(0x8000, 0x78), (0x8001, 0x56)],
+            2,
+            0x5678,
+        ),
+        ("RST 28", &[0xEF], &[], 1, 0x0028),
+        // EX (SP),HL : la valeur qui entre dans HL.
+        (
+            "EX (SP),HL",
+            &[0x31, 0x00, 0x80, 0x21, 0x11, 0x11, 0xE3],
+            &[(0x8000, 0x78), (0x8001, 0x56)],
+            3,
+            0x5678,
+        ),
+        // Arithmetique 16 bits : le registre destination AVANT l'operation, plus un.
+        ("ADD HL,HL", &[0x21, 0x00, 0x20, 0x29], &[], 2, 0x2001),
+        ("SBC HL,BC", &[0x21, 0x00, 0x20, 0xED, 0x42], &[], 2, 0x2001),
+        (
+            "ADD IX,BC",
+            &[0xDD, 0x21, 0x00, 0x20, 0xDD, 0x09],
+            &[],
+            2,
+            0x2001,
+        ),
+        // Tout acces indexe charge MEMPTR avec l'adresse visee, sans le « plus un ».
+        (
+            "LD A,(IX+d)",
+            &[0xDD, 0x21, 0x00, 0x40, 0xDD, 0x7E, 0x10],
+            &[],
+            2,
+            0x4010,
+        ),
+        (
+            "LD A,(IX-1)",
+            &[0xDD, 0x21, 0x00, 0x40, 0xDD, 0x7E, 0xFF],
+            &[],
+            2,
+            0x3FFF,
+        ),
+        // Entrees / sorties.
+        ("IN A,(n)", &[0x3E, 0x12, 0xDB, 0x34], &[], 2, 0x1235),
+        ("OUT (n),A", &[0x3E, 0x12, 0xD3, 0x34], &[], 2, 0x1235),
+        ("IN A,(C)", &[0x01, 0x34, 0x12, 0xED, 0x78], &[], 2, 0x1235),
+        // CPI avance MEMPTR d'un, CPD le recule d'un ; ils partent ici de 0x1235.
+        (
+            "CPI",
+            &[0x3A, 0x34, 0x12, 0x21, 0x00, 0x50, 0xED, 0xA1],
+            &[],
+            3,
+            0x1236,
+        ),
+        (
+            "CPD",
+            &[0x3A, 0x34, 0x12, 0x21, 0x00, 0x50, 0xED, 0xA9],
+            &[],
+            3,
+            0x1234,
+        ),
+        // Une instruction de bloc qui se repete pointe sur son propre opcode,
+        // ici en 0x0009, plus un. LDI seul laisserait MEMPTR intact.
+        (
+            "LDIR en cours",
+            &[
+                0x21, 0x00, 0x50, 0x11, 0x00, 0x60, 0x01, 0x02, 0x00, 0xED, 0xB0,
+            ],
+            &[],
+            4,
+            0x000A,
+        ),
+    ];
+
+    for (name, program, memory, instructions, expected) in cases {
+        let (c, _) = run(program, memory, *instructions);
+        assert_eq!(c.reg.wz, *expected, "{name}");
+    }
+}
+
+/// La seule manifestation observable de MEMPTR : les deux drapeaux non
+/// documentés de `BIT b,(HL)` et de sa forme indexée viennent de son octet de
+/// poids fort, et non de la valeur testée.
+#[test]
+fn bit_undocumented_flags_come_from_memptr() {
+    // LD A,(0x28FF) laisse MEMPTR a 0x2900. Le poids fort, 0x29 = 0010_1001,
+    // a ses bits 3 et 5 a 1. La valeur testee, elle, ne les a pas : c'est ce
+    // qui distingue les deux sources.
+    let (c, _) = run(
+        &[0x3A, 0xFF, 0x28, 0x21, 0x00, 0x50, 0xCB, 0x46],
+        &[(0x5000, 0x01)],
+        3,
+    );
+    assert_eq!(0x2900, c.reg.wz);
+    assert_eq!(c.flags(), YF | HF | XF); // BIT 0,(HL) : bit a 1, donc ni Z ni P/V
+
+    // Meme instruction, MEMPTR a 0x0100 : le poids fort n'a aucun des deux bits.
+    let (c, _) = run(
+        &[0x3A, 0xFF, 0x00, 0x21, 0x00, 0x50, 0xCB, 0x46],
+        &[(0x5000, 0x01)],
+        3,
+    );
+    assert_eq!(0x0100, c.reg.wz);
+    assert_eq!(c.flags(), HF);
+
+    // Forme indexee : MEMPTR vaut l'adresse visee, 0x2900. On teste le bit 7
+    // d'un octet qui l'a a 1, ce qui pose S — drapeau que cette forme ne
+    // posait pas du tout.
+    let (c, _) = run(
+        &[0xDD, 0x21, 0x00, 0x29, 0xDD, 0xCB, 0x00, 0x7E],
+        &[(0x2900, 0x80)],
+        2,
+    );
+    assert_eq!(0x2900, c.reg.wz);
+    assert_eq!(c.flags(), SF | YF | HF | XF);
 }
