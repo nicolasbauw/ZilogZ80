@@ -16,7 +16,7 @@ FAIT - Meme classe de bug trouvee a l'audit : sauts relatifs arriere
   JR e, JR cc,e et DJNZ faisaient `pc + 2 - deplacement` sans protection
   sur des u16 (6 sites). Un saut arriere depuis le tout debut de la
   memoire paniquait en debug au lieu de reboucler par le haut comme le
-  fait la machine. Passes en wrapping_sub.
+  fait la machine. Passes en extension de signe via relative_target.
   Regression : backward_relative_jumps_wrap_below_address_zero.
 
   A noter : le commit c8e0814 « Wrap 16 bit address arithmetic instead of
@@ -30,29 +30,41 @@ FAIT - Meme classe de bug trouvee a l'audit : sauts relatifs arriere
     type ou sont elargies en u32.
   - decalages `n << 1` : en Rust, seul un decalage superieur a la largeur
     du type panique, pas la perte du bit de poids fort. Rien a faire.
-  - signed_to_abs(n) = !n + 1 paniquerait pour n = 0, mais tous ses appels
-    sont gardes par un test du bit 7. Laisse tel quel.
+  - signed_to_abs(n) = !n + 1 paniquerait pour n = 0. Plus aucun appelant
+    depuis la refonte de l'adressage indexe ; laissee en place car elle
+    fait partie de l'API publique.
 
-FAIT - Warnings de test.rs
+FAIT - Warnings et lints de test.rs
 
-  dasm_cb construisait un CPU inutilise : `dasm` lit le bus a l'adresse
-  qu'on lui passe. Plus aucun warning a la compilation des tests.
+  Un CPU inutilise dans dasm_cb, 113 `assert_eq!(x, true)` passes en
+  `assert!(x)`, deux emprunts mutables inutiles, un `0x00 | z` sans effet.
+  Plus aucun warning ni lint clippy cote tests. Les trois lints restants
+  sont dans la lib et relevent de choix de style du decodeur.
 
-A FAIRE (optionnel) - Lints clippy de test.rs
+FAIT - Drapeaux documentes des instructions d'E/S par bloc
 
-  113 occurrences de `assert_eq!(x, true)` que clippy voudrait voir en
-  `assert!(x)` (lint bool_assert_comparison). C'est du style, anterieur a
-  tout ce qui precede, et le diff toucherait beaucoup de lignes : a faire
-  d'un bloc si on le decide, pas au fil de l'eau.
+  INI/IND/OUTI/OUTD ne posaient ni S, ni H, ni P/V, et mettaient N a 1
+  systematiquement alors qu'il recopie le bit 7 de l'octet transfere.
+  Voir doc/REPRISE-drapeaux-non-documentes.md pour les regles.
+  Couvert par block_io_documented_flags.
 
-A FAIRE - MEMPTR/WZ
+FAIT - MEMPTR/WZ
 
-  Voir doc/REPRISE-drapeaux-non-documentes.md : `BIT b,(HL)` approxime ses
-  deux drapeaux non documentes par la valeur lue, la ou le Z80 les prend
-  sur l'octet de poids fort de MEMPTR.
+  Le registre est modelise et mis a jour par toutes les familles
+  concernees ; BIT b,(HL) et BIT b,(IX+d) y prennent desormais leurs deux
+  drapeaux non documentes. La forme indexee ne posait au passage ni S, ni
+  P/V. Detail des regles dans doc/REPRISE-drapeaux-non-documentes.md.
+  Couvert par memptr_update_rules et bit_undocumented_flags_come_from_memptr.
 
-A FAIRE - Drapeaux documentes des instructions d'E/S par bloc
+  Prealable : les 50 acces (IX+d)/(IY+d) repetaient chacun un if/else de
+  cinq lignes distinguant deplacement positif et negatif, la ou une
+  extension de signe suffit. Factorises dans ix_d/iy_d, qui sont aussi le
+  point d'accroche de MEMPTR. 400 lignes de moins.
 
-  INI/IND/OUTI/OUTD ne posent ni S, ni H, ni P/V. Manque anterieur aux
-  drapeaux non documentes, constate explicitement par le test
-  undocumented_flags_rotations_cpl_block_io.
+A FAIRE - Passer zexall
+
+  bin/zexdoc.com passe ses 67 tests, mais il masque justement les deux
+  drapeaux non documentes : il ne valide pas le travail XF/YF ni MEMPTR.
+  Le banc qui le ferait est zexall, qui controle tous les bits de F et
+  n'est pas dans le depot. Tant qu'il n'y sera pas passe, XF/YF et MEMPTR
+  ne reposent que sur des tests derives a la main des regles publiees.

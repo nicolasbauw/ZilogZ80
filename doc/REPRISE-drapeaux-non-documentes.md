@@ -82,23 +82,61 @@ trois familles ci-dessus : le reste de la suite ne les exerçait sur
 aucune valeur ayant à la fois le bit 3 et le bit 5, si bien qu'un oubli
 n'y aurait rien cassé.
 
-## Reste à faire, hors périmètre de cette branche
+## Drapeaux documentés des E/S par bloc
 
-Les instructions d'E/S par bloc ne posent toujours pas leurs drapeaux
-**documentés** (S, H, P/V) — seuls Z, N et maintenant XF/YF le sont.
-C'est un manque antérieur à cette branche, et qui ne relève pas des
-drapeaux non documentés ; le test dédié le constate explicitement.
+Traité depuis, dans la foulée. `INI`/`IND`/`OUTI`/`OUTD` et leurs formes
+répétitives ne posaient ni S, ni H, ni P/V, et mettaient N à 1
+systématiquement. Les règles réelles :
 
-## Approximation connue, non traitée : MEMPTR/WZ
+- S, Z (et XF/YF) viennent de `B` **après** décrémentation ;
+- `N` recopie le **bit 7 de l'octet transféré** — seul cas de la machine
+  où ce drapeau ne vaut pas 1 après une opération qui le pose ;
+- H, C et P/V se déduisent d'une somme intermédiaire `k` entre cet octet
+  et un second terme propre à la famille (`C + 1` pour `INI`, `C - 1`
+  pour `IND`, `L` après mise à jour pour les sorties) : H et C valent le
+  débordement de `k`, et P/V la parité de `(k & 7) ^ B`.
 
-`BIT b,(HL)` devrait prendre ses deux bits sur l'octet de poids fort du
-registre interne **MEMPTR** (aussi appelé WZ), et non sur la valeur lue.
-C'est actuellement approximé par la valeur lue, avec un commentaire dans
-`Cpu::bit`.
+Les huit sites partagent le helper `CPU::block_io_flags`. Couvert par
+`block_io_documented_flags`.
 
-Implémenter MEMPTR proprement est un chantier à part : ce registre est
-mis à jour par des dizaines d'instructions (`JP`, `CALL`, `RET`, `RST`,
-`DJNZ` pris, `LD A,(nn)`, `LD (nn),A`, `EX (SP),HL`, `ADD/ADC/SBC HL`,
-accès indexés `(IX+d)`, `IN`/`OUT`, instructions de bloc en répétition…),
-pour une seule manifestation observable : les deux bits de `BIT b,(HL)`.
-À traiter séparément, une fois cette branche fusionnée.
+## MEMPTR/WZ
+
+Traité également. Le registre est modélisé (`Registers::wz`) et mis à
+jour par toutes les familles concernées : accès indexés, chargements vers
+et depuis `(nn)`, `EX (SP),rr`, arithmétique 16 bits, sauts absolus
+(pris ou non) et relatifs (pris seulement), `CALL`, `RET`, `RST`,
+interruptions, E/S directes et par bloc, et les formes répétitives de
+transfert et de comparaison.
+
+Deux règles sortent du lot :
+
+- les quatre instructions qui présentent `A` sur la moitié haute du bus
+  d'adresse (`LD (nn),A`, `LD (BC),A`, `LD (DE),A`, `OUT (n),A`)
+  n'avancent que l'octet de poids faible et chargent `A` dans le poids
+  fort (`CPU::wz_after_write_a`) ;
+- `LDIR`/`LDDR`/`CPIR`/`CPDR` qui se répètent rechargent MEMPTR avec
+  l'adresse de leur propre opcode plus un, le processeur s'apprêtant à le
+  relire (`CPU::repeat_block_wz`). Les formes répétitives d'E/S par bloc
+  ne suivent **pas** cette règle.
+
+`BIT b,(HL)` et `BIT b,(IX+d)` prennent désormais leurs deux drapeaux non
+documentés sur le poids fort de MEMPTR. La forme indexée en a profité :
+elle ne posait ni S, ni P/V, ni ces deux bits.
+
+Couvert par `memptr_update_rules` (26 cas) et
+`bit_undocumented_flags_come_from_memptr`.
+
+L'implémentation de ces règles s'est appuyée sur une refonte préalable de
+l'adressage indexé : les 50 accès `(IX+d)`/`(IY+d)` répétaient chacun un
+`if/else` distinguant déplacement positif et négatif, là où une extension
+de signe suffit. Ils passent par `ix_d`/`iy_d`, qui sont aussi le point
+d'accroche de MEMPTR.
+
+## Limite de la validation
+
+`bin/zexdoc.com` passe ses 67 tests, mais il masque justement les deux
+drapeaux non documentés : il valide le reste de l'émulation, pas ce
+travail-ci. Le banc qui vérifierait XF/YF et MEMPTR est **zexall**, qui
+contrôle tous les bits du registre F et n'est pas présent dans le dépôt.
+Tant qu'il n'y aura pas été passé, XF/YF et MEMPTR ne reposent que sur
+les tests écrits ici, dérivés à la main des règles publiées.
