@@ -1571,444 +1571,184 @@ impl CPU {
             0xDD46 => {
                 // LD B,(IX+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.b = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.b = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16))
-                }
+                let address = self.ix_d(displacement);
+                self.reg.b = bus.read_byte(address)
             }
             0xDD4E => {
                 // LD C,(IX+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.c = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.c = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16))
-                }
+                let address = self.ix_d(displacement);
+                self.reg.c = bus.read_byte(address)
             }
             0xDD56 => {
                 // LD D,(IX+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.d = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.d = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16))
-                }
+                let address = self.ix_d(displacement);
+                self.reg.d = bus.read_byte(address)
             }
             0xDD5E => {
                 // LD E,(IX+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.e = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.e = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16))
-                }
+                let address = self.ix_d(displacement);
+                self.reg.e = bus.read_byte(address)
             }
             0xDD66 => {
                 // LD H,(IX+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.h = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.h = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16))
-                }
+                let address = self.ix_d(displacement);
+                self.reg.h = bus.read_byte(address)
             }
             0xDD6E => {
                 // LD L,(IX+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.l = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.l = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16))
-                }
+                let address = self.ix_d(displacement);
+                self.reg.l = bus.read_byte(address)
             }
             0xDD7E => {
                 // LD A,(IX+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.a = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.a = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16))
-                }
+                let address = self.ix_d(displacement);
+                self.reg.a = bus.read_byte(address)
             }
 
             // LD r,(IY+d)
             0xFD46 => {
                 // LD B,(IY+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.b = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.b = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16))
-                }
+                let address = self.iy_d(displacement);
+                self.reg.b = bus.read_byte(address)
             }
             0xFD4E => {
                 // LD C,(IY+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.c = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.c = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16))
-                }
+                let address = self.iy_d(displacement);
+                self.reg.c = bus.read_byte(address)
             }
             0xFD56 => {
                 // LD D,(IY+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.d = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.d = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16))
-                }
+                let address = self.iy_d(displacement);
+                self.reg.d = bus.read_byte(address)
             }
             0xFD5E => {
                 // LD E,(IY+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.e = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.e = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16))
-                }
+                let address = self.iy_d(displacement);
+                self.reg.e = bus.read_byte(address)
             }
             0xFD66 => {
                 // LD H,(IY+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.h = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.h = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16))
-                }
+                let address = self.iy_d(displacement);
+                self.reg.h = bus.read_byte(address)
             }
             0xFD6E => {
                 // LD L,(IY+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.l = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.l = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16))
-                }
+                let address = self.iy_d(displacement);
+                self.reg.l = bus.read_byte(address)
             }
             0xFD7E => {
                 // LD A,(IY+d)
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    self.reg.a = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    )
-                } else {
-                    self.reg.a = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16))
-                }
+                let address = self.iy_d(displacement);
+                self.reg.a = bus.read_byte(address)
             }
 
             // LD (IX+d),r
             0xDD70 => {
                 // LD (IX+d),B
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.b,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_ix().wrapping_add(displacement as u16),
-                        self.reg.b,
-                    )
-                }
+                let address = self.ix_d(displacement);
+                bus.write_byte(address, self.reg.b)
             }
             0xDD71 => {
                 // LD (IX+d),C
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.c,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_ix().wrapping_add(displacement as u16),
-                        self.reg.c,
-                    )
-                }
+                let address = self.ix_d(displacement);
+                bus.write_byte(address, self.reg.c)
             }
             0xDD72 => {
                 // LD (IX+d),D
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.d,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_ix().wrapping_add(displacement as u16),
-                        self.reg.d,
-                    )
-                }
+                let address = self.ix_d(displacement);
+                bus.write_byte(address, self.reg.d)
             }
             0xDD73 => {
                 // LD (IX+d),E
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.e,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_ix().wrapping_add(displacement as u16),
-                        self.reg.e,
-                    )
-                }
+                let address = self.ix_d(displacement);
+                bus.write_byte(address, self.reg.e)
             }
             0xDD74 => {
                 // LD (IX+d),H
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.h,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_ix().wrapping_add(displacement as u16),
-                        self.reg.h,
-                    )
-                }
+                let address = self.ix_d(displacement);
+                bus.write_byte(address, self.reg.h)
             }
             0xDD75 => {
                 // LD (IX+d),L
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.l,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_ix().wrapping_add(displacement as u16),
-                        self.reg.l,
-                    )
-                }
+                let address = self.ix_d(displacement);
+                bus.write_byte(address, self.reg.l)
             }
             0xDD77 => {
                 // LD (IX+d),A
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.a,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_ix().wrapping_add(displacement as u16),
-                        self.reg.a,
-                    )
-                }
+                let address = self.ix_d(displacement);
+                bus.write_byte(address, self.reg.a)
             }
 
             // LD (IY+d),r
             0xFD70 => {
                 // LD (IY+d),B
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.b,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_iy().wrapping_add(displacement as u16),
-                        self.reg.b,
-                    )
-                }
+                let address = self.iy_d(displacement);
+                bus.write_byte(address, self.reg.b)
             }
             0xFD71 => {
                 // LD (IY+d),C
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.c,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_iy().wrapping_add(displacement as u16),
-                        self.reg.c,
-                    )
-                }
+                let address = self.iy_d(displacement);
+                bus.write_byte(address, self.reg.c)
             }
             0xFD72 => {
                 // LD (IY+d),D
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.d,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_iy().wrapping_add(displacement as u16),
-                        self.reg.d,
-                    )
-                }
+                let address = self.iy_d(displacement);
+                bus.write_byte(address, self.reg.d)
             }
             0xFD73 => {
                 // LD (IY+d),E
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.e,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_iy().wrapping_add(displacement as u16),
-                        self.reg.e,
-                    )
-                }
+                let address = self.iy_d(displacement);
+                bus.write_byte(address, self.reg.e)
             }
             0xFD74 => {
                 // LD (IY+d),H
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.h,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_iy().wrapping_add(displacement as u16),
-                        self.reg.h,
-                    )
-                }
+                let address = self.iy_d(displacement);
+                bus.write_byte(address, self.reg.h)
             }
             0xFD75 => {
                 // LD (IY+d),L
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.l,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_iy().wrapping_add(displacement as u16),
-                        self.reg.l,
-                    )
-                }
+                let address = self.iy_d(displacement);
+                bus.write_byte(address, self.reg.l)
             }
             0xFD77 => {
                 // LD (IY+d),A
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        self.reg.a,
-                    )
-                } else {
-                    bus.write_byte(
-                        self.reg.get_iy().wrapping_add(displacement as u16),
-                        self.reg.a,
-                    )
-                }
+                let address = self.iy_d(displacement);
+                bus.write_byte(address, self.reg.a)
             }
 
             // LD (IX+d),n
             0xDD36 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
                 let data = bus.read_byte(self.reg.pc.wrapping_add(3));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        data,
-                    )
-                } else {
-                    bus.write_byte(self.reg.get_ix().wrapping_add(displacement as u16), data)
-                }
+                let address = self.ix_d(displacement);
+                bus.write_byte(address, data)
             }
 
             // LD IX,nn
@@ -2025,16 +1765,8 @@ impl CPU {
             0xFD36 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
                 let data = bus.read_byte(self.reg.pc.wrapping_add(3));
-                if bit::get(displacement, 7) {
-                    bus.write_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                        data,
-                    )
-                } else {
-                    bus.write_byte(self.reg.get_iy().wrapping_add(displacement as u16), data)
-                }
+                let address = self.iy_d(displacement);
+                bus.write_byte(address, data)
             }
 
             // LD A,I
@@ -2281,333 +2013,169 @@ impl CPU {
             // ADD A,(IX+d)
             0xDD86 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.add(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16));
-                    self.add(d);
-                }
+                let address = self.ix_d(displacement);
+                let d = bus.read_byte(address);
+                self.add(d);
             }
 
             // ADD A,(IY+d)
             0xFD86 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.add(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16));
-                    self.add(d);
-                }
+                let address = self.iy_d(displacement);
+                let d = bus.read_byte(address);
+                self.add(d);
             }
 
             // ADC A,(IX+d)
             0xDD8E => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.adc(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16));
-                    self.adc(d);
-                }
+                let address = self.ix_d(displacement);
+                let d = bus.read_byte(address);
+                self.adc(d);
             }
 
             // ADC A,(IY+d)
             0xFD8E => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.adc(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16));
-                    self.adc(d);
-                }
+                let address = self.iy_d(displacement);
+                let d = bus.read_byte(address);
+                self.adc(d);
             }
 
             // SUB (IX+d)
             0xDD96 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.sub(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16));
-                    self.sub(d);
-                }
+                let address = self.ix_d(displacement);
+                let d = bus.read_byte(address);
+                self.sub(d);
             }
 
             // SUB (IY+d)
             0xFD96 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.sub(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16));
-                    self.sub(d);
-                }
+                let address = self.iy_d(displacement);
+                let d = bus.read_byte(address);
+                self.sub(d);
             }
 
             // SBC (IX+d)
             0xDD9E => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.sbc(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16));
-                    self.sbc(d);
-                }
+                let address = self.ix_d(displacement);
+                let d = bus.read_byte(address);
+                self.sbc(d);
             }
 
             // SBC (IY+d)
             0xFD9E => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.sbc(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16));
-                    self.sbc(d);
-                }
+                let address = self.iy_d(displacement);
+                let d = bus.read_byte(address);
+                self.sbc(d);
             }
 
             // AND (IX+d)
             0xDDA6 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.and(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16));
-                    self.and(d);
-                }
+                let address = self.ix_d(displacement);
+                let d = bus.read_byte(address);
+                self.and(d);
             }
 
             // AND (IY+d)
             0xFDA6 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.and(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16));
-                    self.and(d);
-                }
+                let address = self.iy_d(displacement);
+                let d = bus.read_byte(address);
+                self.and(d);
             }
 
             // OR (IX+d)
             0xDDB6 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.or(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16));
-                    self.or(d);
-                }
+                let address = self.ix_d(displacement);
+                let d = bus.read_byte(address);
+                self.or(d);
             }
 
             // OR (IY+d)
             0xFDB6 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.or(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16));
-                    self.or(d);
-                }
+                let address = self.iy_d(displacement);
+                let d = bus.read_byte(address);
+                self.or(d);
             }
 
             // XOR (IX+d)
             0xDDAE => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.xor(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16));
-                    self.xor(d);
-                }
+                let address = self.ix_d(displacement);
+                let d = bus.read_byte(address);
+                self.xor(d);
             }
 
             // XOR (IY+d)
             0xFDAE => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.xor(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16));
-                    self.xor(d);
-                }
+                let address = self.iy_d(displacement);
+                let d = bus.read_byte(address);
+                self.xor(d);
             }
 
             // CP (IX+d)
             0xDDBE => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_ix()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.cp(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_ix().wrapping_add(displacement as u16));
-                    self.cp(d);
-                }
+                let address = self.ix_d(displacement);
+                let d = bus.read_byte(address);
+                self.cp(d);
             }
 
             // CP (IY+d)
             0xFDBE => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let d = bus.read_byte(
-                        self.reg
-                            .get_iy()
-                            .wrapping_sub(signed_to_abs(displacement) as u16),
-                    );
-                    self.cp(d);
-                } else {
-                    let d = bus.read_byte(self.reg.get_iy().wrapping_add(displacement as u16));
-                    self.cp(d);
-                }
+                let address = self.iy_d(displacement);
+                let d = bus.read_byte(address);
+                self.cp(d);
             }
 
             // INC (IX+d)
             0xDD34 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let m = self
-                        .reg
-                        .get_ix()
-                        .wrapping_sub(signed_to_abs(displacement) as u16);
-                    let d = bus.read_byte(m);
-                    let r = self.inc(d);
-                    bus.write_byte(m, r);
-                } else {
-                    let m = self.reg.get_ix().wrapping_add(displacement as u16);
-                    let d = bus.read_byte(m);
-                    let r = self.inc(d);
-                    bus.write_byte(m, r);
-                }
+                let address = self.ix_d(displacement);
+                let m = address;
+                let d = bus.read_byte(m);
+                let r = self.inc(d);
+                bus.write_byte(m, r);
             }
 
             // INC (IY+d)
             0xFD34 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let m = self
-                        .reg
-                        .get_iy()
-                        .wrapping_sub(signed_to_abs(displacement) as u16);
-                    let d = bus.read_byte(m);
-                    let r = self.inc(d);
-                    bus.write_byte(m, r);
-                } else {
-                    let m = self.reg.get_iy().wrapping_add(displacement as u16);
-                    let d = bus.read_byte(m);
-                    let r = self.inc(d);
-                    bus.write_byte(m, r);
-                }
+                let address = self.iy_d(displacement);
+                let m = address;
+                let d = bus.read_byte(m);
+                let r = self.inc(d);
+                bus.write_byte(m, r);
             }
 
             // DEC (IX+d)
             0xDD35 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let m = self
-                        .reg
-                        .get_ix()
-                        .wrapping_sub(signed_to_abs(displacement) as u16);
-                    let d = bus.read_byte(m);
-                    let r = self.dec(d);
-                    bus.write_byte(m, r);
-                } else {
-                    let m = self.reg.get_ix().wrapping_add(displacement as u16);
-                    let d = bus.read_byte(m);
-                    let r = self.dec(d);
-                    bus.write_byte(m, r);
-                }
+                let address = self.ix_d(displacement);
+                let m = address;
+                let d = bus.read_byte(m);
+                let r = self.dec(d);
+                bus.write_byte(m, r);
             }
 
             // DEC (IY+d)
             0xFD35 => {
                 let displacement = bus.read_byte(self.reg.pc.wrapping_add(2));
-                if bit::get(displacement, 7) {
-                    let m = self
-                        .reg
-                        .get_iy()
-                        .wrapping_sub(signed_to_abs(displacement) as u16);
-                    let d = bus.read_byte(m);
-                    let r = self.dec(d);
-                    bus.write_byte(m, r);
-                } else {
-                    let m = self.reg.get_iy().wrapping_add(displacement as u16);
-                    let d = bus.read_byte(m);
-                    let r = self.dec(d);
-                    bus.write_byte(m, r);
-                }
+                let address = self.iy_d(displacement);
+                let m = address;
+                let d = bus.read_byte(m);
+                let r = self.dec(d);
+                bus.write_byte(m, r);
             }
 
             // General-Purpose Arithmetic and CPU Control Groups
@@ -3934,12 +3502,11 @@ impl CPU {
         let op = bus.read_byte(self.reg.pc.wrapping_add(3));
         self.reg.pc = self.reg.pc.wrapping_add(4);
 
-        let base = if prefix == 0xDD {
-            self.reg.get_ix()
+        let address = if prefix == 0xDD {
+            self.ix_d(displacement as u8)
         } else {
-            self.reg.get_iy()
+            self.iy_d(displacement as u8)
         };
-        let address = base.wrapping_add(displacement as u16);
         let value = bus.read_byte(address);
         let (x, y, z) = (op >> 6, ((op >> 3) & 7) as usize, op & 7);
 
@@ -4014,6 +3581,25 @@ impl CPU {
             7 => self.reg.a = value,
             _ => unreachable!("le code 6 n'est pas un registre"),
         }
+    }
+
+    /// Adresse visée par un accès indexé `(IX+d)`, le déplacement étant lu
+    /// comme un octet signé.
+    ///
+    /// Tout accès indexé charge MEMPTR avec l'adresse calculée — c'est la
+    /// règle la plus large du registre, et elle vaut quelle que soit
+    /// l'instruction qui s'en sert.
+    fn ix_d(&mut self, displacement: u8) -> u16 {
+        let address = self.reg.get_ix().wrapping_add(displacement as i8 as u16);
+        self.reg.wz = address;
+        address
+    }
+
+    /// Idem pour `(IY+d)`.
+    fn iy_d(&mut self, displacement: u8) -> u16 {
+        let address = self.reg.get_iy().wrapping_add(displacement as i8 as u16);
+        self.reg.wz = address;
+        address
     }
 
     /// Drapeaux communs aux huit instructions d'E/S par bloc (`INI`, `IND`,
