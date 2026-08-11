@@ -16,12 +16,12 @@ pub struct Registers {
     pub r: u8,
     pub sp: u16,
     pub pc: u16,
-    /// MEMPTR (aussi appelé WZ) : registre interne que le Z80 n'expose par
-    /// aucune instruction. Il retient la dernière adresse que le processeur
-    /// a formée, et sa seule manifestation observable est constituée des deux
-    /// drapeaux non documentés de `BIT b,(HL)`, qui viennent de son octet de
-    /// poids fort. Les règles de mise à jour sont réunies dans les méthodes
-    /// `set_wz*` de `CPU`.
+    /// MEMPTR (also called WZ): an internal register the Z80 exposes through
+    /// no instruction. It holds the last address the processor formed, and
+    /// its only observable manifestation is the two undocumented flags of
+    /// `BIT b,(HL)`, which come from its high byte. The update rules are
+    /// spread across `CPU`'s `wz_after`, `wz_after_write_a`, `ix_d`, `iy_d`,
+    /// `relative_target` and `repeat_block_wz` helpers.
     pub wz: u16,
     pub flags: Flags,
 }

@@ -3,14 +3,12 @@ use std::{
     io::{self, prelude::*},
 };
 
-// Dans src/bus.rs
-
 pub trait Bus {
-    // Lecture / Écriture mémoire obligatoires
+    // Mandatory memory read / write
     fn read_byte(&self, address: u16) -> u8;
     fn write_byte(&mut self, address: u16, data: u8);
 
-    // Méthodes mémoire utilitaires avec implémentations par défaut (Z80 Little Endian)
+    // Utility memory methods with default implementations (Z80 little endian)
     fn read_word(&self, address: u16) -> u16 {
         u16::from(self.read_byte(address))
             | (u16::from(self.read_byte(address.wrapping_add(1))) << 8)
@@ -33,13 +31,13 @@ pub trait Bus {
         self.write_byte(address.wrapping_add(1), (data >> 8) as u8);
     }
 
-    // Gestion de l'espace d'I/O (E/S) - 16 bits d'adresse de port
+    // I/O space handling - 16-bit port address
     fn read_io(&self, _port: u16) -> u8 {
-        0xFF // Valeur par défaut (bus flottant)
+        0xFF // Default value (floating bus)
     }
 
     fn write_io(&mut self, _port: u16, _data: u8) {
-        // Par défaut, ne fait rien (utile pour les systèmes sans I/O)
+        // Does nothing by default (useful for systems without I/O)
     }
 }
 
@@ -105,7 +103,6 @@ impl FlatBus {
     }
 }
 
-// Implémentation du trait Bus pour ton SimpleBus
 impl Bus for FlatBus {
     fn read_byte(&self, address: u16) -> u8 {
         if address as usize >= self.address_space.len() {

@@ -10,21 +10,20 @@ pub struct CPU {
     pub reg: Registers,
     pub alt: Registers,
     halt: bool,
-    /// Dernière instruction rencontrée que l'exécution ne sait pas traiter,
-    /// à relever par l'hôte. Une bibliothèque n'a pas à décider où vont ses
-    /// diagnostics : sur cette machine, la sortie standard est la console du
-    /// débogueur, et une instruction inconnue dans une boucle de jeu y
-    /// noierait tout le reste.
+    /// Last unhandled instruction encountered, for the host to pick up. A
+    /// library shouldn't decide where its diagnostics go: on this machine,
+    /// standard output is the debugger's console, and an unknown
+    /// instruction inside a game loop would drown out everything else.
     unimplemented: Option<Unimplemented>,
     unimplemented_count: u64,
     int: Option<u8>,
-    /// Vrai uniquement pendant l'exécution de l'opcode courant quand celui-ci
-    /// vient d'être injecté par une interruption (mode 0/1), plutôt que lu
-    /// normalement en mémoire. À ne pas confondre avec `int.is_some()`, qui
-    /// signifie seulement "une interruption est en attente" : une interruption
-    /// peut rester en attente (masquée par DI) pendant qu'une tout autre
-    /// instruction RST, bien réelle et lue en mémoire, s'exécute — les
-    /// gestionnaires RST doivent incrémenter le PC dans ce cas, pas le sauter.
+    /// True only while executing the current opcode when it was just
+    /// injected by an interrupt (mode 0/1), rather than read normally from
+    /// memory. Not to be confused with `int.is_some()`, which only means
+    /// "an interrupt is pending": an interrupt can stay pending (masked by
+    /// DI) while a completely different RST instruction, a real one read
+    /// from memory, executes — RST handlers must increment PC in that case,
+    /// not skip it.
     interrupt_acknowledge: bool,
     nmi: bool,
     im: u8,
@@ -62,34 +61,34 @@ impl CPU {
         }
     }
 
-    // --- Getters pour les Interruptions ---
+    // --- Interrupt getters ---
 
-    /// Renvoie l'état de la première bascule d'interruption (IFF1)
+    /// Returns the state of the first interrupt flip-flop (IFF1)
     pub fn iff1(&self) -> bool {
         self.iff1
     }
 
-    /// Renvoie l'état de la seconde bascule d'interruption (IFF2)
+    /// Returns the state of the second interrupt flip-flop (IFF2)
     pub fn iff2(&self) -> bool {
         self.iff2
     }
 
-    /// Renvoie le mode d'interruption actuel (0, 1 ou 2)
+    /// Returns the current interrupt mode (0, 1 or 2)
     pub fn im(&self) -> u8 {
         self.im
     }
 
-    /// Indique si le CPU est actuellement en état HALT
+    /// Whether the CPU is currently in the HALT state
     pub fn is_halted(&self) -> bool {
         self.halt
     }
 
-    /// Indique si une interruption masquable (INT) est en attente
+    /// Whether a maskable interrupt (INT) is pending
     pub fn has_pending_int(&self) -> bool {
         self.int.is_some()
     }
 
-    /// Indique si une interruption non masquable (NMI) est en attente
+    /// Whether a non-maskable interrupt (NMI) is pending
     pub fn has_pending_nmi(&self) -> bool {
         self.nmi
     }
@@ -105,16 +104,16 @@ impl CPU {
     }
 
     /// Shortcut to reg.flags.to_byte()
-    /// Relève la dernière instruction non gérée rencontrée, et l'oublie.
+    /// Picks up the last unhandled instruction encountered, and forgets it.
     ///
-    /// À interroger après `execute()` : l'hôte choisit alors de l'afficher,
-    /// de la journaliser ou de s'arrêter dessus.
+    /// Meant to be polled after `execute()`: the host then chooses to
+    /// display it, log it, or stop on it.
     pub fn take_unimplemented(&mut self) -> Option<Unimplemented> {
         self.unimplemented.take()
     }
 
-    /// Nombre total d'instructions non gérées depuis le démarrage, y compris
-    /// celles qui n'ont pas été relevées : rien ne disparaît en silence.
+    /// Total number of unhandled instructions since startup, including
+    /// those that were never picked up: nothing disappears silently.
     pub fn unimplemented_count(&self) -> u64 {
         self.unimplemented_count
     }
@@ -147,17 +146,17 @@ impl CPU {
         if self.halt {
             if self.nmi || has_pending_maskable_interrupt {
                 self.halt = false;
-                // HALT laisse volontairement le PC sur son propre opcode tant que
-                // le CPU patiente. Il faut donc le faire avancer au moment où une
-                // interruption sort le CPU de cet état, pour que l'adresse de
-                // retour empilée soit l'instruction SUIVANTE : sinon le RET du
-                // gestionnaire ramène sur le HALT, et le programme y reste piégé
-                // indéfiniment, une interruption après l'autre.
+                // HALT deliberately leaves PC on its own opcode while the
+                // CPU waits. It must therefore be advanced the moment an
+                // interrupt takes the CPU out of this state, so that the
+                // return address pushed is the NEXT instruction: otherwise
+                // the handler's RET lands back on the HALT, trapping the
+                // program there forever, one interrupt after another.
                 self.reg.pc = self.reg.pc.wrapping_add(1);
             } else {
-                // Le Z80 en HALT relit son propre opcode en boucle en
-                // attendant l'interruption : chaque tour est un vrai cycle
-                // M1, et R avance donc même si rien d'autre ne se passe.
+                // A Z80 in HALT keeps re-reading its own opcode while
+                // waiting for the interrupt: each pass is a real M1 cycle,
+                // so R advances even though nothing else happens.
                 self.bump_r();
                 return 4;
             }
@@ -848,8 +847,8 @@ impl CPU {
                 self.reg.flags.h = self.reg.flags.c;
                 self.reg.flags.c = !self.reg.flags.c;
                 self.reg.flags.n = false;
-                // Sur un Zilog NMOS (celui du CPC), SCF/CCF prennent leurs
-                // deux drapeaux non documentes directement sur A.
+                // On a Zilog NMOS (the one in the CPC), SCF/CCF take their
+                // two undocumented flags directly from A.
                 self.reg.flags.set_undocumented_from(self.reg.a);
             }
 
@@ -1434,10 +1433,10 @@ impl CPU {
             // OUT (n), A (Opcode 0xD3)
             0xD3 => {
                 let n = bus.read_byte(self.reg.pc.wrapping_add(1));
-                // Le port d'I/O Z80 sur 16 bits : A sur le poids fort, n sur le poids faible.
+                // The Z80's 16-bit I/O port: A on the high byte, n on the low byte.
                 let port = ((self.reg.a as u16) << 8) | (n as u16);
                 bus.write_io(port, self.reg.a);
-                // OUT (n),A suit la meme regle batarde que LD (nn),A.
+                // OUT (n),A follows the same oddball rule as LD (nn),A.
                 self.wz_after_write_a(port);
             }
 
@@ -1450,10 +1449,10 @@ impl CPU {
             }
 
             _ => {
-                // Aucune instruction d'un octet n'est absente aujourd'hui,
-                // mais la durée annoncée doit rester celle de la table : un
-                // repli qui invente un temps d'exécution fausse en silence
-                // toute la machine qui se cadence dessus.
+                // No one-byte instruction is missing today, but the
+                // reported duration must still match the table: a fallback
+                // that invents an execution time would silently throw off
+                // every part of the machine clocked from it.
                 self.record_unimplemented(bus, 1);
             }
         }
@@ -1498,17 +1497,10 @@ impl CPU {
         cycles
     }
 
-    /// Termine une itération d'instruction à répétition (LDIR, CPIR, OTIR...).
-    ///
-    /// Si la répétition doit continuer, le PC recule de deux pour que
-    /// l'instruction soit rejouée au prochain appel : c'est exactement ce que
-    /// fait le Z80, et c'est ce qui laisse une interruption s'intercaler entre
-    /// deux itérations. Renvoie la durée de l'itération : 21 cycles quand elle
-    /// se répète, 16 pour la dernière.
-    /// Variante de `repeat_block` pour `LDIR`/`LDDR`/`CPIR`/`CPDR` : tant
-    /// qu'elles se repetent, elles rechargent MEMPTR avec l'adresse de leur
-    /// propre opcode augmentee de un, le processeur s'appretant a le relire.
-    /// Les formes repetitives d'E/S par bloc ne suivent pas cette regle.
+    /// Variant of `repeat_block` for `LDIR`/`LDDR`/`CPIR`/`CPDR`: as long as
+    /// they keep repeating, they reload MEMPTR with their own opcode's
+    /// address plus one, since the processor is about to read it again.
+    /// The repeated block I/O forms don't follow this rule.
     fn repeat_block_wz(&mut self, again: bool) -> u32 {
         if again {
             self.reg.wz = self.reg.pc.wrapping_add(1);
@@ -1516,9 +1508,16 @@ impl CPU {
         self.repeat_block(again)
     }
 
+    /// Ends one iteration of a repeating instruction (LDIR, CPIR, OTIR...).
+    ///
+    /// If the repetition must continue, PC steps back by two so the
+    /// instruction gets replayed on the next call: that's exactly what the
+    /// Z80 does, and it's what lets an interrupt slip in between two
+    /// iterations. Returns the iteration's duration: 21 cycles while it
+    /// repeats, 16 for the last one.
     fn repeat_block(&mut self, again: bool) -> u32 {
         if again {
-            // Le PC sera avancé de deux en fin d'exécution : on l'annule.
+            // PC will be advanced by two at the end of execution: undo that.
             self.reg.pc = self.reg.pc.wrapping_sub(2);
             21
         } else {
@@ -1527,11 +1526,11 @@ impl CPU {
     }
 
     fn execute_2bytes<B: Bus>(&mut self, bus: &mut B) -> u32 {
-        // Second cycle M1 de la forme préfixée : le composant lit l'octet
-        // qui suit CB/ED/DD/FD comme un second opcode. Les formes DD/FD CB
-        // (execute_4bytes) n'ajoutent rien de plus : sur le vrai Z80, le
-        // déplacement et l'octet final de cette forme à quatre octets sont
-        // de simples lectures mémoire, pas des cycles M1.
+        // Second M1 cycle of the prefixed form: the chip reads the byte
+        // following CB/ED/DD/FD as a second opcode. The DD/FD CB forms
+        // (execute_4bytes) add nothing more: on a real Z80, the
+        // displacement and final byte of this four-byte form are plain
+        // memory reads, not M1 cycles.
         self.bump_r();
         let opcode = bus.read_le_word(self.reg.pc);
         let mut cycles = match opcode & 0xFF00 {
@@ -1755,8 +1754,8 @@ impl CPU {
                 self.reg.flags.set_undocumented_from(self.reg.i);
                 self.reg.flags.z = self.reg.i == 0;
                 self.reg.flags.h = false;
-                // Le flag P/V copie IFF2.
-                // Note: Si une interruption arrive au même moment, P/V est forcé à 0.
+                // The P/V flag mirrors IFF2.
+                // Note: if an interrupt arrives at the same moment, P/V is forced to 0.
                 self.reg.flags.p = if self.interrupt_pending_during_instruction() {
                     false
                 } else {
@@ -1935,21 +1934,20 @@ impl CPU {
                 self.reg.flags.n = false;
             }
 
-            // Instructions à répétition (LDIR, LDDR, CPIR, CPDR, INIR, INDR,
+            // Repeating instructions (LDIR, LDDR, CPIR, CPDR, INIR, INDR,
             // OTIR, OTDR)
             // -------------------------------------------------------------------------
-            // Le Z80 ne les exécute PAS d'un seul tenant : il effectue une
-            // itération, et si la condition de répétition tient encore, il
-            // recule PC de deux pour rejouer l'instruction. C'est ce qui les
-            // rend interruptibles entre deux itérations.
+            // The Z80 does NOT execute them in a single stretch: it performs
+            // one iteration, and if the repeat condition still holds, it
+            // steps PC back by two to replay the instruction. That's what
+            // makes them interruptible between two iterations.
             //
-            // Les dérouler entièrement dans un seul appel paraît équivalent —
-            // le nombre de cycles rendu est le même — mais fige la machine
-            // hôte pendant toute la durée : un LDIR de 16 Ko consomme 344 000
-            // cycles, soit plus de quatre trames d'un CPC, pendant lesquelles
-            // aucune interruption ne peut être acceptée. Toute musique ou
-            // logique de jeu cadencée par les interruptions prend alors du
-            // retard.
+            // Unrolling them entirely in a single call looks equivalent —
+            // the reported cycle count is the same — but it freezes the
+            // host machine for the whole duration: a 16 KB LDIR consumes
+            // 344,000 cycles, more than four CPC frames, during which no
+            // interrupt can be accepted. Any music or game logic clocked by
+            // interrupts then falls behind.
 
             // LDIR
             0xEDB0 => {
@@ -1986,7 +1984,7 @@ impl CPU {
             // CPIR
             0xEDB1 => {
                 self.cpi(bus);
-                // La répétition s'arrête sur une correspondance (Z=1) ou sur BC nul.
+                // The repetition stops on a match (Z=1) or when BC reaches zero.
                 let again = !self.reg.flags.z && self.reg.get_bc() != 0;
                 cycles = self.repeat_block_wz(again);
             }
@@ -1997,7 +1995,7 @@ impl CPU {
             // CPDR
             0xEDB9 => {
                 self.cpd(bus);
-                // La répétition s'arrête sur une correspondance (Z=1) ou sur BC nul.
+                // The repetition stops on a match (Z=1) or when BC reaches zero.
                 let again = !self.reg.flags.z && self.reg.get_bc() != 0;
                 cycles = self.repeat_block_wz(again);
             }
@@ -2172,10 +2170,10 @@ impl CPU {
             }
 
             // General-Purpose Arithmetic and CPU Control Groups
-            // NEG. Le Z80 ne decode que trois bits de ce champ : les sept
-            // autres combinaisons (0x4C, 0x54...) sont le MEME NEG, non
-            // documente mais bien reel. Les laisser au repli "trou de la
-            // table ED" en ferait des NOP silencieux.
+            // NEG. The Z80 only decodes three bits of this field: the other
+            // seven combinations (0x4C, 0x54...) are the SAME NEG,
+            // undocumented but very real. Leaving them to the "ED table gap"
+            // fallback would turn them into silent NOPs.
             0xED44 | 0xED4C | 0xED54 | 0xED5C | 0xED64 | 0xED6C | 0xED74 | 0xED7C => {
                 self.neg();
             }
@@ -2186,8 +2184,8 @@ impl CPU {
                 self.call_stack_pop(bus);
             }
 
-            // RETN, et ses six doublons non documentes (meme raison que NEG
-            // ci-dessus).
+            // RETN, and its six undocumented duplicates (same reason as NEG
+            // above).
             0xED45 | 0xED55 | 0xED5D | 0xED65 | 0xED6D | 0xED75 | 0xED7D => {
                 self.iff1 = self.iff2;
                 self.call_stack_pop(bus);
@@ -3270,16 +3268,16 @@ impl CPU {
             }
 
             // =========================================================================
-            // GROUPE D'INSTRUCTIONS D'ENTRÉE / SORTIE (I/O) - OPCODES 0xED
+            // INPUT / OUTPUT (I/O) INSTRUCTION GROUP - OPCODES 0xED
             // =========================================================================
 
-            // IN r, (C) - Lit le port BC et écrit dans le registre spécifié.
-            // Modifie les flags S, Z, H (reset), P (parité), N (reset).
+            // IN r, (C) - Reads port BC and writes into the specified register.
+            // Modifies flags S, Z, H (reset), P (parity), N (reset).
             0xED40 | 0xED48 | 0xED50 | 0xED58 | 0xED60 | 0xED68 | 0xED78 => {
                 let port = self.reg.get_bc();
                 let data = bus.read_io(port);
 
-                // Routage vers le bon registre de destination selon l'opcode
+                // Routes to the right destination register depending on the opcode
                 match opcode {
                     0xED40 => self.reg.b = data, // IN B, (C)
                     0xED48 => self.reg.c = data, // IN C, (C)
@@ -3291,17 +3289,17 @@ impl CPU {
                     _ => {}
                 }
 
-                // Mise à jour des flags
+                // Update flags
                 self.reg.flags.s = (data & 0x80) != 0;
                 self.reg.flags.set_undocumented_from(data);
                 self.reg.flags.z = data == 0;
                 self.reg.flags.h = false;
-                self.reg.flags.p = data.count_ones() % 2 == 0; // Parité
+                self.reg.flags.p = data.count_ones() % 2 == 0; // Parity
                 self.reg.flags.n = false;
                 self.wz_after(port);
             }
 
-            // IN F, (C) - Opcode 0xED70 (Undocumented) : affecte seulement les flags
+            // IN F, (C) - Opcode 0xED70 (Undocumented): only affects flags
             0xED70 => {
                 let port = self.reg.get_bc();
                 let data = bus.read_io(port);
@@ -3314,7 +3312,7 @@ impl CPU {
                 self.wz_after(port);
             }
 
-            // OUT (C), r - Écrit la valeur du registre spécifié sur le port BC.
+            // OUT (C), r - Writes the specified register's value to port BC.
             0xED41 | 0xED49 | 0xED51 | 0xED59 | 0xED61 | 0xED69 | 0xED79 => {
                 let port = self.reg.get_bc();
                 let data = match opcode {
@@ -3331,7 +3329,7 @@ impl CPU {
                 self.wz_after(port);
             }
 
-            // OUT (C), 0 - Opcode 0xED71 (Undocumented) : Écrit un octet nul sur le port BC.
+            // OUT (C), 0 - Opcode 0xED71 (Undocumented): writes a null byte to port BC.
             0xED71 => {
                 let port = self.reg.get_bc();
                 bus.write_io(port, 0);
@@ -3339,15 +3337,15 @@ impl CPU {
             }
 
             // -------------------------------------------------------------------------
-            // Transferts par Blocs I/O (Opcodes INI, INIR, IND, INDR, OUTI, OTIR, OUTD, OTDR)
+            // Block I/O transfers (opcodes INI, INIR, IND, INDR, OUTI, OTIR, OUTD, OTDR)
             // -------------------------------------------------------------------------
-            // Attention à l'asymétrie entre les deux familles : les instructions
-            // de SORTIE décrémentent B AVANT l'accès au port, donc c'est B-1 qui
-            // est présenté sur A8-A15, alors que les instructions d'ENTRÉE le
-            // décrémentent APRÈS et présentent B inchangé. C'est la raison du
-            // "INC B" qui précède systématiquement OUTI dans le code de l'époque.
+            // Watch for the asymmetry between the two families: OUTPUT
+            // instructions decrement B BEFORE the port access, so it's B-1
+            // that's presented on A8-A15, whereas INPUT instructions
+            // decrement it AFTER and present B unchanged. That's why "INC B"
+            // is always seen right before OUTI in period code.
 
-            // INI (0xEDA2) : Lit depuis le port BC, écrit à (HL), incrémente HL, décrémente B
+            // INI (0xEDA2): reads from port BC, writes to (HL), increments HL, decrements B
             0xEDA2 => {
                 let port = self.reg.get_bc();
                 let data = bus.read_io(port);
@@ -3359,7 +3357,7 @@ impl CPU {
                 self.reg.wz = self.reg.get_bc().wrapping_add(1);
             }
 
-            // INIR (0xEDB2) : INI répété jusqu'à ce que B devienne 0
+            // INIR (0xEDB2): INI repeated until B reaches 0
             0xEDB2 => {
                 let port = self.reg.get_bc();
                 let data = bus.read_io(port);
@@ -3372,7 +3370,7 @@ impl CPU {
                 cycles = self.repeat_block(self.reg.b != 0);
             }
 
-            // IND (0xEDAA) : Lit depuis le port BC, écrit à (HL), décrémente HL, décrémente B
+            // IND (0xEDAA): reads from port BC, writes to (HL), decrements HL, decrements B
             0xEDAA => {
                 let port = self.reg.get_bc();
                 let data = bus.read_io(port);
@@ -3384,7 +3382,7 @@ impl CPU {
                 self.reg.wz = self.reg.get_bc().wrapping_sub(1);
             }
 
-            // INDR (0xEDBA) : IND répété jusqu'à ce que B devienne 0
+            // INDR (0xEDBA): IND repeated until B reaches 0
             0xEDBA => {
                 let port = self.reg.get_bc();
                 let data = bus.read_io(port);
@@ -3397,7 +3395,7 @@ impl CPU {
                 cycles = self.repeat_block(self.reg.b != 0);
             }
 
-            // OUTI (0xEDA3) : Lit depuis (HL), décrémente B, écrit sur le port BC, incrémente HL
+            // OUTI (0xEDA3): reads from (HL), decrements B, writes to port BC, increments HL
             0xEDA3 => {
                 let data = bus.read_byte(self.reg.get_hl());
                 self.reg.b = self.reg.b.wrapping_sub(1);
@@ -3409,7 +3407,7 @@ impl CPU {
                 self.reg.wz = self.reg.get_bc().wrapping_add(1);
             }
 
-            // OTIR (0xEDB3) : OUTI répété jusqu'à ce que B devienne 0
+            // OTIR (0xEDB3): OUTI repeated until B reaches 0
             0xEDB3 => {
                 let data = bus.read_byte(self.reg.get_hl());
                 self.reg.b = self.reg.b.wrapping_sub(1);
@@ -3422,7 +3420,7 @@ impl CPU {
                 cycles = self.repeat_block(self.reg.b != 0);
             }
 
-            // OUTD (0xEDAB) : Lit depuis (HL), décrémente B, écrit sur le port BC, décrémente HL
+            // OUTD (0xEDAB): reads from (HL), decrements B, writes to port BC, decrements HL
             0xEDAB => {
                 let data = bus.read_byte(self.reg.get_hl());
                 self.reg.b = self.reg.b.wrapping_sub(1);
@@ -3434,7 +3432,7 @@ impl CPU {
                 self.reg.wz = self.reg.get_bc().wrapping_sub(1);
             }
 
-            // OTDR (0xEDBB) : OUTD répété jusqu'à ce que B devienne 0
+            // OTDR (0xEDBB): OUTD repeated until B reaches 0
             0xEDBB => {
                 let data = bus.read_byte(self.reg.get_hl());
                 self.reg.b = self.reg.b.wrapping_sub(1);
@@ -3448,17 +3446,17 @@ impl CPU {
             }
 
             _ => match (opcode >> 8) as u8 {
-                // Un préfixe DD/FD devant une instruction qui ne touche ni à
-                // HL ni à (HL) n'a aucun effet : le Z80 le traverse en quatre
-                // cycles et exécute l'instruction telle quelle. C'est le cas
-                // de 145 opcodes DD et 149 FD, qui ne sont donc pas absents,
-                // seulement sans objet.
+                // A DD/FD prefix in front of an instruction that touches
+                // neither HL nor (HL) has no effect: the Z80 passes through
+                // it in four cycles and executes the instruction as is.
+                // That's the case for 145 DD opcodes and 149 FD opcodes,
+                // which aren't missing, just moot.
                 0xDD | 0xFD => {
                     self.reg.pc = self.reg.pc.wrapping_add(1);
                     return 4;
                 }
-                // Les trous de la table ED ne sont pas des instructions : le
-                // processeur les traverse sans rien faire, en huit cycles.
+                // The gaps in the ED table are not instructions: the
+                // processor passes through them doing nothing, in eight cycles.
                 0xED => cycles = 8,
                 _ => self.record_unimplemented(bus, 2),
             },
@@ -3486,21 +3484,21 @@ impl CPU {
     }
 
     // DDCB FDCB
-    /// Instructions DD CB / FD CB : opérations sur bits d'un octet indexé.
+    /// DD CB / FD CB instructions: bit operations on an indexed byte.
     ///
-    /// Leur format est parfaitement régulier — préfixe, CB, déplacement, puis
-    /// un opcode dont les champs désignent l'opération et un registre — ce qui
-    /// permet de les décoder plutôt que de les énumérer :
+    /// Their format is perfectly regular — prefix, CB, displacement, then an
+    /// opcode whose fields designate the operation and a register — which is
+    /// what makes decoding them possible instead of enumerating them:
     ///
     /// ```text
     ///   7 6 5 4 3 2 1 0
     ///   x x y y y z z z
     /// ```
     ///
-    /// L'opération porte toujours sur la case mémoire visée. Quand z ne
-    /// désigne pas cette case (z != 6), le résultat est EN PLUS recopié dans
-    /// le registre z : forme non documentée, mais bien présente dans le
-    /// silicium, et employée par des programmes réels.
+    /// The operation always acts on the targeted memory cell. When z doesn't
+    /// designate that cell (z != 6), the result is ALSO copied into register
+    /// z: an undocumented form, but a real one in silicon, and one that real
+    /// programs use.
     fn execute_4bytes<B: Bus>(&mut self, bus: &mut B) -> u32 {
         let prefix = bus.read_byte(self.reg.pc);
         let displacement = bus.read_byte(self.reg.pc.wrapping_add(2)) as i8;
@@ -3527,17 +3525,17 @@ impl CPU {
                 _ => self.srl(value),
             },
             1 => {
-                // BIT ne modifie que les drapeaux : ni la mémoire ni un
-                // registre, et le champ z est sans effet.
+                // BIT only touches flags: neither memory nor a register,
+                // and the z field has no effect.
                 let r = bit::get(value, y);
                 self.reg.flags.z = !r;
                 self.reg.flags.h = true;
                 self.reg.flags.n = false;
                 self.reg.flags.s = r && y == 7;
                 self.reg.flags.p = !r;
-                // Comme `BIT b,(HL)`, la forme indexée prend ses deux
-                // drapeaux non documentés sur le poids fort de MEMPTR — que
-                // `ix_d`/`iy_d` viennent de charger avec l'adresse visée.
+                // Like `BIT b,(HL)`, the indexed form takes its two
+                // undocumented flags from MEMPTR's high byte — which
+                // `ix_d`/`iy_d` just loaded with the targeted address.
                 self.reg
                     .flags
                     .set_undocumented_from((self.reg.wz >> 8) as u8);
@@ -3554,20 +3552,21 @@ impl CPU {
         23
     }
 
-    /// Avance le registre R d'un cycle M1 (recherche d'opcode).
+    /// Advances register R by one M1 cycle (opcode fetch).
     ///
-    /// Le Z80 l'incrémente à chaque octet d'opcode lu en mémoire — y compris
-    /// les octets de préfixe CB/ED/DD/FD, qui sont eux-mêmes des cycles M1.
-    /// Seuls les 7 bits de poids faible comptent : le bit 7 n'est modifié que
-    /// par une écriture explicite (LD R,A), jamais par le comptage.
+    /// The Z80 increments it on every opcode byte read from memory —
+    /// including CB/ED/DD/FD prefix bytes, which are themselves M1 cycles.
+    /// Only the low 7 bits count: bit 7 is only changed by an explicit
+    /// write (LD R,A), never by the counting.
     fn bump_r(&mut self) {
         self.reg.r = (self.reg.r & 0x80) | (self.reg.r.wrapping_add(1) & 0x7F);
     }
 
-    /// Note l'instruction en cours comme non gérée, sans rien exécuter.
+    /// Records the current instruction as unhandled, without executing
+    /// anything.
     ///
-    /// Le processeur poursuit sur la suivante : c'est le comportement le moins
-    /// destructeur, et l'hôte a de quoi savoir ce qui s'est passé.
+    /// The processor moves on to the next one: that's the least destructive
+    /// behavior, and the host has what it needs to know what happened.
     fn record_unimplemented<B: Bus>(&mut self, bus: &B, len: u8) {
         let address = self.reg.pc;
         let mut bytes = [0u8; 4];
@@ -3582,8 +3581,8 @@ impl CPU {
         self.unimplemented_count = self.unimplemented_count.saturating_add(1);
     }
 
-    /// Range une valeur dans le registre 8 bits désigné par un champ y ou z.
-    /// Le code 6 désigne un accès mémoire, que les appelants traitent eux-mêmes.
+    /// Stores a value into the 8-bit register designated by a y or z field.
+    /// Code 6 designates a memory access, which callers handle themselves.
     fn set_register(&mut self, code: u8, value: u8) {
         match code {
             0 => self.reg.b = value,
@@ -3593,15 +3592,15 @@ impl CPU {
             4 => self.reg.h = value,
             5 => self.reg.l = value,
             7 => self.reg.a = value,
-            _ => unreachable!("le code 6 n'est pas un registre"),
+            _ => unreachable!("code 6 is not a register"),
         }
     }
 
-    /// Destination d'un saut relatif : `PC + 2 + e`, le déplacement étant
-    /// signé.
+    /// Destination of a relative jump: `PC + 2 + e`, the displacement being
+    /// signed.
     ///
-    /// Un saut relatif **pris** charge MEMPTR avec sa destination ; un saut
-    /// non pris le laisse intact, d'où l'appel depuis la seule branche prise.
+    /// A relative jump that's **taken** loads MEMPTR with its destination; a
+    /// jump not taken leaves it intact, hence the call from the taken branch only.
     fn relative_target(&mut self, displacement: u8) -> u16 {
         let target = self
             .reg
@@ -3612,64 +3611,63 @@ impl CPU {
         target
     }
 
-    /// MEMPTR après un accès mémoire à `address` : le registre retient
-    /// l'adresse *suivante*. C'est le cas de loin le plus courant.
+    /// MEMPTR after a memory access at `address`: the register holds the
+    /// *next* address. By far the most common case.
     fn wz_after(&mut self, address: u16) {
         self.reg.wz = address.wrapping_add(1);
     }
 
-    /// MEMPTR après `LD (nn),A`, `LD (BC),A`, `LD (DE),A` et `OUT (n),A`.
+    /// MEMPTR after `LD (nn),A`, `LD (BC),A`, `LD (DE),A` and `OUT (n),A`.
     ///
-    /// Ces quatre-là ne suivent pas la règle générale : seul l'octet de poids
-    /// faible avance d'un, tandis que le poids fort reçoit `A`. La bizarrerie
-    /// est bien celle du composant, pas une simplification — elle vient de ce
-    /// que le Z80 présente `A` sur la moitié haute du bus d'adresse pendant
-    /// ce cycle.
+    /// These four don't follow the general rule: only the low byte advances
+    /// by one, while the high byte receives `A`. The oddity really is the
+    /// chip's, not a simplification on our part — it comes from the Z80
+    /// presenting `A` on the high half of the address bus during that cycle.
     fn wz_after_write_a(&mut self, address: u16) {
         self.reg.wz = u16::from(self.reg.a) << 8 | u16::from((address as u8).wrapping_add(1));
     }
 
-    /// Adresse visée par un accès indexé `(IX+d)`, le déplacement étant lu
-    /// comme un octet signé.
+    /// Address targeted by an indexed access `(IX+d)`, the displacement
+    /// being read as a signed byte.
     ///
-    /// Tout accès indexé charge MEMPTR avec l'adresse calculée — c'est la
-    /// règle la plus large du registre, et elle vaut quelle que soit
-    /// l'instruction qui s'en sert.
+    /// Any indexed access loads MEMPTR with the computed address — the
+    /// broadest rule of the register, and it holds regardless of which
+    /// instruction uses it.
     fn ix_d(&mut self, displacement: u8) -> u16 {
         let address = self.reg.get_ix().wrapping_add(displacement as i8 as u16);
         self.reg.wz = address;
         address
     }
 
-    /// Idem pour `(IY+d)`.
+    /// Same for `(IY+d)`.
     fn iy_d(&mut self, displacement: u8) -> u16 {
         let address = self.reg.get_iy().wrapping_add(displacement as i8 as u16);
         self.reg.wz = address;
         address
     }
 
-    /// Drapeaux communs aux huit instructions d'E/S par bloc (`INI`, `IND`,
-    /// `OUTI`, `OUTD` et leurs formes répétitives).
+    /// Flags common to the eight block I/O instructions (`INI`, `IND`,
+    /// `OUTI`, `OUTD` and their repeated forms).
     ///
-    /// S, Z et les deux drapeaux non documentés viennent de `B` **après**
-    /// décrémentation. Les trois autres se déduisent d'une somme
-    /// intermédiaire que le Z80 forme entre l'octet transféré et un second
-    /// terme propre à la famille : `C + 1` pour `INI`, `C - 1` pour `IND`, et
-    /// `L` (après mise à jour de `HL`) pour les deux instructions de sortie.
-    /// C'est cet `addend` que l'appelant fournit.
+    /// S, Z and the two undocumented flags come from `B` **after**
+    /// decrementing. The other three are derived from an intermediate sum
+    /// the Z80 forms between the transferred byte and a second term
+    /// specific to the family: `C + 1` for `INI`, `C - 1` for `IND`, and `L`
+    /// (after `HL` is updated) for the two output instructions. That's the
+    /// `addend` the caller supplies.
     ///
-    /// Ces règles n'ont rien d'arbitraire vu du silicium — elles décrivent
-    /// une addition interne dont le résultat n'est jamais rangé nulle part —
-    /// mais elles sont reproductibles, et c'est à ce titre que la suite
-    /// `zexall` les vérifie.
+    /// These rules aren't arbitrary from the silicon's point of view — they
+    /// describe an internal addition whose result is never stored anywhere
+    /// — but they're reproducible, and that's exactly what the `zexall`
+    /// suite checks.
     fn block_io_flags(&mut self, data: u8, addend: u8) {
         let b = self.reg.b;
         self.reg.flags.s = b & 0x80 != 0;
         self.reg.flags.z = b == 0;
         self.reg.flags.set_undocumented_from(b);
-        // Seul cas de la machine où N ne vaut pas systématiquement 1 après
-        // une opération qui le pose : il recopie le bit 7 de l'octet
-        // transféré.
+        // The one case on this machine where N doesn't systematically end
+        // up at 1 after an operation that sets it: it mirrors bit 7 of the
+        // transferred byte.
         self.reg.flags.n = data & 0x80 != 0;
         let k = u16::from(data) + u16::from(addend);
         self.reg.flags.h = k > 0xFF;
@@ -3686,9 +3684,9 @@ impl CPU {
         self.reg.set_de(de.wrapping_add(1));
         self.reg.set_hl(hl.wrapping_add(1));
         self.reg.set_bc(bc.wrapping_sub(1));
-        // Les deux drapeaux non documentes viennent de A + l'octet
-        // transfere, avec la regle propre aux instructions de bloc : bit 3
-        // pour XF, mais bit 1 pour YF.
+        // The two undocumented flags come from A + the transferred byte,
+        // under the rule specific to block instructions: bit 3 for XF, but
+        // bit 1 for YF.
         self.reg
             .flags
             .set_undocumented_from_block(self.reg.a.wrapping_add(transferred));
@@ -3703,9 +3701,9 @@ impl CPU {
         self.reg.set_de(de.wrapping_sub(1));
         self.reg.set_hl(hl.wrapping_sub(1));
         self.reg.set_bc(bc.wrapping_sub(1));
-        // Les deux drapeaux non documentes viennent de A + l'octet
-        // transfere, avec la regle propre aux instructions de bloc : bit 3
-        // pour XF, mais bit 1 pour YF.
+        // The two undocumented flags come from A + the transferred byte,
+        // under the rule specific to block instructions: bit 3 for XF, but
+        // bit 1 for YF.
         self.reg
             .flags
             .set_undocumented_from_block(self.reg.a.wrapping_add(transferred));
@@ -3727,8 +3725,8 @@ impl CPU {
         self.reg.flags.h = (self.reg.a as i8 & 0x0F) < (h as i8 & 0x0F);
         self.reg.flags.p = self.reg.get_bc() != 0;
         self.reg.flags.n = true;
-        // Regle de bloc : la source est le resultat MOINS le demi-report,
-        // et YF vient du bit 1 (voir set_undocumented_from_block).
+        // Block rule: the source is the result MINUS the half-carry, and
+        // YF comes from bit 1 (see set_undocumented_from_block).
         let n = r.wrapping_sub(u8::from(self.reg.flags.h));
         self.reg.flags.set_undocumented_from_block(n);
     }
@@ -3749,8 +3747,8 @@ impl CPU {
         self.reg.flags.h = (self.reg.a as i8 & 0x0F) < (h as i8 & 0x0F);
         self.reg.flags.p = self.reg.get_bc() != 0;
         self.reg.flags.n = true;
-        // Regle de bloc : la source est le resultat MOINS le demi-report,
-        // et YF vient du bit 1 (voir set_undocumented_from_block).
+        // Block rule: the source is the result MINUS the half-carry, and
+        // YF comes from bit 1 (see set_undocumented_from_block).
         let n = r.wrapping_sub(u8::from(self.reg.flags.h));
         self.reg.flags.set_undocumented_from_block(n);
     }
@@ -3864,10 +3862,10 @@ impl CPU {
         let r = self.reg.a;
         self.sub(n);
         self.reg.a = r;
-        // Exception la plus connue du Z80 : `CP` tire ses deux drapeaux non
-        // documentés de l'OPÉRANDE, pas du résultat de la soustraction —
-        // contrairement à `SUB`, dont il partage pourtant tout le reste.
-        // C'est ce qui permet de distinguer les deux à l'exécution.
+        // The Z80's best-known exception: `CP` draws its two undocumented
+        // flags from the OPERAND, not from the subtraction's result —
+        // unlike `SUB`, which it otherwise shares everything with. This is
+        // what lets the two be told apart at runtime.
         self.reg.flags.set_undocumented_from(n);
     }
 
@@ -3969,15 +3967,15 @@ impl CPU {
     // 16 bits add
     fn add_16(&mut self, n1: u16, n2: u16) -> u16 {
         let r = n1.wrapping_add(n2);
-        // MEMPTR prend la valeur du registre destination AVANT l'addition,
-        // augmentee de un — pour ADD HL,rr comme pour ADD IX/IY,rr.
+        // MEMPTR takes the destination register's value BEFORE the
+        // addition, plus one — for ADD HL,rr as well as ADD IX/IY,rr.
         self.reg.wz = n1.wrapping_add(1);
         self.reg.flags.c = u32::from(n1) + u32::from(n2) > 0xffff;
         self.reg.flags.h = (n1 & 0x0FFF) + (n2 & 0x0FFF) > 0x0FFF;
         self.reg.flags.n = false;
-        // `ADD HL,rr` ne touche ni S ni Z (contrairement à `ADC`/`SBC HL`),
-        // mais il laisse bien transparaître les deux bits non documentés,
-        // pris sur l'octet de poids fort du résultat.
+        // `ADD HL,rr` touches neither S nor Z (unlike `ADC`/`SBC HL`), but
+        // it does let the two undocumented bits show through, taken from
+        // the result's high byte.
         self.reg.flags.set_undocumented_from((r >> 8) as u8);
         r
     }
@@ -3993,19 +3991,19 @@ impl CPU {
         self.reg.set_hl(r);
         self.reg.wz = h.wrapping_add(1);
         self.reg.flags.s = r & 0x8000 == 0x8000;
-        // Sur les operations 16 bits, les deux drapeaux non documentes
-        // viennent de l'octet de POIDS FORT du resultat.
+        // On 16-bit operations, the two undocumented flags come from the
+        // HIGH byte of the result.
         self.reg.flags.set_undocumented_from((r >> 8) as u8);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.c = u32::from(h) + u32::from(n) + c as u32 > 0xffff;
         self.reg.flags.h = (h & 0x0FFF) + (n & 0x0FFF) + c > 0x0FFF;
         self.reg.flags.n = false;
-        // Débordement signé : il y a débordement quand les deux opérandes ont
-        // le même signe et que le résultat en a un autre. Passer par
-        // `overflowing_add` sur `n + c` était doublement faux — `n + c`
-        // débordait pour `n = 0xFFFF` avec retenue (panique en debug), et le
-        // débordement d'une somme à trois termes n'est pas celui de la somme
-        // partielle.
+        // Signed overflow: it occurs when both operands share the same
+        // sign and the result ends up with a different one. Going through
+        // `overflowing_add` on `n + c` was wrong twice over — `n + c`
+        // overflowed for `n = 0xFFFF` with the carry set (a debug panic),
+        // and the overflow of a three-term sum isn't that of the partial
+        // sum.
         self.reg.flags.p = (h ^ r) & (n ^ r) & 0x8000 != 0;
     }
 
@@ -4021,16 +4019,16 @@ impl CPU {
         self.reg.wz = h.wrapping_add(1);
         self.reg.flags.z = r == 0x00;
         self.reg.flags.s = r & 0x8000 == 0x8000;
-        // Sur les operations 16 bits, les deux drapeaux non documentes
-        // viennent de l'octet de POIDS FORT du resultat.
+        // On 16-bit operations, the two undocumented flags come from the
+        // HIGH byte of the result.
         self.reg.flags.set_undocumented_from((r >> 8) as u8);
         self.reg.flags.h = (h & 0x0fff) < (n & 0x0fff) + c;
         self.reg.flags.c = u32::from(h) < u32::from(n) + c as u32;
         self.reg.flags.n = true;
-        // Débordement signé d'une soustraction : les opérandes sont de signes
-        // opposés et le résultat prend celui du soustracteur. Même remarque
-        // que pour `adc_16` : la version passant par `n + c` tronqué en `i16`
-        // donnait un résultat faux dès que `n + c` dépassait 0xFFFF.
+        // Signed overflow of a subtraction: the operands have opposite
+        // signs and the result takes the subtrahend's. Same remark as for
+        // `adc_16`: the version going through `n + c` truncated to `i16`
+        // gave a wrong result as soon as `n + c` exceeded 0xFFFF.
         self.reg.flags.p = (h ^ n) & (h ^ r) & 0x8000 != 0;
     }
 
@@ -4225,14 +4223,14 @@ impl CPU {
         self.reg.flags.z = !r;
         self.reg.flags.h = true;
         self.reg.flags.n = false;
-        // S et P/V manquaient : le Z80 pose S quand on teste le bit 7 et
-        // qu'il vaut 1, et recopie Z dans P/V.
+        // S and P/V were missing: the Z80 sets S when testing bit 7 and it's
+        // 1, and mirrors Z into P/V.
         self.reg.flags.s = r && bit == 7;
         self.reg.flags.p = !r;
-        // Les deux drapeaux non documentés viennent de la VALEUR TESTÉE —
-        // sauf pour `BIT b,(HL)`, qui les prend sur l'octet de poids fort de
-        // MEMPTR. C'est la seule manifestation observable de ce registre
-        // interne, et la raison pour laquelle il est modélisé.
+        // The two undocumented flags come from the TESTED VALUE — except
+        // for `BIT b,(HL)`, which takes them from MEMPTR's high byte. This
+        // is the only observable manifestation of that internal register,
+        // and the reason it's modeled at all.
         let tested = match register {
             0 => self.reg.b,
             1 => self.reg.c,
@@ -4296,8 +4294,8 @@ impl CPU {
     fn call_stack_pop<B: Bus>(&mut self, bus: &mut B) {
         self.reg.pc = bus.read_word(self.reg.sp);
         self.reg.sp = self.reg.sp.wrapping_add(2);
-        // Tous les retours (RET, RET cc pris, RETI, RETN) passent par ici, et
-        // tous chargent MEMPTR avec l'adresse de retour.
+        // Every return (RET, RET cc taken, RETI, RETN) goes through here,
+        // and every one of them loads MEMPTR with the return address.
         self.reg.wz = self.reg.pc;
     }
 
@@ -4328,17 +4326,17 @@ pub fn signed_to_abs(n: u8) -> u8 {
     !n + 1
 }
 
-/// Instruction rencontrée que l'exécution ne sait pas traiter.
+/// Instruction encountered that execution doesn't know how to handle.
 ///
-/// Le processeur ne l'exécute pas et poursuit sur la suivante ; c'est à
-/// l'hôte de décider quoi en faire — l'afficher, la journaliser, ou s'arrêter
-/// dessus. Le désassembleur du module `dasm` sait la nommer.
+/// The processor doesn't execute it and moves on to the next one; it's up
+/// to the host to decide what to do with it — display it, log it, or stop
+/// on it. The `dasm` module's disassembler knows how to name it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Unimplemented {
-    /// Adresse de l'instruction.
+    /// The instruction's address.
     pub address: u16,
-    /// Ses octets, dans la limite de la plus longue instruction du Z80.
+    /// Its bytes, up to the longest Z80 instruction.
     pub bytes: [u8; 4],
-    /// Sa longueur en octets.
+    /// Its length in bytes.
     pub len: u8,
 }

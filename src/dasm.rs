@@ -1,8 +1,8 @@
-//! Désassembleur Z80.
+//! Z80 disassembler.
 //!
-//! Le décodage suit la structure du jeu d'instructions plutôt qu'une table de
-//! libellés par préfixe. Chaque opcode se découpe en champs de bits qui
-//! désignent directement le registre, la condition ou l'opération concernée :
+//! Decoding follows the structure of the instruction set rather than a table
+//! of labels per prefix. Each opcode splits into bit fields that directly
+//! designate the register, condition, or operation involved:
 //!
 //! ```text
 //!   7 6 5 4 3 2 1 0
@@ -10,44 +10,44 @@
 //!       p p q
 //! ```
 //!
-//! C'est ainsi que le composant lui-même le décode, et cela couvre d'un seul
-//! tenant les préfixes DD/FD/CB/ED ainsi que les instructions non documentées
-//! (SLL, moitiés de IX/IY, doubles opérations de DD CB), qu'une table plate
-//! oblige à énumérer une par une — donc à en oublier.
+//! This is how the chip itself decodes it, and it covers in one stroke the
+//! DD/FD/CB/ED prefixes as well as the undocumented instructions (SLL,
+//! IX/IY halves, DD CB double operations) that a flat table would force you
+//! to enumerate one by one — and therefore to forget some.
 //!
-//! Le libellé est précédé des octets de l'instruction, sur une colonne de
-//! largeur fixe, pour que le désassemblage d'une plage reste aligné.
+//! The label is preceded by the instruction's bytes, in a fixed-width
+//! column, so that disassembling a range stays aligned.
 
 use crate::bus::Bus;
 
-/// Largeur de la colonne des octets, avant le libellé.
+/// Width of the bytes column, before the label.
 const BYTES_COLUMN: usize = 14;
 
-/// Registres 8 bits désignés par les champs y et z. L'entrée 6 est l'accès
-/// mémoire, que le préfixe DD/FD remplace par (IX+d) ou (IY+d).
+/// 8-bit registers designated by the y and z fields. Entry 6 is the memory
+/// access, which the DD/FD prefix replaces with (IX+d) or (IY+d).
 const R: [&str; 8] = ["B", "C", "D", "E", "H", "L", "(HL)", "A"];
 
-/// Paires 16 bits désignées par le champ p, dans les deux tables qu'utilise
-/// le Z80 : celle où 3 vaut SP, et celle où 3 vaut AF (PUSH/POP).
+/// 16-bit pairs designated by the p field, in the two tables the Z80 uses:
+/// the one where 3 means SP, and the one where 3 means AF (PUSH/POP).
 const RP: [&str; 4] = ["BC", "DE", "HL", "SP"];
 const RP2: [&str; 4] = ["BC", "DE", "HL", "AF"];
 
-/// Conditions désignées par le champ y.
+/// Conditions designated by the y field.
 const CC: [&str; 8] = ["NZ", "Z", "NC", "C", "PO", "PE", "P", "M"];
 
-/// Opérations de l'unité arithmétique, avec leur destination implicite.
+/// Arithmetic unit operations, with their implicit destination.
 const ALU: [&str; 8] = [
     "ADD A,", "ADC A,", "SUB A,", "SBC A,", "AND ", "XOR ", "OR ", "CP ",
 ];
 
-/// Décalages et rotations du préfixe CB. SLL n'est pas documentée mais existe
-/// bel et bien dans le silicium, et les jeux s'en servent.
+/// CB-prefixed shifts and rotations. SLL is undocumented but does exist in
+/// silicon, and games make use of it.
 const ROT: [&str; 8] = ["RLC", "RRC", "RL", "RR", "SLA", "SRA", "SLL", "SRL"];
 
-/// Mode d'interruption désigné par le champ y de ED xx x110.
+/// Interrupt mode designated by the y field of ED xx x110.
 const IM: [&str; 8] = ["0", "0", "1", "2", "0", "0", "1", "2"];
 
-/// Instructions de transfert par blocs : [y-4][z].
+/// Block transfer instructions: [y-4][z].
 const BLI: [[&str; 4]; 4] = [
     ["LDI", "CPI", "INI", "OUTI"],
     ["LDD", "CPD", "IND", "OUTD"],
@@ -55,7 +55,7 @@ const BLI: [[&str; 4]; 4] = [
     ["LDDR", "CPDR", "INDR", "OTDR"],
 ];
 
-/// Registre d'index en vigueur, imposé par un préfixe DD ou FD.
+/// Index register in effect, imposed by a DD or FD prefix.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Index {
     None,
@@ -64,7 +64,7 @@ enum Index {
 }
 
 impl Index {
-    /// Nom de la paire 16 bits : HL, ou le registre d'index qui la remplace.
+    /// Name of the 16-bit pair: HL, or the index register that replaces it.
     fn pair(self) -> &'static str {
         match self {
             Index::None => "HL",
@@ -78,8 +78,8 @@ impl Index {
     }
 }
 
-/// Lecteur d'octets qui retient combien il en a consommé : la longueur de
-/// l'instruction est le sous-produit naturel de son décodage.
+/// Byte reader that keeps track of how many it has consumed: the
+/// instruction's length is the natural byproduct of decoding it.
 struct Fetch<'a, B: Bus + ?Sized> {
     bus: &'a B,
     address: u16,
@@ -101,8 +101,8 @@ impl<B: Bus + ?Sized> Fetch<'_, B> {
         u16::from_le_bytes([lo, hi])
     }
 
-    /// Adresse visée par un saut relatif, calculée depuis la fin de
-    /// l'instruction comme le fait le processeur.
+    /// Target address of a relative jump, computed from the end of the
+    /// instruction, as the processor does.
     fn relative(&mut self) -> u16 {
         let d = self.byte() as i8;
         self.address
@@ -111,7 +111,7 @@ impl<B: Bus + ?Sized> Fetch<'_, B> {
     }
 }
 
-/// Déplacement signé d'un accès indexé, tel qu'on l'écrit en assembleur.
+/// Signed displacement of an indexed access, as written in assembly.
 fn displacement(d: u8) -> String {
     let d = d as i8;
     if d < 0 {
@@ -121,11 +121,11 @@ fn displacement(d: u8) -> String {
     }
 }
 
-/// Opérande 8 bits désignée par un champ y ou z.
+/// 8-bit operand designated by a y or z field.
 ///
-/// Sous préfixe DD/FD, l'accès mémoire devient indexé — et consomme alors le
-/// déplacement, d'où le lecteur en paramètre — tandis que H et L désignent les
-/// moitiés du registre d'index.
+/// Under a DD/FD prefix, the memory access becomes indexed — and then
+/// consumes the displacement, hence the reader parameter — while H and L
+/// designate the halves of the index register.
 fn operand<B: Bus + ?Sized>(code: u8, index: Index, f: &mut Fetch<B>) -> String {
     match (code, index) {
         (6, Index::None) => "(HL)".to_string(),
@@ -141,8 +141,8 @@ fn operand<B: Bus + ?Sized>(code: u8, index: Index, f: &mut Fetch<B>) -> String 
     }
 }
 
-/// Paire 16 bits désignée par le champ p, HL cédant la place au registre
-/// d'index quand un préfixe est présent.
+/// 16-bit pair designated by the p field, HL giving way to the index
+/// register when a prefix is present.
 fn pair(p: u8, index: Index, table: &[&str; 4]) -> String {
     if p == 2 {
         index.pair().to_string()
@@ -151,10 +151,10 @@ fn pair(p: u8, index: Index, table: &[&str; 4]) -> String {
     }
 }
 
-/// Désassemble l'instruction située à `address`.
+/// Disassembles the instruction located at `address`.
 ///
-/// Renvoie son libellé, précédé de ses octets en hexadécimal, ainsi que sa
-/// longueur en octets — de quoi enchaîner sur l'instruction suivante.
+/// Returns its label, preceded by its bytes in hexadecimal, along with its
+/// length in bytes — enough to move on to the next instruction.
 pub fn dasm<B: Bus + ?Sized>(bus: &B, address: u16) -> (String, u8) {
     let mut f = Fetch {
         bus,
@@ -167,8 +167,8 @@ pub fn dasm<B: Bus + ?Sized>(bus: &B, address: u16) -> (String, u8) {
     let mut bytes = String::new();
     for i in 0..len {
         let b = bus.read_byte(address.wrapping_add(i as u16));
-        // Un préfixe et l'octet qu'il qualifie forment un seul groupe : c'est
-        // ce qui distingue à l'œil ED B0 de deux instructions d'un octet.
+        // A prefix and the byte it qualifies form a single group: that's
+        // what visually distinguishes ED B0 from two one-byte instructions.
         if i > 0 && !(i == 1 && is_prefix(bus.read_byte(address))) {
             bytes.push(' ');
         }
@@ -182,7 +182,7 @@ fn is_prefix(opcode: u8) -> bool {
     matches!(opcode, 0xCB | 0xDD | 0xED | 0xFD)
 }
 
-/// Décode une instruction, éventuellement déjà sous préfixe DD ou FD.
+/// Decodes an instruction, possibly already under a DD or FD prefix.
 fn decode<B: Bus + ?Sized>(f: &mut Fetch<B>, index: Index) -> String {
     let op = f.byte();
     let (x, y, z) = (op >> 6, (op >> 3) & 7, op & 7);
@@ -226,8 +226,8 @@ fn decode<B: Bus + ?Sized>(f: &mut Fetch<B>, index: Index) -> String {
             4 => format!("INC {}", operand(y, index, f)),
             5 => format!("DEC {}", operand(y, index, f)),
             6 => {
-                // Le déplacement précède la valeur immédiate : LD (IX+d),n
-                // s'écrit DD 36 d n.
+                // The displacement precedes the immediate value: LD (IX+d),n
+                // is encoded as DD 36 d n.
                 let dst = operand(y, index, f);
                 format!("LD {},${:02X}", dst, f.byte())
             }
@@ -237,8 +237,8 @@ fn decode<B: Bus + ?Sized>(f: &mut Fetch<B>, index: Index) -> String {
             if y == 6 && z == 6 {
                 return "HALT".to_string();
             }
-            // Une seule des deux opérandes peut être indexée : dans
-            // LD H,(IX+d), le H reste un vrai H.
+            // Only one of the two operands can be indexed: in LD H,(IX+d),
+            // H stays a real H.
             let (dst, src) = match (y, z) {
                 (6, _) => {
                     let dst = operand(6, index, f);
@@ -297,12 +297,12 @@ fn decode<B: Bus + ?Sized>(f: &mut Fetch<B>, index: Index) -> String {
     }
 }
 
-/// Instructions préfixées CB : rotations, décalages et opérations sur bits.
+/// CB-prefixed instructions: rotations, shifts, and bit operations.
 ///
-/// Sous DD/FD, le déplacement se lit AVANT l'opcode, et l'opération porte
-/// toujours sur la case mémoire indexée : le champ z ne désigne alors plus
-/// l'opérande mais un registre où recopier le résultat, forme non documentée
-/// mais bien réelle.
+/// Under DD/FD, the displacement is read BEFORE the opcode, and the
+/// operation always acts on the indexed memory cell: the z field then no
+/// longer designates the operand but a register to copy the result into,
+/// an undocumented but very real form.
 fn decode_cb<B: Bus + ?Sized>(f: &mut Fetch<B>, index: Index) -> String {
     let indexed = if index.prefixed() {
         let d = f.byte();
@@ -322,17 +322,17 @@ fn decode_cb<B: Bus + ?Sized>(f: &mut Fetch<B>, index: Index) -> String {
         _ => format!("SET {},{}", y, target),
     };
 
-    // BIT n'écrit nulle part : sa forme indexée n'a pas de copie.
+    // BIT writes nowhere: its indexed form has no copy.
     match indexed {
         Some(_) if z != 6 && x != 1 => format!("LD {},{}", R[z as usize], text),
         _ => text,
     }
 }
 
-/// Instructions préfixées ED.
+/// ED-prefixed instructions.
 ///
-/// Les trous de la table ne sont pas des instructions : le processeur les
-/// traverse sans rien faire, en deux octets.
+/// The gaps in the table are not instructions: the processor passes through
+/// them without doing anything, in two bytes.
 fn decode_ed<B: Bus + ?Sized>(f: &mut Fetch<B>) -> String {
     let op = f.byte();
     let (x, y, z) = (op >> 6, (op >> 3) & 7, op & 7);
@@ -401,11 +401,11 @@ mod tests {
 
     fn check(bytes: &[u8], expected: &str) {
         let (got, len) = disassemble(bytes);
-        assert_eq!(got, expected, "octets {bytes:02X?}");
+        assert_eq!(got, expected, "bytes {bytes:02X?}");
         assert_eq!(
             len as usize,
             bytes.len(),
-            "longueur de {expected} ({bytes:02X?})"
+            "length of {expected} ({bytes:02X?})"
         );
     }
 
@@ -443,8 +443,8 @@ mod tests {
         check(&[0x2F], "CPL");
     }
 
-    /// Les sauts relatifs s'expriment par leur cible, pas par leur
-    /// déplacement : c'est la seule forme exploitable quand on lit du code.
+    /// Relative jumps are shown by their target, not their displacement:
+    /// it's the only usable form when reading code.
     #[test]
     fn relative_jumps_show_their_target() {
         check(&[0x10, 0x03], "DJNZ $0105");
@@ -458,14 +458,14 @@ mod tests {
     fn cb_prefixed_instructions() {
         check(&[0xCB, 0x00], "RLC B");
         check(&[0xCB, 0x06], "RLC (HL)");
-        check(&[0xCB, 0x30], "SLL B"); // non documentée
+        check(&[0xCB, 0x30], "SLL B"); // undocumented
         check(&[0xCB, 0x48], "BIT 1,B");
         check(&[0xCB, 0x86], "RES 0,(HL)");
         check(&[0xCB, 0xFE], "SET 7,(HL)");
     }
 
-    /// Le cas qui manquait : opérations sur bits d'un octet indexé. Un jeu qui
-    /// s'en sert pour ses drapeaux devenait illisible en plein débogage.
+    /// The case that was missing: bit operations on an indexed byte. A game
+    /// using this for its flags would become unreadable mid-debug.
     #[test]
     fn indexed_bit_instructions() {
         check(&[0xDD, 0xCB, 0x2D, 0x86], "RES 0,(IX+$2D)");
@@ -473,7 +473,7 @@ mod tests {
         check(&[0xFD, 0xCB, 0x02, 0xC6], "SET 0,(IY+$02)");
         check(&[0xDD, 0xCB, 0xFE, 0x46], "BIT 0,(IX-$02)");
         check(&[0xDD, 0xCB, 0x00, 0x06], "RLC (IX+$00)");
-        // Forme non documentée : le résultat est aussi rangé dans un registre.
+        // Undocumented form: the result is also stored in a register.
         check(&[0xDD, 0xCB, 0x04, 0x00], "LD B,RLC (IX+$04)");
         check(&[0xDD, 0xCB, 0x04, 0x81], "LD C,RES 0,(IX+$04)");
     }
@@ -491,13 +491,13 @@ mod tests {
         check(&[0xDD, 0xE5], "PUSH IX");
         check(&[0xDD, 0xE9], "JP (IX)");
         check(&[0xDD, 0xB6, 0x2D], "OR (IX+$2D)");
-        // Moitiés du registre d'index, non documentées.
+        // Halves of the index register, undocumented.
         check(&[0xDD, 0x7C], "LD A,IXh");
         check(&[0xFD, 0x2C], "INC IYl");
     }
 
-    /// Dans LD H,(IX+d), le H reste un vrai H : une seule opérande peut être
-    /// indexée. Confondre les deux est l'erreur classique du décodage indexé.
+    /// In LD H,(IX+d), H stays a real H: only one operand can be indexed.
+    /// Confusing the two is the classic error of indexed decoding.
     #[test]
     fn only_the_memory_operand_is_indexed() {
         check(&[0xDD, 0x66, 0x04], "LD H,(IX+$04)");
@@ -524,13 +524,13 @@ mod tests {
         check(&[0xED, 0xB0], "LDIR");
         check(&[0xED, 0xB3], "OTIR");
         check(&[0xED, 0xA2], "INI");
-        // Trou de la table : deux octets traversés sans effet.
+        // Gap in the table: two bytes passed through with no effect.
         check(&[0xED, 0x00], "NOP");
     }
 
-    /// Aucun octet ne doit rester indéchiffrable, et la longueur annoncée doit
-    /// toujours être exploitable : c'est ce qui permet de désassembler une
-    /// plage sans se désaligner.
+    /// No byte should remain undecodable, and the reported length must
+    /// always be usable: that's what lets a range be disassembled without
+    /// getting misaligned.
     #[test]
     fn every_opcode_decodes_with_a_usable_length() {
         let mut bus = FlatBus::new(0xFFFF);
@@ -543,12 +543,12 @@ mod tests {
                 let (text, len) = dasm(&bus, 0x100);
                 assert!(
                     (1..=4).contains(&len),
-                    "{first:02X} {second:02X} : longueur {len}"
+                    "{first:02X} {second:02X}: length {len}"
                 );
                 let mnemonic = &text[BYTES_COLUMN..];
                 assert!(
                     !mnemonic.is_empty() && !mnemonic.contains('?'),
-                    "{first:02X} {second:02X} : {mnemonic:?}"
+                    "{first:02X} {second:02X}: {mnemonic:?}"
                 );
             }
         }

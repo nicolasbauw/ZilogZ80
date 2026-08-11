@@ -30,28 +30,26 @@ impl Flags {
         }
     }
 
-    /// Recopie les deux drapeaux non documentés (bits 3 et 5, dits XF et YF)
-    /// depuis une valeur — le résultat de l'opération dans la grande
-    /// majorité des cas.
+    /// Copies the two undocumented flags (bits 3 and 5, known as XF and YF)
+    /// from a value — the operation's result in the vast majority of cases.
     ///
-    /// Ces bits n'ont aucune signification propre : le Z80 y laisse
-    /// simplement transparaître les bits correspondants de sa dernière
-    /// opération. Ils ne sont observables qu'en passant par `PUSH AF`, mais
-    /// certaines protections de copie s'en servent précisément pour cette
-    /// raison — d'où l'intérêt de les émuler fidèlement.
+    /// These bits have no meaning of their own: the Z80 simply lets the
+    /// corresponding bits of its last operation show through. They're only
+    /// observable via `PUSH AF`, but some copy-protection schemes rely on
+    /// exactly that — hence the value of emulating them faithfully.
     ///
-    /// Attention aux exceptions, qui ne prennent pas le résultat comme
-    /// source : `CP` les tire de l'opérande, `BIT n,(HL)` de `MEMPTR`, et
-    /// les instructions de bloc d'une somme intermédiaire (voir
+    /// Watch for the exceptions, which don't take the result as their
+    /// source: `CP` draws them from the operand, `BIT n,(HL)` from `MEMPTR`,
+    /// and block instructions from an intermediate sum (see
     /// `set_undocumented_from_block`).
     pub fn set_undocumented_from(&mut self, value: u8) {
         self.b3 = value & 0x08 != 0;
         self.b5 = value & 0x20 != 0;
     }
 
-    /// Variante propre aux instructions de bloc (`LDI`/`LDD`, `CPI`/`CPD` et
-    /// leurs formes répétitives) : là, le bit 3 de la valeur donne XF, mais
-    /// c'est le **bit 1** qui donne YF, et non le bit 5.
+    /// Variant specific to block instructions (`LDI`/`LDD`, `CPI`/`CPD` and
+    /// their repeated forms): there, bit 3 of the value still gives XF, but
+    /// it's **bit 1** that gives YF, not bit 5.
     pub fn set_undocumented_from_block(&mut self, value: u8) {
         self.b3 = value & 0x08 != 0;
         self.b5 = value & 0x02 != 0;

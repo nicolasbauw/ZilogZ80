@@ -10,12 +10,12 @@ pub const CYCLES: [u8; 256] = [
     7, 11, 5, 10, 10, 4, 10, 11, 7, 11, 5, 6, 10, 4, 10, 12, 7, 11,
 ];
 
-/// Durées des instructions préfixées DD ou FD.
+/// Durations of DD- or FD-prefixed instructions.
 ///
-/// Le préfixe coûte quatre cycles de plus que l'instruction de base, y compris
-/// quand il ne sert à rien. Font exception les formes à déplacement (IX+d),
-/// qui vont chercher un octet en mémoire et coûtent nettement plus : ce sont
-/// les seules valeurs qui ne se déduisent pas de la table sans préfixe.
+/// The prefix costs four cycles more than the base instruction, even when it
+/// serves no purpose. The exceptions are the displacement forms (IX+d),
+/// which fetch a byte from memory and cost noticeably more: these are the
+/// only values that can't be derived from the unprefixed table.
 pub const CYCLES_DD_FD: [u8; 256] = [
     8, 14, 11, 10, 8, 8, 11, 8, 8, 15, 11, 10, 8, 8, 11, 8, 0, 14, 11, 10, 8, 8, 11, 8, 16, 15, 11,
     10, 8, 8, 11, 8, 0, 14, 20, 10, 8, 8, 11, 8, 0, 15, 20, 10, 8, 8, 11, 8, 0, 14, 17, 10, 23, 23,
@@ -29,12 +29,12 @@ pub const CYCLES_DD_FD: [u8; 256] = [
     14, 8, 14, 16, 11, 15,
 ];
 
-/// Durées des instructions préfixées ED.
+/// Durations of ED-prefixed instructions.
 ///
-/// La plage 0x40-0x7F suit un motif régulier par groupes de huit : IN r,(C) et
-/// OUT (C),r à 12 cycles, SBC/ADC HL,rr à 15, les LD 16 bits absolus à 20, NEG
-/// à 8, RETN/RETI à 14 et IM n à 8. Elle était entièrement à zéro, ce qui
-/// faisait compter chaque accès aux ports pour rien.
+/// The 0x40-0x7F range follows a regular pattern in groups of eight: IN r,(C)
+/// and OUT (C),r at 12 cycles, SBC/ADC HL,rr at 15, absolute 16-bit LDs at
+/// 20, NEG at 8, RETN/RETI at 14 and IM n at 8. This range used to be
+/// entirely zero, which made every port access count for nothing.
 pub const CYCLES_ED: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -47,9 +47,9 @@ pub const CYCLES_ED: [u8; 256] = [
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 
-/// Durées des instructions préfixées CB. La plage SLL (0x30-0x37) n'est pas
-/// documentée mais s'exécute bel et bien : la laisser à zéro faisait avancer
-/// le temps émulé de rien du tout à chaque appel.
+/// Durations of CB-prefixed instructions. The SLL range (0x30-0x37) is
+/// undocumented but does execute: leaving it at zero made emulated time
+/// advance by nothing at all on every call.
 pub const CYCLES_CB: [u8; 256] = [
     8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8,
     15, 8, 8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8, 8, 8, 15, 8, 8, 8, 8, 8,
