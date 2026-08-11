@@ -8,7 +8,7 @@ This is a Z80 emulator.
 
 Example for a small loop:
 ```rust
-use zilog_z80::{bus::Bus, cpu::CPU};
+use zilog_z80::{bus::FlatBus, cpu::CPU};
 let mut b = FlatBus::new(0xFFFF);
 let mut c = CPU::new();
 c.reg.pc = 0x0100;                  // sets pc to 0x0100
@@ -26,6 +26,7 @@ loop {
 }
 ```
 
+FlatBus is used when you just need a very basic bus, and no particulat address decoding.  
 For IO examples see my [Amstrad CPC emulator.](https://github.com/nicolasbauw/amstrad_cpc)
 
 The library provides a disassembler method:
