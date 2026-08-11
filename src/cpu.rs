@@ -1457,30 +1457,6 @@ impl CPU {
             }
         }
 
-        // TODO implement debuf for 2 and 4 bytes execute_()
-        /*if self.debug.opcode {
-            print!(
-                "{:#06X}\t{}\nSP : {:#06X}\tS : {}\tZ : {}\tH : {}\tP : {}\tN : {}\tC : {}\nB : {:#04X}\tC : {:#04X}\tD : {:#04X}\tE : {:#04X}\tH : {:#04X}\tL : {:#04X}\tA : {:#04X}\t(SP) : {:#06X}\n",
-                pc,
-                Bus::dasm(bus, pc).0,
-                self.reg.sp,
-                self.reg.flags.s as i32,
-                self.reg.flags.z as i32,
-                self.reg.flags.h as i32,
-                self.reg.flags.p as i32,
-                self.reg.flags.n as i32,
-                self.reg.flags.c as i32,
-                self.reg.b,
-                self.reg.c,
-                self.reg.d,
-                self.reg.e,
-                self.reg.h,
-                self.reg.l,
-                self.reg.a,
-                bus.read_word(self.reg.sp)
-            )
-        }*/
-
         match opcode {
             0xC3 | 0xDA | 0xD2 | 0xCA | 0xC2 | 0xFA | 0xF2 | 0xEA | 0xE2 | 0xE9 | 0xCD | 0xDC
             | 0xD4 | 0xCC | 0xC4 | 0xFC | 0xF4 | 0xEC | 0xE4 | 0xC9 | 0xD8 | 0xD0 | 0xC8 | 0xC0
