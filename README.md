@@ -27,7 +27,7 @@ loop {
 ```
 
 FlatBus is used when you just need a very basic bus, and no particular address decoding.  
-For IO examples see my [Amstrad CPC emulator.](https://github.com/nicolasbauw/amstrad_cpc)
+For for complex address decoding and IO examples see my [Amstrad CPC emulator.](https://github.com/nicolasbauw/amstrad_cpc)
 
 The library provides a disassembler method:
 
