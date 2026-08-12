@@ -38,6 +38,12 @@ pub struct CPU {
     slice_start_time: SystemTime,
 }
 
+impl Default for CPU {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CPU {
     /// Creates a new CPU instance. 'Size' will be its top address.
     pub fn new() -> CPU {
@@ -3273,7 +3279,7 @@ impl CPU {
                 self.reg.flags.set_undocumented_from(data);
                 self.reg.flags.z = data == 0;
                 self.reg.flags.h = false;
-                self.reg.flags.p = data.count_ones() % 2 == 0; // Parity
+                self.reg.flags.p = data.count_ones() & 0x01 == 0x00; // Parity
                 self.reg.flags.n = false;
                 self.wz_after(port);
             }
@@ -3286,7 +3292,7 @@ impl CPU {
                 self.reg.flags.set_undocumented_from(data);
                 self.reg.flags.z = data == 0;
                 self.reg.flags.h = false;
-                self.reg.flags.p = data.count_ones() % 2 == 0;
+                self.reg.flags.p = data.count_ones() & 0x01 == 0x00;
                 self.reg.flags.n = false;
                 self.wz_after(port);
             }
@@ -3651,7 +3657,7 @@ impl CPU {
         let k = u16::from(data) + u16::from(addend);
         self.reg.flags.h = k > 0xFF;
         self.reg.flags.c = k > 0xFF;
-        self.reg.flags.p = ((k & 0x07) as u8 ^ b).count_ones() % 2 == 0;
+        self.reg.flags.p = ((k & 0x07) as u8 ^ b).count_ones() & 0x01 == 0x00;
     }
 
     fn ldi<B: Bus>(&mut self, bus: &mut B) {

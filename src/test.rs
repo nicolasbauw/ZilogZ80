@@ -7274,9 +7274,9 @@ fn no_meaningful_dd_fd_opcode_falls_through_to_the_prefix_fallback() {
         match op {
             0x09 | 0x19 | 0x29 | 0x39 => true,        // ADD HL,rr
             0x21 | 0x22 | 0x23 | 0x2A | 0x2B => true, // LD/INC/DEC HL
-            0x24 | 0x25 | 0x26 => true,               // INC/DEC/LD H
-            0x2C | 0x2D | 0x2E => true,               // INC/DEC/LD L
-            0x34 | 0x35 | 0x36 => true,               // INC/DEC/LD (HL)
+            0x24..=0x26 => true,                      // INC/DEC/LD H
+            0x2C..=0x2E => true,                      // INC/DEC/LD L
+            0x34..=0x36 => true,                      // INC/DEC/LD (HL)
             0xE1 | 0xE3 | 0xE5 | 0xE9 | 0xF9 => true, // POP/EX/PUSH/JP/LD SP
             0xCB => true,                             // prefixe des operations indexees
             0x40..=0x7F => {
