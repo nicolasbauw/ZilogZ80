@@ -115,9 +115,8 @@ impl Bus for FlatBus {
         if address as usize >= self.address_space.len() {
             return;
         }
-        if self.rom_space.is_some()
-            && address >= self.rom_space.as_ref().unwrap().start
-            && address <= self.rom_space.as_ref().unwrap().end
+        if let Some(rom) = &self.rom_space
+            && (rom.start..=rom.end).contains(&address)
         {
             return;
         }

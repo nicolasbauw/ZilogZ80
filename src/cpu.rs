@@ -194,10 +194,13 @@ impl CPU {
         // Interrupt requested in interrupt mode 2 ? Push PC onto the stack, build jump address and jump to that address.
         // The acknowledge cycle is 19 T-states and consumes the whole call: the first instruction of the
         // service routine is fetched by the next execute() call, not by this one.
-        if has_pending_maskable_interrupt && self.im == 2 {
+        if has_pending_maskable_interrupt
+            && self.im == 2
+            && let Some(vector) = self.int
+        {
             self.bump_r();
             self.interrupt_stack_push(bus);
-            let addr = ((self.reg.i as u16) << 8) | (self.int.unwrap() as u16);
+            let addr = ((self.reg.i as u16) << 8) | (vector as u16);
             self.reg.pc = bus.read_word(addr);
             self.reg.wz = self.reg.pc;
             self.int = None;
