@@ -266,7 +266,7 @@ impl CPU {
         sleep_time
     }
 
-    /// Sets CPU frequency (MHz)
+    /// Sets CPU frequency (MHz). Effective only when used with execute_timed().
     /// ```rust
     /// use zilog_z80::cpu::CPU;
     /// let mut c = CPU::new();
