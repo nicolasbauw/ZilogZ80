@@ -104,6 +104,17 @@ impl CPU {
         self.int = Some(byte);
     }
 
+    /// Cancels a pending maskable interrupt request, as if the device that
+    /// raised it had withdrawn the request before the CPU could acknowledge
+    /// it. Symmetric with [`CPU::int_request`].
+    ///
+    /// Real hardware does this: on the Amstrad CPC, writing to the Gate
+    /// Array's mode/ROM register with bit 4 set clears the pending interrupt
+    /// request outright, in addition to resetting the interrupt divider.
+    pub fn int_cancel(&mut self) {
+        self.int = None;
+    }
+
     /// Creates a non-maskable interrupt request
     pub fn nmi_request(&mut self) {
         self.nmi = true;
