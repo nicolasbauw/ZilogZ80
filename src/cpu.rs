@@ -120,6 +120,28 @@ impl CPU {
         self.nmi = true;
     }
 
+    /// Restores the interrupt mode and both interrupt flip-flops at once,
+    /// the counterpart to the [`CPU::im`], [`CPU::iff1`] and [`CPU::iff2`]
+    /// getters.
+    ///
+    /// Meant for loading a previously captured machine state (a snapshot
+    /// file, a save state): these three values are normally only ever
+    /// changed by the program itself, through `IM n`, `EI` and `DI`, so a
+    /// host that restores a state has no other way to put them back.
+    /// Deliberately a single call rather than three independent setters —
+    /// they describe one coherent interrupt state, and a restore that set
+    /// only some of them would leave the CPU in a configuration no real
+    /// program could have produced.
+    ///
+    /// `im` is masked to 0-2: the Z80 has no other interrupt mode, and a
+    /// snapshot file carrying garbage there should not be able to push this
+    /// emulator into a state it cannot represent.
+    pub fn set_interrupt_state(&mut self, im: u8, iff1: bool, iff2: bool) {
+        self.im = if im > 2 { 0 } else { im };
+        self.iff1 = iff1;
+        self.iff2 = iff2;
+    }
+
     /// Shortcut to reg.flags.to_byte()
     /// Picks up the last unhandled instruction encountered, and forgets it.
     ///
@@ -4335,4 +4357,30 @@ pub struct Unimplemented {
     pub bytes: [u8; 4],
     /// Its length in bytes.
     pub len: u8,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn set_interrupt_state_round_trips_through_the_getters() {
+        let mut cpu = CPU::new();
+        cpu.set_interrupt_state(2, true, false);
+        assert_eq!(cpu.im(), 2);
+        assert!(cpu.iff1());
+        assert!(!cpu.iff2());
+
+        cpu.set_interrupt_state(1, false, true);
+        assert_eq!(cpu.im(), 1);
+        assert!(!cpu.iff1());
+        assert!(cpu.iff2());
+    }
+
+    #[test]
+    fn set_interrupt_state_rejects_a_mode_the_z80_has_no_notion_of() {
+        let mut cpu = CPU::new();
+        cpu.set_interrupt_state(7, false, false);
+        assert_eq!(cpu.im(), 0);
+    }
 }
