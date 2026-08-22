@@ -54,7 +54,11 @@ pub struct CPU {
     // cycles = clock speed in Hz / required frames-per-second
     slice_max_cycles: u32,
     slice_current_cycles: u32,
-    slice_start_time: SystemTime,
+    /// `None` until `execute_timed` first needs it. Keeps `CPU::new` free of
+    /// any call to `SystemTime::now()`, which panics on targets with no
+    /// clock (wasm32-unknown-unknown) — hosts that only call `execute` never
+    /// touch this field at all, so they're unaffected by that target gap.
+    slice_start_time: Option<SystemTime>,
 }
 
 impl Default for CPU {
@@ -83,7 +87,7 @@ impl CPU {
             slice_duration: 16,
             slice_max_cycles: 35000,
             slice_current_cycles: 0,
-            slice_start_time: SystemTime::now(),
+            slice_start_time: None,
         }
     }
 
@@ -316,10 +320,12 @@ impl CPU {
         if self.slice_current_cycles > self.slice_max_cycles {
             self.slice_current_cycles = 0;
             // d = time taken to execute the slice_max_cycles
-            if let Ok(d) = self.slice_start_time.elapsed() {
-                sleep_time = Some(self.slice_duration.saturating_sub(d.as_millis() as u32));
-                self.slice_start_time = SystemTime::now();
+            if let Some(start) = self.slice_start_time {
+                if let Ok(d) = start.elapsed() {
+                    sleep_time = Some(self.slice_duration.saturating_sub(d.as_millis() as u32));
+                }
             }
+            self.slice_start_time = Some(SystemTime::now());
         }
         let cycles = self.execute(bus);
         self.slice_current_cycles += cycles;
