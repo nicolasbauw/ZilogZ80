@@ -1750,6 +1750,81 @@ fn ccf_scf_asm() {
     assert_eq!(c.flags(), YF | CF); // SCF
 }
 
+/// `ccf_scf_asm` above only exercises SCF/CCF immediately after an
+/// instruction that itself writes flags — the case where `Q` (Patrik Rak's
+/// 2012 discovery, see `CPU::q`) equals the current F, so `(q ^ f) | a`
+/// collapses to plain `a` and the two undocumented flags end up looking
+/// exactly like "copied from A". That's also what an implementation with no
+/// `Q` tracking at all — always copying from A — would produce, so it can't
+/// tell the two apart.
+///
+/// This test targets the other branch: SCF right after `LD A,n`, which
+/// (like most loads) leaves F untouched. Q must then read as 0, and the
+/// formula falls back to ORing in the OLD flags' undocumented bits instead
+/// of ignoring them — the one case where a "just copy from A" model gives
+/// the wrong answer.
+#[test]
+fn scf_after_a_flag_preserving_instruction_ors_in_the_old_flags() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    for (i, byte) in [
+        0x3E, 0x20, // LD A,0x20
+        0xB7, // OR A -> r=0x20, flags end up as YF alone
+        0x3E, 0x00, // LD A,0x00 : does NOT touch flags, so Q becomes 0
+        0x37, // SCF
+    ]
+    .iter()
+    .enumerate()
+    {
+        b.write_byte(i as u16, *byte);
+    }
+
+    c.execute(&mut b); // LD A,0x20
+    c.execute(&mut b); // OR A
+    assert_eq!(c.flags(), YF); // bit 5 of 0x20, no other flag standing
+
+    c.execute(&mut b); // LD A,0x00 — flag-preserving: Q drops to 0
+    assert_eq!(c.flags(), YF); // unchanged, confirming LD really left F alone
+
+    c.execute(&mut b); // SCF, with A=0x00
+    // Q=0 here, so the formula ORs in F's own YF instead of taking it from
+    // A (which is 0x00 and would give neither flag on its own) — this is
+    // exactly what distinguishes the Q-aware formula from a naive "always
+    // from A" implementation.
+    assert_eq!(c.flags(), YF | CF);
+}
+
+/// Same distinction as above, for CCF: the fix touches both instructions
+/// identically, and each deserves its own direct check rather than relying
+/// on SCF's test to stand in for it.
+#[test]
+fn ccf_after_a_flag_preserving_instruction_ors_in_the_old_flags() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    for (i, byte) in [
+        0x3E, 0x20, // LD A,0x20
+        0xB7, // OR A -> flags end up as YF alone
+        0x3E, 0x00, // LD A,0x00 : Q becomes 0
+        0x3F, // CCF
+    ]
+    .iter()
+    .enumerate()
+    {
+        b.write_byte(i as u16, *byte);
+    }
+
+    c.execute(&mut b); // LD A,0x20
+    c.execute(&mut b); // OR A
+    assert_eq!(c.flags(), YF);
+    c.execute(&mut b); // LD A,0x00
+
+    c.execute(&mut b); // CCF, with A=0x00 and C already clear
+    // H takes the old C (0), C flips to 1, and — the point of this test —
+    // YF survives from the old F via the OR, rather than vanishing the way
+    // it would if CCF copied its undocumented flags from A alone.
+    assert_eq!(c.flags(), YF | CF);
+}
+
 #[test]
 fn call_ret_asm() {
     let mut c = CPU::new();

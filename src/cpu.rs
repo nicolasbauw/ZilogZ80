@@ -30,6 +30,25 @@ pub struct CPU {
     iff1: bool,
     iff2: bool,
     ei_instr_delay: u8,
+    /// The "Q" latch: the flag register value left behind by the last
+    /// instruction that actually wrote to F, or 0 if that instruction
+    /// didn't touch F at all (including right after an interrupt is
+    /// acknowledged). Reset to 0 at the top of every `execute()` call, then
+    /// overwritten by whichever flag-writing instruction runs.
+    ///
+    /// Its only consumer is `SCF`/`CCF`: on real NMOS silicon, their two
+    /// undocumented flags (bits 3/5) aren't simply copied from A — they're
+    /// bits 3/5 of `(q ^ f_before) | a`, discovered by Patrik Rak in 2012.
+    /// When the previous instruction wrote flags, `q` equals the current F
+    /// (nothing changed it since), so the XOR cancels out and the formula
+    /// reduces to "from A", matching every other flag-writing instruction.
+    /// It only diverges — ORing in the old flags' bits 3/5 instead of just
+    /// A's — right after something that leaves F alone (`NOP`, `INC rr`,
+    /// `LD r,r'`, `EX AF,AF'`, `PUSH`/`POP`...). Software essentially never
+    /// depends on this, but it's exactly what test suites like ZEXALL
+    /// check, and it was worth getting right rather than leaving a known
+    /// gap.
+    q: u8,
     slice_duration: u32,
     // Defaults to 35000 cycles per 16ms slice (2.1 Mhz).
     // cycles = clock speed in Hz / required frames-per-second
@@ -60,6 +79,7 @@ impl CPU {
             iff1: false,
             iff2: false,
             ei_instr_delay: 0,
+            q: 0,
             slice_duration: 16,
             slice_max_cycles: 35000,
             slice_current_cycles: 0,
@@ -178,6 +198,13 @@ impl CPU {
 
     /// Fetches and executes one instruction from (pc). Returns consumed clock cycles.
     pub fn execute<B: Bus>(&mut self, bus: &mut B) -> u32 {
+        // Defaults to "this instruction didn't touch F" (see `q`'s doc
+        // comment). Set unconditionally, before HALT/NMI/interrupt-ack can
+        // return early: an interrupt is exactly one of the cases where Q
+        // must read as 0, and every flag-writing instruction below
+        // overwrites this anyway.
+        self.q = 0;
+
         // Interrupt request must stay latched while masked (DI/EI delay) and be cleared only when acknowledged.
         let mut clear_int_request = false;
 
@@ -882,24 +909,37 @@ impl CPU {
                 self.reg.flags.h = true;
                 self.reg.flags.n = true;
                 self.reg.flags.set_undocumented_from(self.reg.a);
+                self.q = self.reg.flags.to_byte();
             }
 
             // CCF
             0x3F => {
+                // On NMOS silicon (the one in the CPC), SCF/CCF's two
+                // undocumented flags aren't simply copied from A: they're
+                // bits 3/5 of `(q ^ f_before) | a` (Patrik Rak, 2012 — see
+                // `q`'s doc comment). Captured before this instruction
+                // touches C/H/N, since that's the "f_before" the formula
+                // wants.
+                let f_before = self.reg.flags.to_byte();
                 self.reg.flags.h = self.reg.flags.c;
                 self.reg.flags.c = !self.reg.flags.c;
                 self.reg.flags.n = false;
-                // On a Zilog NMOS (the one in the CPC), SCF/CCF take their
-                // two undocumented flags directly from A.
-                self.reg.flags.set_undocumented_from(self.reg.a);
+                let combined = (self.q ^ f_before) | self.reg.a;
+                self.reg.flags.set_undocumented_from(combined);
+                self.q = self.reg.flags.to_byte();
             }
 
             // SCF
             0x37 => {
+                // Same undocumented-flag rule as CCF just above — see its
+                // comment.
+                let f_before = self.reg.flags.to_byte();
                 self.reg.flags.c = true;
                 self.reg.flags.h = false;
                 self.reg.flags.n = false;
-                self.reg.flags.set_undocumented_from(self.reg.a);
+                let combined = (self.q ^ f_before) | self.reg.a;
+                self.reg.flags.set_undocumented_from(combined);
+                self.q = self.reg.flags.to_byte();
             }
 
             // NOP
@@ -1780,6 +1820,7 @@ impl CPU {
                     self.iff2
                 };
                 self.reg.flags.n = false;
+                self.q = self.reg.flags.to_byte();
             }
 
             // LD A,R
@@ -1795,6 +1836,7 @@ impl CPU {
                     self.iff2
                 };
                 self.reg.flags.n = false;
+                self.q = self.reg.flags.to_byte();
             }
 
             // LD I,A
@@ -1950,6 +1992,7 @@ impl CPU {
                 let bc = self.reg.get_bc();
                 self.reg.flags.p = bc != 0;
                 self.reg.flags.n = false;
+                self.q = self.reg.flags.to_byte();
             }
 
             // Repeating instructions (LDIR, LDDR, CPIR, CPDR, INIR, INDR,
@@ -1974,6 +2017,7 @@ impl CPU {
                 self.reg.flags.h = false;
                 self.reg.flags.p = bc != 0;
                 self.reg.flags.n = false;
+                self.q = self.reg.flags.to_byte();
                 cycles = self.repeat_block_wz(bc != 0);
             }
 
@@ -1984,6 +2028,7 @@ impl CPU {
                 let bc = self.reg.get_bc();
                 self.reg.flags.p = bc != 0;
                 self.reg.flags.n = false;
+                self.q = self.reg.flags.to_byte();
             }
 
             // LDDR
@@ -1993,6 +2038,7 @@ impl CPU {
                 self.reg.flags.h = false;
                 self.reg.flags.p = bc != 0;
                 self.reg.flags.n = false;
+                self.q = self.reg.flags.to_byte();
                 cycles = self.repeat_block_wz(bc != 0);
             }
 
@@ -2703,6 +2749,7 @@ impl CPU {
                 self.reg.flags.h = false;
                 self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
                 self.reg.flags.n = false;
+                self.q = self.reg.flags.to_byte();
             }
 
             // RRD
@@ -2722,6 +2769,7 @@ impl CPU {
                 self.reg.flags.h = false;
                 self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
                 self.reg.flags.n = false;
+                self.q = self.reg.flags.to_byte();
             }
 
             // Bit Set, Reset, and Test Group
@@ -3314,6 +3362,7 @@ impl CPU {
                 self.reg.flags.h = false;
                 self.reg.flags.p = data.count_ones() & 0x01 == 0x00; // Parity
                 self.reg.flags.n = false;
+                self.q = self.reg.flags.to_byte();
                 self.wz_after(port);
             }
 
@@ -3327,6 +3376,7 @@ impl CPU {
                 self.reg.flags.h = false;
                 self.reg.flags.p = data.count_ones() & 0x01 == 0x00;
                 self.reg.flags.n = false;
+                self.q = self.reg.flags.to_byte();
                 self.wz_after(port);
             }
 
@@ -3557,6 +3607,7 @@ impl CPU {
                 self.reg
                     .flags
                     .set_undocumented_from((self.reg.wz >> 8) as u8);
+                self.q = self.reg.flags.to_byte();
                 return 20;
             }
             2 => bit::reset(value, y),
@@ -3691,6 +3742,7 @@ impl CPU {
         self.reg.flags.h = k > 0xFF;
         self.reg.flags.c = k > 0xFF;
         self.reg.flags.p = ((k & 0x07) as u8 ^ b).count_ones() & 0x01 == 0x00;
+        self.q = self.reg.flags.to_byte();
     }
 
     fn ldi<B: Bus>(&mut self, bus: &mut B) {
@@ -3747,6 +3799,7 @@ impl CPU {
         // YF comes from bit 1 (see set_undocumented_from_block).
         let n = r.wrapping_sub(u8::from(self.reg.flags.h));
         self.reg.flags.set_undocumented_from_block(n);
+        self.q = self.reg.flags.to_byte();
     }
 
     // Returns A - (HL)
@@ -3769,6 +3822,7 @@ impl CPU {
         // YF comes from bit 1 (see set_undocumented_from_block).
         let n = r.wrapping_sub(u8::from(self.reg.flags.h));
         self.reg.flags.set_undocumented_from_block(n);
+        self.q = self.reg.flags.to_byte();
     }
 
     // ADD A,r
@@ -3783,6 +3837,7 @@ impl CPU {
         self.reg.flags.c = u16::from(a) + u16::from(n) > 0xff;
         self.reg.flags.n = false;
         self.reg.a = r;
+        self.q = self.reg.flags.to_byte();
     }
 
     // ADD A,s : ADD with carry
@@ -3801,6 +3856,7 @@ impl CPU {
         self.reg.flags.c = u16::from(a) + u16::from(n) + u16::from(c) > 0xff;
         self.reg.flags.n = false;
         self.reg.a = r;
+        self.q = self.reg.flags.to_byte();
     }
 
     // SUB s
@@ -3815,6 +3871,7 @@ impl CPU {
         self.reg.flags.c = u16::from(a) < u16::from(n);
         self.reg.flags.n = true;
         self.reg.a = r;
+        self.q = self.reg.flags.to_byte();
     }
 
     // SBC s
@@ -3833,6 +3890,7 @@ impl CPU {
         self.reg.flags.c = u16::from(a) < (u16::from(n) + u16::from(c));
         self.reg.flags.n = true;
         self.reg.a = r;
+        self.q = self.reg.flags.to_byte();
     }
 
     // Logical AND
@@ -3846,6 +3904,7 @@ impl CPU {
         self.reg.flags.c = false;
         self.reg.flags.n = false;
         self.reg.a = r;
+        self.q = self.reg.flags.to_byte();
     }
 
     // Logical OR
@@ -3859,6 +3918,7 @@ impl CPU {
         self.reg.flags.c = false;
         self.reg.flags.n = false;
         self.reg.a = r;
+        self.q = self.reg.flags.to_byte();
     }
 
     // Logical exclusive-OR
@@ -3873,6 +3933,7 @@ impl CPU {
         self.reg.flags.c = false;
         self.reg.flags.n = false;
         self.reg.a = r;
+        self.q = self.reg.flags.to_byte();
     }
 
     // Comparison with accumulator
@@ -3885,6 +3946,7 @@ impl CPU {
         // unlike `SUB`, which it otherwise shares everything with. This is
         // what lets the two be told apart at runtime.
         self.reg.flags.set_undocumented_from(n);
+        self.q = self.reg.flags.to_byte();
     }
 
     // Increment
@@ -3896,6 +3958,7 @@ impl CPU {
         self.reg.flags.p = n == 0x7F;
         self.reg.flags.h = (n & 0x0f) + 0x01 > 0x0f;
         self.reg.flags.n = false;
+        self.q = self.reg.flags.to_byte();
         r
     }
 
@@ -3908,6 +3971,7 @@ impl CPU {
         self.reg.flags.p = n == 0x80;
         self.reg.flags.h = ((n & 0x0f) as i8) < 1;
         self.reg.flags.n = true;
+        self.q = self.reg.flags.to_byte();
         r
     }
 
@@ -3966,6 +4030,7 @@ impl CPU {
         self.reg.flags.s = bit::get(self.reg.a, 7);
         self.reg.flags.set_undocumented_from(self.reg.a);
         self.reg.flags.p = self.reg.a.count_ones() & 0x01 == 0x00;
+        self.q = self.reg.flags.to_byte();
     }
 
     // NEG
@@ -3980,6 +4045,7 @@ impl CPU {
         self.reg.flags.h = 0 < (self.reg.a & 0x0F);
         self.reg.flags.n = true;
         self.reg.a = r;
+        self.q = self.reg.flags.to_byte();
     }
 
     // 16 bits add
@@ -3995,6 +4061,7 @@ impl CPU {
         // it does let the two undocumented bits show through, taken from
         // the result's high byte.
         self.reg.flags.set_undocumented_from((r >> 8) as u8);
+        self.q = self.reg.flags.to_byte();
         r
     }
 
@@ -4023,6 +4090,7 @@ impl CPU {
         // and the overflow of a three-term sum isn't that of the partial
         // sum.
         self.reg.flags.p = (h ^ r) & (n ^ r) & 0x8000 != 0;
+        self.q = self.reg.flags.to_byte();
     }
 
     // Register pair substraction with carry
@@ -4048,6 +4116,7 @@ impl CPU {
         // `adc_16`: the version going through `n + c` truncated to `i16`
         // gave a wrong result as soon as `n + c` exceeded 0xFFFF.
         self.reg.flags.p = (h ^ n) & (h ^ r) & 0x8000 != 0;
+        self.q = self.reg.flags.to_byte();
     }
 
     // Rotate Accumulator left
@@ -4059,6 +4128,7 @@ impl CPU {
         self.reg.flags.n = false;
         self.reg.flags.set_undocumented_from(r);
         self.reg.a = r;
+        self.q = self.reg.flags.to_byte();
     }
 
     // Rotate left
@@ -4071,6 +4141,7 @@ impl CPU {
         self.reg.flags.h = false;
         self.reg.flags.n = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
+        self.q = self.reg.flags.to_byte();
         r
     }
 
@@ -4086,6 +4157,7 @@ impl CPU {
         self.reg.flags.n = false;
         self.reg.flags.set_undocumented_from(r);
         self.reg.a = r;
+        self.q = self.reg.flags.to_byte();
     }
 
     // Rotate right
@@ -4102,6 +4174,7 @@ impl CPU {
         self.reg.flags.h = false;
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         self.reg.flags.n = false;
+        self.q = self.reg.flags.to_byte();
         r
     }
 
@@ -4117,6 +4190,7 @@ impl CPU {
         };
         self.reg.flags.set_undocumented_from(r);
         self.reg.a = r;
+        self.q = self.reg.flags.to_byte();
     }
 
     // Rotate left through carry
@@ -4133,6 +4207,7 @@ impl CPU {
         self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.set_undocumented_from(r);
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
+        self.q = self.reg.flags.to_byte();
         r
     }
 
@@ -4148,6 +4223,7 @@ impl CPU {
         };
         self.reg.flags.set_undocumented_from(r);
         self.reg.a = r;
+        self.q = self.reg.flags.to_byte();
     }
 
     // Rotate right through carry
@@ -4164,6 +4240,7 @@ impl CPU {
         self.reg.flags.s = r & 0x80 == 0x80;
         self.reg.flags.set_undocumented_from(r);
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
+        self.q = self.reg.flags.to_byte();
         r
     }
 
@@ -4177,6 +4254,7 @@ impl CPU {
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         self.reg.flags.n = false;
         self.reg.flags.c = bit::get(n, 7);
+        self.q = self.reg.flags.to_byte();
         r
     }
 
@@ -4190,6 +4268,7 @@ impl CPU {
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         self.reg.flags.n = false;
         self.reg.flags.c = bit::get(n, 7);
+        self.q = self.reg.flags.to_byte();
         r
     }
 
@@ -4205,6 +4284,7 @@ impl CPU {
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         self.reg.flags.n = false;
         self.reg.flags.c = bit::get(n, 0);
+        self.q = self.reg.flags.to_byte();
         r
     }
 
@@ -4220,6 +4300,7 @@ impl CPU {
         self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
         self.reg.flags.n = false;
         self.reg.flags.c = bit::get(n, 0);
+        self.q = self.reg.flags.to_byte();
         r
     }
 
@@ -4260,6 +4341,7 @@ impl CPU {
             _ => self.reg.a,
         };
         self.reg.flags.set_undocumented_from(tested);
+        self.q = self.reg.flags.to_byte();
     }
 
     // Bit set
