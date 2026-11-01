@@ -2261,10 +2261,11 @@ impl CPU {
                 self.call_stack_pop(bus);
             }
 
-            // Interrput modes
-            0xED46 => self.im = 0,
-            0xED56 => self.im = 1,
-            0xED5E => self.im = 2,
+            // Interrput modes, and their undocumented duplicates: ED 4E,
+            // 66 and 6E act as IM 0, ED 76 as IM 1, ED 7E as IM 2.
+            0xED46 | 0xED4E | 0xED66 | 0xED6E => self.im = 0,
+            0xED56 | 0xED76 => self.im = 1,
+            0xED5E | 0xED7E => self.im = 2,
 
             //16-Bit Arithmetic Group
             // ADC HL,ss
@@ -2755,6 +2756,7 @@ impl CPU {
                 self.reg.flags.h = false;
                 self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
                 self.reg.flags.n = false;
+                self.reg.wz = self.reg.get_hl().wrapping_add(1);
                 self.q = self.reg.flags.to_byte();
             }
 
@@ -2775,6 +2777,7 @@ impl CPU {
                 self.reg.flags.h = false;
                 self.reg.flags.p = r.count_ones() & 0x01 == 0x00;
                 self.reg.flags.n = false;
+                self.reg.wz = self.reg.get_hl().wrapping_add(1);
                 self.q = self.reg.flags.to_byte();
             }
 
@@ -3417,7 +3420,9 @@ impl CPU {
             // instructions decrement B BEFORE the port access, so it's B-1
             // that's presented on A8-A15, whereas INPUT instructions
             // decrement it AFTER and present B unchanged. That's why "INC B"
-            // is always seen right before OUTI in period code.
+            // is always seen right before OUTI in period code. MEMPTR follows
+            // the same asymmetry: it's derived from the BC actually put on
+            // the bus (B before decrement for INI/IND, after for OUTI/OUTD).
 
             // INI (0xEDA2): reads from port BC, writes to (HL), increments HL, decrements B
             0xEDA2 => {
@@ -3428,7 +3433,7 @@ impl CPU {
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.block_io_flags(data, self.reg.c.wrapping_add(1));
-                self.reg.wz = self.reg.get_bc().wrapping_add(1);
+                self.reg.wz = port.wrapping_add(1);
             }
 
             // INIR (0xEDB2): INI repeated until B reaches 0
@@ -3440,7 +3445,7 @@ impl CPU {
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.block_io_flags(data, self.reg.c.wrapping_add(1));
-                self.reg.wz = self.reg.get_bc().wrapping_add(1);
+                self.reg.wz = port.wrapping_add(1);
                 cycles = self.repeat_block(self.reg.b != 0);
             }
 
@@ -3453,7 +3458,7 @@ impl CPU {
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.block_io_flags(data, self.reg.c.wrapping_sub(1));
-                self.reg.wz = self.reg.get_bc().wrapping_sub(1);
+                self.reg.wz = port.wrapping_sub(1);
             }
 
             // INDR (0xEDBA): IND repeated until B reaches 0
@@ -3465,7 +3470,7 @@ impl CPU {
                 self.reg.b = self.reg.b.wrapping_sub(1);
 
                 self.block_io_flags(data, self.reg.c.wrapping_sub(1));
-                self.reg.wz = self.reg.get_bc().wrapping_sub(1);
+                self.reg.wz = port.wrapping_sub(1);
                 cycles = self.repeat_block(self.reg.b != 0);
             }
 
@@ -3527,6 +3532,11 @@ impl CPU {
                 // which aren't missing, just moot.
                 0xDD | 0xFD => {
                     self.reg.pc = self.reg.pc.wrapping_add(1);
+                    // The second byte's fetch was counted on entry, but that
+                    // byte will be fetched again, as an opcode of its own, by
+                    // the next call: undo the count, so the prefix alone
+                    // advances R by one.
+                    self.reg.r = (self.reg.r & 0x80) | (self.reg.r.wrapping_sub(1) & 0x7F);
                     return 4;
                 }
                 // The gaps in the ED table are not instructions: the

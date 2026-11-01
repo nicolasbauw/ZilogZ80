@@ -1,6 +1,6 @@
 [package]
 name = "zilog_z80"
-version = "1.1.2"
+version = "1.1.3"
 edition = "2024"
 authors = ["Nicolas BAUW <nbauw@hotmail.com>"]
 description = "Zilog Z80 Emulator."
@@ -9,7 +9,8 @@ categories = ["emulators"]
 license = "MIT"
 repository = "https://github.com/nicolasbauw/ZilogZ80"
 readme = "README.md"
-exclude = ["zexdoc_results.txt"]
+# Données de la suite FUSE : GPL-2, réservées aux tests du dépôt.
+exclude = ["zexdoc_results.txt", "tests/fuse/", "tests/fuse.rs"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
