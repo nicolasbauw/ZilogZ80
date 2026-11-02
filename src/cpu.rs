@@ -49,6 +49,12 @@ pub struct CPU {
     /// check, and it was worth getting right rather than leaving a known
     /// gap.
     q: u8,
+    /// `q` as the previous instruction left it, saved by `execute()` before
+    /// it resets `q` for the current one: that earlier value is the one
+    /// SCF/CCF must read. Reading `q` itself there would always see the
+    /// fresh 0 and OR the old flags back in after every instruction
+    /// (z80test's z80ccf, SCF+CCF and CCF+SCF tests).
+    q_before: u8,
     slice_duration: u32,
     // Defaults to 35000 cycles per 16ms slice (2.1 Mhz).
     // cycles = clock speed in Hz / required frames-per-second
@@ -84,6 +90,7 @@ impl CPU {
             iff2: false,
             ei_instr_delay: 0,
             q: 0,
+            q_before: 0,
             slice_duration: 16,
             slice_max_cycles: 35000,
             slice_current_cycles: 0,
@@ -207,6 +214,7 @@ impl CPU {
         // return early: an interrupt is exactly one of the cases where Q
         // must read as 0, and every flag-writing instruction below
         // overwrites this anyway.
+        self.q_before = self.q;
         self.q = 0;
 
         // Interrupt request must stay latched while masked (DI/EI delay) and be cleared only when acknowledged.
@@ -923,14 +931,15 @@ impl CPU {
                 // On NMOS silicon (the one in the CPC), SCF/CCF's two
                 // undocumented flags aren't simply copied from A: they're
                 // bits 3/5 of `(q ^ f_before) | a` (Patrik Rak, 2012 — see
-                // `q`'s doc comment). Captured before this instruction
+                // `q`'s doc comment), `q` being the previous instruction's
+                // (`q_before`). Captured before this instruction
                 // touches C/H/N, since that's the "f_before" the formula
                 // wants.
                 let f_before = self.reg.flags.to_byte();
                 self.reg.flags.h = self.reg.flags.c;
                 self.reg.flags.c = !self.reg.flags.c;
                 self.reg.flags.n = false;
-                let combined = (self.q ^ f_before) | self.reg.a;
+                let combined = (self.q_before ^ f_before) | self.reg.a;
                 self.reg.flags.set_undocumented_from(combined);
                 self.q = self.reg.flags.to_byte();
             }
@@ -943,7 +952,7 @@ impl CPU {
                 self.reg.flags.c = true;
                 self.reg.flags.h = false;
                 self.reg.flags.n = false;
-                let combined = (self.q ^ f_before) | self.reg.a;
+                let combined = (self.q_before ^ f_before) | self.reg.a;
                 self.reg.flags.set_undocumented_from(combined);
                 self.q = self.reg.flags.to_byte();
             }

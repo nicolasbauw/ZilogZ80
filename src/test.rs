@@ -1825,6 +1825,59 @@ fn ccf_after_a_flag_preserving_instruction_ors_in_the_old_flags() {
     assert_eq!(c.flags(), YF | CF);
 }
 
+/// The other branch of the Q rule, the one real software hits all the time:
+/// SCF/CCF right after an instruction that wrote F. Q then equals F, the
+/// XOR cancels out, and the undocumented flags come from A alone. `CP n`
+/// is the telling case: it writes YF/XF from its operand, not from A, so a
+/// CPU that lost track of Q (reading it as 0) would OR those bits back in.
+/// z80test's z80ccf and SCF+CCF/CCF+SCF tests caught exactly this.
+#[test]
+fn scf_after_a_flag_writing_instruction_takes_its_flags_from_a() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    for (i, byte) in [
+        0x3E, 0x00, // LD A,0x00
+        0xFE, 0x28, // CP 0x28 -> YF and XF from the operand, A untouched
+        0x37, // SCF
+    ]
+    .iter()
+    .enumerate()
+    {
+        b.write_byte(i as u16, *byte);
+    }
+
+    c.execute(&mut b); // LD A,0x00
+    c.execute(&mut b); // CP 0x28
+    assert_eq!(c.flags() & (YF | XF), YF | XF);
+
+    c.execute(&mut b); // SCF: Q == F, so bits 5/3 come from A (0x00)
+    assert_eq!(c.flags() & (YF | XF | CF | HF | NF), CF);
+}
+
+/// Same as above for CCF.
+#[test]
+fn ccf_after_a_flag_writing_instruction_takes_its_flags_from_a() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    for (i, byte) in [
+        0x3E, 0x00, // LD A,0x00
+        0xFE, 0x28, // CP 0x28 -> YF, XF, and a borrow: C set
+        0x3F, // CCF
+    ]
+    .iter()
+    .enumerate()
+    {
+        b.write_byte(i as u16, *byte);
+    }
+
+    c.execute(&mut b); // LD A,0x00
+    c.execute(&mut b); // CP 0x28
+    assert_eq!(c.flags() & (YF | XF | CF), YF | XF | CF);
+
+    c.execute(&mut b); // CCF: H takes the old C, C flips, bits 5/3 from A
+    assert_eq!(c.flags() & (YF | XF | CF | HF | NF), HF);
+}
+
 #[test]
 fn call_ret_asm() {
     let mut c = CPU::new();
@@ -2575,6 +2628,21 @@ fn ld_a_r_interrupt_pending_clears_parity() {
     // IM 0 acknowledge: RST 08 fetched from the data bus, 11 + 2 wait states.
     assert_eq!(c.execute(&mut b), 13);
     assert_eq!(c.reg.pc, 0x0008);
+}
+
+/// LD R,A followed by LD A,R: the value read back is the one written plus
+/// LD A,R's own two opcode fetches (Kevin Thacker's CPC "rtest" harness).
+#[test]
+fn ld_a_r_right_after_ld_r_a_counts_its_own_fetches() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    for (i, byte) in [0xAF, 0xED, 0x4F, 0xED, 0x4F, 0xED, 0x5F].iter().enumerate() {
+        b.write_byte(i as u16, *byte); // XOR A, LD R,A, LD R,A, LD A,R
+    }
+    for _ in 0..4 {
+        c.execute(&mut b);
+    }
+    assert_eq!(c.reg.a, 2);
 }
 
 #[test]
