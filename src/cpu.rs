@@ -625,23 +625,24 @@ impl CPU {
             0xC5 => {
                 // PUSH BC
                 self.reg.sp = self.reg.sp.wrapping_sub(2);
-                bus.write_word(self.reg.sp, self.reg.get_bc());
+                Self::write_stack_word(bus, self.reg.sp, self.reg.get_bc());
             }
             0xD5 => {
                 // PUSH DE
                 self.reg.sp = self.reg.sp.wrapping_sub(2);
-                bus.write_word(self.reg.sp, self.reg.get_de());
+                Self::write_stack_word(bus, self.reg.sp, self.reg.get_de());
             }
             0xE5 => {
                 // PUSH HL
                 self.reg.sp = self.reg.sp.wrapping_sub(2);
-                bus.write_word(self.reg.sp, self.reg.get_hl());
+                Self::write_stack_word(bus, self.reg.sp, self.reg.get_hl());
             }
             0xF5 => {
                 // PUSH AF
                 self.reg.sp = self.reg.sp.wrapping_sub(2);
-                bus.write_byte(self.reg.sp, self.reg.flags.to_byte());
+                // High byte first, like every stack write (see write_stack_word).
                 bus.write_byte(self.reg.sp.wrapping_add(1), self.reg.a);
+                bus.write_byte(self.reg.sp, self.reg.flags.to_byte());
             }
 
             // POP qq
@@ -708,7 +709,7 @@ impl CPU {
             0xE3 => {
                 let pointed_by_sp = bus.read_word(self.reg.sp);
                 let hl = self.reg.get_hl();
-                bus.write_word(self.reg.sp, hl);
+                Self::write_stack_word(bus, self.reg.sp, hl);
                 self.reg.set_hl(pointed_by_sp);
                 self.reg.wz = pointed_by_sp;
             }
@@ -1962,13 +1963,13 @@ impl CPU {
             // PUSH IX
             0xDDE5 => {
                 self.reg.sp = self.reg.sp.wrapping_sub(2);
-                bus.write_word(self.reg.sp, self.reg.get_ix());
+                Self::write_stack_word(bus, self.reg.sp, self.reg.get_ix());
             }
 
             // PUSH IY
             0xFDE5 => {
                 self.reg.sp = self.reg.sp.wrapping_sub(2);
-                bus.write_word(self.reg.sp, self.reg.get_iy());
+                Self::write_stack_word(bus, self.reg.sp, self.reg.get_iy());
             }
 
             // POP IX
@@ -1987,7 +1988,7 @@ impl CPU {
             // EX (SP),IX
             0xDDE3 => {
                 let pointed_by_sp = bus.read_word(self.reg.sp);
-                bus.write_word(self.reg.sp, self.reg.get_ix());
+                Self::write_stack_word(bus, self.reg.sp, self.reg.get_ix());
                 self.reg.set_ix(pointed_by_sp);
                 self.reg.wz = pointed_by_sp;
             }
@@ -1995,7 +1996,7 @@ impl CPU {
             // EX (SP),IY
             0xFDE3 => {
                 let pointed_by_sp = bus.read_word(self.reg.sp);
-                bus.write_word(self.reg.sp, self.reg.get_iy());
+                Self::write_stack_word(bus, self.reg.sp, self.reg.get_iy());
                 self.reg.set_iy(pointed_by_sp);
                 self.reg.wz = pointed_by_sp;
             }
@@ -4412,7 +4413,7 @@ impl CPU {
     // call stack push
     fn call_stack_push<B: Bus>(&mut self, bus: &mut B) {
         self.reg.sp = self.reg.sp.wrapping_sub(2);
-        bus.write_word(self.reg.sp, self.reg.pc.wrapping_add(3));
+        Self::write_stack_word(bus, self.reg.sp, self.reg.pc.wrapping_add(3));
     }
 
     // call stack pop
@@ -4425,9 +4426,18 @@ impl CPU {
     }
 
     // interrupt stack push
+    /// Writes a word on the stack the way the Z80 does: high byte (at
+    /// `address + 1`) first, then low byte. PUSH, CALL, RST, interrupt
+    /// acknowledges and EX (SP),rr all store in this order; it matters to a
+    /// bus that timestamps its writes (e.g. video memory read by a beam).
+    fn write_stack_word<B: Bus>(bus: &mut B, address: u16, data: u16) {
+        bus.write_byte(address.wrapping_add(1), (data >> 8) as u8);
+        bus.write_byte(address, (data & 0xFF) as u8);
+    }
+
     fn interrupt_stack_push<B: Bus>(&mut self, bus: &mut B) {
         self.reg.sp = self.reg.sp.wrapping_sub(2);
-        bus.write_word(self.reg.sp, self.reg.pc);
+        Self::write_stack_word(bus, self.reg.sp, self.reg.pc);
     }
 }
 

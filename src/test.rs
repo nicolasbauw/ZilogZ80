@@ -7673,3 +7673,42 @@ fn bit_undocumented_flags_come_from_memptr() {
     assert_eq!(0x2900, c.reg.wz);
     assert_eq!(c.flags(), SF | YF | HF | XF);
 }
+
+/// Stack writes go high byte first (SP+1, then SP), as on a real Z80, for
+/// PUSH, CALL, RST, EX (SP),HL and interrupt acknowledges; LD (nn),HL keeps
+/// low byte first.
+#[test]
+fn stack_writes_go_high_byte_first() {
+    struct WriteLog {
+        ram: [u8; 0x10000],
+        writes: Vec<u16>,
+    }
+    impl Bus for WriteLog {
+        fn read_byte(&self, a: u16) -> u8 {
+            self.ram[a as usize]
+        }
+        fn write_byte(&mut self, a: u16, v: u8) {
+            self.ram[a as usize] = v;
+            self.writes.push(a);
+        }
+    }
+    // (program, expected write addresses) with SP = 0x8000 on entry.
+    let cases: [(&[u8], [u16; 2]); 7] = [
+        (&[0xD5], [0x7FFF, 0x7FFE]),             // PUSH DE
+        (&[0xF5], [0x7FFF, 0x7FFE]),             // PUSH AF
+        (&[0xDD, 0xE5], [0x7FFF, 0x7FFE]),       // PUSH IX
+        (&[0xCD, 0x00, 0x20], [0x7FFF, 0x7FFE]), // CALL 0x2000
+        (&[0xFF], [0x7FFF, 0x7FFE]),             // RST 38
+        (&[0xE3], [0x8001, 0x8000]),             // EX (SP),HL
+        (&[0x22, 0x00, 0x30], [0x3000, 0x3001]), // LD (0x3000),HL
+    ];
+    for (program, expected) in cases {
+        let mut b = WriteLog { ram: [0; 0x10000], writes: Vec::new() };
+        b.ram[0x1000..0x1000 + program.len()].copy_from_slice(program);
+        let mut c = CPU::new();
+        c.reg.pc = 0x1000;
+        c.reg.sp = 0x8000;
+        c.execute(&mut b);
+        assert_eq!(b.writes, expected, "{program:02X?}");
+    }
+}
