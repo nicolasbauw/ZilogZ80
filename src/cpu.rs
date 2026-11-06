@@ -30,6 +30,11 @@ pub struct CPU {
     iff1: bool,
     iff2: bool,
     ei_instr_delay: u8,
+    /// The previous call executed a DD/FD prefix on its own (followed by
+    /// another prefix or an opcode it doesn't modify). The instruction isn't
+    /// over yet: no interrupt, maskable or not, is accepted before the next
+    /// call completes it — a string of prefixes can't be interrupted.
+    after_prefix: bool,
     /// The "Q" latch: the flag register value left behind by the last
     /// instruction that actually wrote to F, or 0 if that instruction
     /// didn't touch F at all (including right after an interrupt is
@@ -89,6 +94,7 @@ impl CPU {
             iff1: false,
             iff2: false,
             ei_instr_delay: 0,
+            after_prefix: false,
             q: 0,
             q_before: 0,
             slice_duration: 16,
@@ -219,8 +225,11 @@ impl CPU {
 
         // Interrupt request must stay latched while masked (DI/EI delay) and be cleared only when acknowledged.
         let mut clear_int_request = false;
+        // Right after a lone DD/FD prefix, the instruction isn't finished:
+        // interrupts wait (see `after_prefix`).
+        let after_prefix = std::mem::take(&mut self.after_prefix);
 
-        let has_pending_maskable_interrupt = self.has_pending_maskable_interrupt();
+        let has_pending_maskable_interrupt = self.has_pending_maskable_interrupt() && !after_prefix;
         if self.halt {
             if self.nmi || has_pending_maskable_interrupt {
                 self.halt = false;
@@ -243,7 +252,7 @@ impl CPU {
         // Non maskable interrupt requested ? IFF1 is saved into IFF2 (RETN restores it), PC is pushed
         // and execution restarts at 0x0066. The acknowledge cycle is 11 T-states and consumes the whole
         // call: the first instruction of the handler is fetched by the next execute() call, not by this one.
-        if self.nmi {
+        if self.nmi && !after_prefix {
             self.bump_r();
             self.iff2 = self.iff1;
             self.iff1 = false;
@@ -254,8 +263,8 @@ impl CPU {
             return 11;
         }
 
-        let maskable_interrupts_enabled = self.maskable_interrupts_enabled();
-        let has_pending_maskable_interrupt = self.has_pending_maskable_interrupt();
+        let maskable_interrupts_enabled = self.maskable_interrupts_enabled() && !after_prefix;
+        let has_pending_maskable_interrupt = self.has_pending_maskable_interrupt() && !after_prefix;
 
         // Accepting any maskable interrupt disables further maskable interrupts (IFF1 = IFF2 = false).
         // Interrupt nesting is only possible if the ISR explicitly calls EI to re-enable them.
@@ -3547,6 +3556,7 @@ impl CPU {
                     // the next call: undo the count, so the prefix alone
                     // advances R by one.
                     self.reg.r = (self.reg.r & 0x80) | (self.reg.r.wrapping_sub(1) & 0x7F);
+                    self.after_prefix = true;
                     return 4;
                 }
                 // The gaps in the ED table are not instructions: the

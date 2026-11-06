@@ -7712,3 +7712,29 @@ fn stack_writes_go_high_byte_first() {
         assert_eq!(b.writes, expected, "{program:02X?}");
     }
 }
+
+/// A string of DD/FD prefixes can't be interrupted: a pending interrupt is
+/// only accepted once the instruction they lead to is complete.
+#[test]
+fn an_interrupt_waits_for_the_end_of_a_prefix_string() {
+    let mut c = CPU::new();
+    let mut b = FlatBus::new(0xFFFF);
+    // IM 1, EI, NOP, then DD DD FD DD 00 (four lone prefixes, then NOP).
+    for (i, byte) in [0xED, 0x56, 0xFB, 0x00, 0xDD, 0xDD, 0xFD, 0xDD, 0x00, 0x00].iter().enumerate() {
+        b.write_byte(i as u16, *byte);
+    }
+    c.reg.sp = 0x8000;
+    c.execute(&mut b); // IM 1
+    c.execute(&mut b); // EI
+    c.execute(&mut b); // NOP
+    c.execute(&mut b); // first DD, then the interrupt is raised
+    c.int_request(0xFF);
+    for _ in 0..3 {
+        c.execute(&mut b); // DD, FD, DD: no interrupt in between
+        assert_ne!(c.reg.pc, 0x0038);
+    }
+    c.execute(&mut b); // NOP (the prefixed instruction)
+    assert_eq!(c.reg.pc, 0x0009);
+    c.execute(&mut b); // now the interrupt (RST 38)
+    assert_eq!(c.reg.pc, 0x0038);
+}
