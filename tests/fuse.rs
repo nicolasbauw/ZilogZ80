@@ -17,6 +17,7 @@
 //! (PW) sont comparées, dans l'ordre.
 
 use std::cell::RefCell;
+use zilog_z80::machine_cycles::{MCycleKind, machine_cycles};
 use zilog_z80::{bus::Bus, cpu::CPU};
 
 const TESTS_IN: &str = include_str!("fuse/tests.in");
@@ -306,6 +307,122 @@ fn fuse_test_suite() {
     assert!(
         failures.is_empty(),
         "{} test(s) FUSE en échec sur {} :\n{}",
+        failures.len(),
+        tests.len(),
+        failures.join("\n")
+    );
+}
+
+/// A bus access: the T-state it starts at, and its kind.
+type Access = (u32, MCycleKind);
+
+/// The bus accesses of each test, from the events of tests.expected. Each
+/// MR/MW belongs to the MC (contention check) logged when its cycle starts:
+/// 3 T-states before for a memory read or write, 4 for an opcode fetch (a
+/// read that starts 3 T-states earlier with an MC on its address is a plain
+/// read: the MC 4 T-states earlier is then an internal state). A PR/PW is
+/// logged one T-state into its I/O cycle. Also returns the T-states of all
+/// MCs: for a relative jump that isn't taken (JR cc, DJNZ), FUSE logs the
+/// MC of the displacement read but not the read itself, which does take
+/// place on a real Z80 (UM0080: M2, 3 T-states).
+fn expected_accesses() -> Vec<(String, Vec<Access>, Vec<u32>)> {
+    let mut out = Vec::new();
+    for block in TESTS_EXPECTED.split("\n\n") {
+        let mut lines = block.lines().filter(|l| !l.trim().is_empty());
+        let Some(name) = lines.next() else { continue };
+        let events: Vec<(u32, String, String)> = lines
+            .filter(|l| l.starts_with(' '))
+            .map(|l| {
+                let t: Vec<&str> = l.split_whitespace().collect();
+                (t[0].parse().unwrap(), t[1].to_string(), t[2].to_string())
+            })
+            .collect();
+        let mc_at = |t: u32, addr: &str| {
+            events
+                .iter()
+                .any(|(et, e, a)| *et == t && e == "MC" && a == addr)
+        };
+        let mut accesses = Vec::new();
+        for (t, kind, addr) in &events {
+            let access = match kind.as_str() {
+                "MR" if mc_at(t - 3, addr) => (t - 3, MCycleKind::MemoryRead),
+                "MR" => (t - 4, MCycleKind::OpcodeFetch),
+                "MW" => (t - 3, MCycleKind::MemoryWrite),
+                "PR" => (t - 1, MCycleKind::IoRead),
+                "PW" => (t - 1, MCycleKind::IoWrite),
+                _ => continue,
+            };
+            accesses.push(access);
+        }
+        accesses.sort_by_key(|a| a.0);
+        let mcs = events
+            .iter()
+            .filter(|(_, e, _)| e == "MC")
+            .map(|(t, _, _)| *t)
+            .collect();
+        out.push((name.trim().to_string(), accesses, mcs));
+    }
+    out
+}
+
+/// The machine cycles of `zilog_z80::machine_cycles` give, for every FUSE
+/// test, exactly the bus accesses FUSE logs, at the same T-states.
+#[test]
+fn machine_cycles_match_the_fuse_bus_events() {
+    let tests = parse_in();
+    let expected = expected_accesses();
+    let mut failures = Vec::new();
+    for (t, (name, exp, mcs)) in tests.iter().zip(&expected) {
+        assert_eq!(&t.name, name);
+        let mut bus = TestBus {
+            memory: initial_memory(),
+            port_writes: RefCell::new(Vec::new()),
+        };
+        for (addr, bytes) in &t.memory {
+            for (k, b) in bytes.iter().enumerate() {
+                bus.memory[(*addr as usize + k) & 0xFFFF] = *b;
+            }
+        }
+        let mut c = CPU::new();
+        load_state(&mut c, &t.state);
+        let mut got = Vec::new();
+        let mut now = 0;
+        let mut error = None;
+        while now < t.state.tstates {
+            let pc = c.reg.pc;
+            let byte = |k: u16| bus.memory[pc.wrapping_add(k) as usize];
+            let (first, second, fourth) = (byte(0), byte(1), byte(3));
+            let ticks = c.execute(&mut bus);
+            let Some(cycles) = machine_cycles(first, second, fourth, ticks) else {
+                error = Some(format!(
+                    "{first:02x} {second:02x} ({fourth:02x}): no variant of {ticks} T-states"
+                ));
+                break;
+            };
+            // JR cc or DJNZ not taken: FUSE logs only the MC of its
+            // displacement read (see `expected_accesses`).
+            let jump_not_taken =
+                matches!((first, ticks), (0x20 | 0x28 | 0x30 | 0x38, 7) | (0x10, 8));
+            for m in cycles {
+                if jump_not_taken && m.kind == MCycleKind::MemoryRead {
+                    if !mcs.contains(&now) {
+                        error = Some(format!("no MC at T-state {now} for the displacement read"));
+                    }
+                } else if m.kind != MCycleKind::Internal {
+                    got.push((now, m.kind));
+                }
+                now += u32::from(m.t_states);
+            }
+        }
+        if let Some(e) = error {
+            failures.push(format!("{name}: {e}"));
+        } else if &got != exp {
+            failures.push(format!("{name}: {got:?}\n    FUSE: {exp:?}"));
+        }
+    }
+    assert!(
+        failures.is_empty(),
+        "{} of {} tests differ:\n{}",
         failures.len(),
         tests.len(),
         failures.join("\n")

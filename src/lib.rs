@@ -25,6 +25,7 @@ pub mod cpu;
 mod cycles;
 pub mod dasm;
 mod flags;
+pub mod machine_cycles;
 pub mod registers;
 
 #[cfg(test)]
