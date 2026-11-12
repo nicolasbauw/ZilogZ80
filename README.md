@@ -28,6 +28,22 @@ loop {
 FlatBus is used when you just need a very basic bus, and no particular address decoding.  
 For more complex address decoding and IO examples see my [Amstrad CPC emulator.](https://github.com/nicolasbauw/amstrad_cpc)
 
+`execute` returns the total duration of an instruction. For machines that
+need what happens inside it (on the Amstrad CPC, the Gate Array stretches each
+bus access to a microsecond boundary), `machine_cycles` gives the sequence of
+machine cycles of the instruction just executed, from its opcode bytes and that
+duration: kind (opcode fetch, memory or I/O read or write, interrupt
+acknowledge, internal) and length in T-states. They are static tables, checked
+against the bus events of the FUSE test suite; `execute` doesn't use them, so
+other users pay nothing.
+
+```rust
+use zilog_z80::machine_cycles::{machine_cycles, MCycleKind};
+// PUSH BC: 11 T-states, a 5-T-state M1 then two memory writes.
+let cycles = machine_cycles(0xC5, 0x00, 0x00, 11).unwrap();
+assert_eq!(cycles.iter().filter(|c| c.kind == MCycleKind::MemoryWrite).count(), 2);
+```
+
 The library provides a disassembler method:
 
 ```
